@@ -588,7 +588,7 @@
             }
         }
 
-        // Copy to Clipboard
+           // Copy to Clipboard
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast('Link copied to clipboard!');
@@ -596,4 +596,140 @@
                 console.error('Could not copy text: ', err);
                 showToast('Failed to copy link');
             });
-   
+        }
+
+        // Image Modal Functions
+        function openModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImage.src = imageUrl;
+            currentImageUrl = imageUrl;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+            currentImageUrl = '';
+        }
+
+        function downloadImage() {
+            if (currentImageUrl) {
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = 'delivery-post.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // Show Popup Menu
+        function showPopup() {
+            const popup = document.getElementById('popupMenu');
+            popup.style.display = 'block';
+        }
+
+        // Close Popup Menu
+        function closePopup() {
+            const popup = document.getElementById('popupMenu');
+            popup.style.display = 'none';
+        }
+
+        // Open About Bottom Sheet
+        function openAbout() {
+            closePopup();
+            showBottomSheet('aboutSheet');
+        }
+
+        // Open Request Bottom Sheet
+        function openRequest() {
+            closePopup();
+            showBottomSheet('requestSheet');
+        }
+
+        // Open Report Bottom Sheet
+        function openReport() {
+            closePopup();
+            showBottomSheet('reportSheet');
+        }
+
+        // Open Settings (Placeholder)
+        function openSettings() {
+            closePopup();
+            showToast('Settings coming soon');
+        }
+
+        // Show Bottom Sheet
+        function showBottomSheet(id) {
+            const sheet = document.getElementById(id);
+            sheet.style.display = 'block';
+        }
+
+        // Close Bottom Sheet
+        function closeBottomSheet(id) {
+            const sheet = document.getElementById(id);
+            sheet.style.display = 'none';
+        }
+
+        // Submit Request
+        function submitRequest() {
+            const name = document.getElementById('requestName').value;
+            const details = document.getElementById('requestDetails').value;
+            if (!name || !details) {
+                showToast('Please fill all fields');
+                return;
+            }
+            showToast('Request submitted');
+            closeBottomSheet('requestSheet');
+        }
+
+        // Submit Report
+        function submitReport() {
+            const email = document.getElementById('reportEmail').value;
+            const details = document.getElementById('reportDetails').value;
+            if (!email || !details) {
+                showToast('Please fill all fields');
+                return;
+            }
+            showToast('Report submitted');
+            closeBottomSheet('reportSheet');
+        }
+
+        // Join WhatsApp Group
+        function joinWhatsApp() {
+            window.open('https://www.facebook.com/naylinaung888', '_blank');
+            showToast('Join our WhatsApp group');
+        }
+
+        // Send Email
+        function sendEmail() {
+            window.location.href = 'mailto:chaiaung088@gmail.com';
+            showToast('Send email');
+        }
+
+        // Show Toast Message
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Close Popup on Click Outside
+        document.addEventListener('click', (event) => {
+            const popup = document.getElementById('popupMenu');
+            if (popup.style.display === 'block' && !event.target.closest('.popup') && !event.target.closest('.menu-icon')) {
+                closePopup();
+            }
+        });
+
+        // Initialize
+        window.onload = () => {
+            fetchPosts();
+        };
+    </script>
+</body>
+</html>
