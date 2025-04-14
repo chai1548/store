@@ -1,735 +1,843 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ပစ္စည်းပို့ဆောင်ရေး</title>
-    <style>
-        /* General Styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-
-        /* Top Bar */
-        .top-bar {
-            position: sticky;
-            top: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #4267B2; /* Facebook blue */
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .top-bar.collapsed {
-            padding: 5px 20px;
-            background-color: #333; /* Dark background when collapsed */
-        }
-
-        .search-box {
-            flex: 1;
-            max-width: 500px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-right: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .icons {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .icons img {
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .icons img:hover {
-            transform: scale(1.1);
-        }
-
-        /* Menu Icon */
-        .menu-icon {
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            filter: brightness(0) invert(1); /* Convert icon to white */
-        }
-
-        .menu-icon:hover {
-            transform: scale(1.1);
-        }
-
-        /* Auto Chat Button */
-        .chat-button {
-            background-color: #4267B2;
-            color: white;
-            padding: 10px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .chat-button:hover {
-            background-color: #365899;
-        }
-
-        /* Popup Menu */
-        .popup {
-            display: none;
-            position: absolute;
-            background-color: white;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .popup button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            text-align: left;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-
-        .popup button:hover {
-            background-color: #f1f1f1;
-        }
-
-        /* Bottom Sheet */
-        .bottom-sheet {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            padding: 20px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-
-        .bottom-sheet input,
-        .bottom-sheet textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .bottom-sheet button {
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .bottom-sheet button.primary {
-            background-color: #4267B2;
-            color: white;
-        }
-
-        .bottom-sheet button.secondary {
-            background-color: #ccc;
-            color: black;
-        }
-
-        /* Posts Grid Container */
-        .posts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 20px;
-        }
-
-        .post-card {
-            border: 1px solid #ccc;
-            padding: 15px;
-            border-radius: 5px;
-            background: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
-        }
-
-        .post-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .post-image {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 5px;
-            margin: 5px 0;
-            cursor: pointer;
-        }
-
-        .timestamp {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .post-body {
-            color: #333;
-            margin: 10px 0;
-        }
-
-        .like-btn, .comment-btn, .share-btn {
-            cursor: pointer;
-            margin-right: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .like-btn { color: #ff0000; }
-        .comment-btn { color: #007bff; }
-        .share-btn { color: #28a745; }
-
-        .post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .post-header h3 { 
-            margin: 0;
-            font-size: 1.1em;
-        }
-
-        .post-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-
-        .post-footer .actions {
-            display: flex;
-            align-items: center;
-        }
-
-        /* Modal for Full Image View */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-
-        .modal-content {
-            display: block;
-            margin: auto;
-            max-width: 90%;
-            max-height: 80%;
-            margin-top: 5%;
-        }
-
-        /* Floating Action Button */
-        .fab-container {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 999;
-        }
-
-        .fab {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #4267B2;
-            color: white;
-            border: none;
-            font-size: 24px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .fab:hover {
-            background-color: #365899;
-            transform: scale(1.1);
-        }
-
-        .fab.create-post svg {
-            width: 30px;
-            height: 30px;
-            stroke: white;
-        }
-
-        /* Toast Message */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1002;
-            display: none;
-        }
-
-        /* Like Animation */
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            14% { transform: scale(1.3); }
-            28% { transform: scale(1); }
-            42% { transform: scale(1.3); }
-            70% { transform: scale(1); }
-        }
-
-        .liked {
-            animation: heartBeat 1s;
-            color: #ff0000;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .posts-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .top-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-box {
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
-            
-            .icons {
-                justify-content: flex-end;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Feed</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Previous styles remain the same */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      padding-bottom: 70px;
+    }
+    
+    /* Search bar */
+    .search-container {
+      padding: 10px 15px;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: #f0f0f0;
+      border-radius: 20px;
+      padding: 8px 15px;
+    }
+    
+    .search-bar i {
+      color: #757575;
+      margin-right: 10px;
+    }
+    
+    .search-bar input {
+      border: none;
+      background: transparent;
+      width: 100%;
+      outline: none;
+      font-size: 14px;
+    }
+    
+    /* FAB button */
+    .fab {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      background-color: #4285F4;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 100;
+    }
+    
+    .fab.cancel {
+      background-color: #EF5350;
+      bottom: 90px;
+    }
+    
+    /* Image full view modal */
+    .image-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .image-modal-content {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    
+    .image-modal-content img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    
+    .close-image {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+    }
+    
+    /* Keep all previous styles */
+    .post-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      margin: 15px;
+      padding: 15px;
+    }
+    
+    .profile-pic-container {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+    }
+    
+    .profile-pic {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #546F7A;
+    }
+    
+    .active-indicator {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    
+    .active {
+      background-color: #43A047;
+    }
+    
+    .inactive {
+      background-color: #EF5350;
+    }
+    
+    .user-info {
+      flex-grow: 1;
+    }
+    
+    .verified-badge {
+      color: #4285F4;
+      margin-left: 5px;
+      font-size: 14px;
+    }
+    
+    .post-time {
+      color: #757575;
+      font-size: 0.8em;
+    }
+    
+    .options-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+    
+    .post-text {
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    
+    .read-more {
+      color: #4285F4;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    
+    .post-images {
+      margin-top: 10px;
+      position: relative;
+    }
+    
+    .multi-image-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+    }
+    
+    .multi-image-grid img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .image-counter {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.8em;
+    }
+    
+    .video-container {
+      position: relative;
+      width: 100%;
+      cursor: pointer;
+    }
+    
+    .video-thumbnail {
+      width: 100%;
+      border-radius: 8px;
+    }
+    
+    .video-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.5);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+    }
+    
+    .video-duration {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255,85,79,0.9);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.8em;
+    }
+    
+    .post-footer {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 10px;
+    }
+    
+    .action-button {
+      display: flex;
+      align-items: center;
+      color: #757575;
+      cursor: pointer;
+    }
+    
+    .liked {
+      color: #F44336;
+    }
+    
+    /* Profile and Video modals (keep from previous) */
+    .profile-modal, .video-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .profile-content, .video-player {
+      background-color: white;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .close-modal, .close-video {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .video-player {
+      max-width: 800px;
+    }
+    
+    .video-player video {
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    <!-- Top Bar -->
-    <div class="top-bar" id="topBar">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search posts by description..." onkeyup="filterPosts()">
-        <div class="icons">
-            <div class="menu">
-                <img src="https://cdn-icons-png.flaticon.com/512/56/56763.png" alt="Menu Icon" class="menu-icon" onclick="showPopup()">
-                <div id="popupMenu" class="popup">
-                    <button onclick="openAbout()">About</button>
-                    <button onclick="openRequest()">Request</button>
-                    <button onclick="openSettings()">Settings</button>
-                    <button onclick="openReport()">Report</button>
-                </div>
-            </div>
-            <a href="https://www.facebook.com/share/1J6xHC36Fz/" target="_blank">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Icon">
-            </a>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="Line Icon" onclick="alert('Line Icon Clicked')">
-            <!-- Auto Chat Button -->
-            <button class="chat-button" onclick="window.location.href='chat.html'">
-                <img src="https://cdn-icons-png.flaticon.com/512/134/134914.png" alt="Chat Icon" class="menu-icon">
-            </button>
+  <!-- Search Bar -->
+  <div class="search-container">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search posts..." onkeyup="searchPosts()">
+    </div>
+  </div>
+
+  <div id="feed"></div>
+  
+  <!-- FAB Buttons -->
+  <div class="fab" onclick="goToUpload()">
+    <i class="fas fa-plus"></i>
+  </div>
+  <div class="fab cancel" onclick="cancelAction()">
+    <i class="fas fa-times"></i>
+  </div>
+  
+  <!-- Profile Modal -->
+  <div id="profileModal" class="profile-modal">
+    <div class="profile-content">
+      <span class="close-modal" onclick="closeProfileModal()">&times;</span>
+      <div class="profile-header">
+        <img id="profileAvatar" class="profile-avatar" src="" alt="Profile">
+        <div class="profile-info">
+          <h2 id="profileName">User Name <span id="profileVerified" class="verified-badge"></span></h2>
+          <div id="profileStatus" class="active-dot"></div>
         </div>
+      </div>
     </div>
-
-    <h1 style="margin: 20px;">ထိုင်းမြန်မာပစ္စည်းပို့ဆောင်ရေး</h1>
-
-    <div class="posts-grid" id="posts-container"></div>
-
-    <!-- Full Image View Modal -->
-    <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <img class="modal-content" id="modalImage">
+  </div>
+  
+  <!-- Video Modal -->
+  <div id="videoModal" class="video-modal">
+    <span class="close-video" onclick="closeVideoModal()">&times;</span>
+    <div class="video-player">
+      <video id="videoPlayer" controls>
+        Your browser does not support the video tag.
+      </video>
     </div>
-
-    <!-- Bottom Sheets -->
-    <div id="aboutSheet" class="bottom-sheet">
-        <h2>About</h2>
-        <p>This is the about section.</p>
-        <button class="primary" onclick="joinWhatsApp()">Join WhatsApp Group</button>
-        <button class="secondary" onclick="sendEmail()">Send Email</button>
-        <button class="secondary" onclick="closeBottomSheet('aboutSheet')">Close</button>
+  </div>
+  
+  <!-- Image Full View Modal -->
+  <div id="imageModal" class="image-modal">
+    <span class="close-image" onclick="closeImageModal()">&times;</span>
+    <div class="image-modal-content">
+      <img id="fullSizeImage" src="" alt="Full size image">
     </div>
+  </div>
 
-    <div id="requestSheet" class="bottom-sheet">
-        <h2>Request</h2>
-        <input id="requestName" type="text" placeholder="Enter Your Name">
-        <textarea id="requestDetails" placeholder="Enter Request Details"></textarea>
-        <button class="primary" onclick="submitRequest()">Submit</button>
-        <button class="secondary" onclick="closeBottomSheet('requestSheet')">Cancel</button>
-    </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-    <div id="reportSheet" class="bottom-sheet">
-        <h2>Report</h2>
-        <input id="reportEmail" type="email" placeholder="Enter Your Email">
-        <textarea id="reportDetails" placeholder="Enter Report Details"></textarea>
-        <button class="primary" onclick="submitReport()">Submit</button>
-        <button class="secondary" onclick="closeBottomSheet('reportSheet')">Cancel</button>
-    </div>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+      authDomain: "onlineshop-849c8.firebaseapp.com",
+      databaseURL: "https://onlineshop-849c8.firebaseio.com",
+      projectId: "onlineshop-849c8",
+      storageBucket: "onlineshop-849c8.appspot.com",
+      messagingSenderId: "883512833370",
+      appId: "1:883512833370:android:a1c8412b158f8744afef63"
+    };
 
-    <!-- Floating Create Post Button -->
-    <div class="fab-container">
-        <button class="fab create-post" onclick="window.location.href='upload.html'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        </button>
-    </div>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
 
-    <!-- Toast Message -->
-    <div id="toast" class="toast"></div>
+    // Global variables
+    let currentUser = null;
+    let usersMap = {};
+    let userDataGetStatus = {};
+    let profileAllUsers = [];
+    let status = "all_post";
+    let allPosts = [];
 
-    <script>
-        // Firebase URLs
-        const firebasePostsUrl = "https://onlineshop-849c8.firebaseio.com/posts.json";
-        const firebaseLikesUrl = "https://onlineshop-849c8.firebaseio.com/likes.json";
-        let allPosts = [];
-        let currentImageUrl = '';
-        let likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '{}');
+    // Main function to load posts
+    function loadPosts() {
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
 
-        // Fetch Posts
-        async function fetchPosts() {
-            try {
-                const response = await fetch(firebasePostsUrl);
-                if (!response.ok) throw new Error("Failed to fetch posts");
-                const data = await response.json();
-                if (!data) {
-                    document.getElementById('posts-container').innerHTML = '<div class="post-card">No posts found.</div>';
-                    return;
-                }
-                
-                // Fetch likes for each post
-                const likesResponse = await fetch(firebaseLikesUrl);
-                const likesData = likesResponse.ok ? await likesResponse.json() : {};
-                
-                allPosts = Object.keys(data).map(key => {
-                    let post = data[key];
-                    let imagesArray = post.data ? JSON.parse(post.data) : [];
-                    const postLikes = likesData[key] || {};
-                    const likeCount = Object.keys(postLikes).length;
-                    
-                    return {
-                        postId: key,
-                        description: post.description || 'No Description',
-                        timestamp: post.post_timestamp ? new Date(parseInt(post.post_timestamp)).toLocaleString() : 'No Timestamp',
-                        postBody: post.post_body || '',
-                        totalLikes: likeCount,
-                        totalComments: parseInt(post.comments) || 0,
-                        totalShares: post.total_shares || 0,
-                        images: imagesArray,
-                        posttime: post.posttime || 'No Post Time',
-                        isLiked: likedPosts[key] || false
-                    };
-                });
-                
-                displayPosts(allPosts);
-            } catch (error) {
-                console.error("Error fetching posts:", error);
-                document.getElementById('posts-container').innerHTML = '<div class="post-card">Error fetching posts.</div>';
-            }
-        }
+      // Load users first
+      loadUsers().then(() => {
+        // Then load posts
+        const postsRef = database.ref('posts').orderByChild('post_timestamp');
 
-        // Display Posts in Grid
-        function displayPosts(posts) {
-            const postsContainer = document.getElementById('posts-container');
-            postsContainer.innerHTML = '';
-            
-            if (posts.length === 0) {
-                postsContainer.innerHTML = '<div class="post-card">No posts available.</div>';
-                return;
-            }
-            
-            posts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.className = 'post-card';
-                
-                let imagesHtml = post.images.length > 0 ?
-                    `<div class="image-container">
-                        <img src="${post.images[0]}" alt="Post Image" class="post-image" onclick="openModal('${post.images[0]}')">
-                    </div>` :
-                    '<p>No image available</p>';
-                
-                postElement.innerHTML = `
-                    <div class="post-header">
-                        <h3>Ko Sai</h3>
-                        <div class="timestamp">${post.timestamp}</div>
-                    </div>
-                    <p>${post.description}</p>
-                    ${imagesHtml}
-                    <p class="post-body">${post.postBody || ''}</p>
-                    <div class="post-footer">
-                        <div class="actions">
-                            <span class="like-btn ${post.isLiked ? 'liked' : ''}" 
-                                  onclick="toggleLike('${post.postId}', this)">
-                                ❤️ ${post.totalLikes}
-                            </span>
-                            <span class="comment-btn" onclick="viewComments('${post.postId}')">
-                                💬 ${post.totalComments}
-                            </span>
-                            <span class="share-btn" onclick="sharePost('${post.postId}')">
-                                🔄 ${post.totalShares}
-                            </span>
-                        </div>
-                    </div>
-                `;
-                postsContainer.appendChild(postElement);
+        postsRef.on('value', (snapshot) => {
+          allPosts = [];
+          snapshot.forEach((childSnapshot) => {
+            allPosts.unshift({
+              key: childSnapshot.key,
+              ...childSnapshot.val()
             });
-        }
+          });
 
-        // Toggle Like
-        async function toggleLike(postId, element) {
-            const userId = localStorage.getItem('userId') || generateUserId();
-            localStorage.setItem('userId', userId);
-            
-            try {
-                // Update local state immediately for responsive UI
-                const isLiked = !likedPosts[postId];
-                likedPosts[postId] = isLiked;
-                localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
-                
-                // Update UI
-                element.classList.toggle('liked', isLiked);
-                const likeCountElement = element.querySelector('span') || element;
-                const currentCount = parseInt(likeCountElement.textContent.match(/\d+/)[0]) || 0;
-                likeCountElement.textContent = `❤️ ${isLiked ? currentCount + 1 : currentCount - 1}`;
-                
-                // Update Firebase
-                const likeUrl = `${firebaseLikesUrl.replace('.json', '')}/${postId}/${userId}.json`;
-                const method = isLiked ? 'PUT' : 'DELETE';
-                
-                await fetch(likeUrl, {
-                    method: method,
-                    body: isLiked ? JSON.stringify(true) : null
-                });
-                
-                showToast(isLiked ? 'Post liked!' : 'Like removed');
-                
-            } catch (error) {
-                console.error("Error toggling like:", error);
-                showToast('Error updating like');
-            }
-        }
-
-        // Generate unique user ID
-        function generateUserId() {
-            return 'user_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        // Search by Description
-        function filterPosts() {
-            const searchValue = document.getElementById('searchInput').value.toLowerCase();
-            const filteredPosts = allPosts.filter(post => 
-                post.description.toLowerCase().includes(searchValue) ||
-                (post.postBody && post.postBody.toLowerCase().includes(searchValue))
-            );
-            displayPosts(filteredPosts);
-        }
-
-        // View Comments
-        function viewComments(postId) {
-            window.location.href = `comments.html?postId=${postId}`;
-        }
-
-        // Share Post
-        function sharePost(postId) {
-            const post = allPosts.find(p => p.postId === postId);
-            if (post) {
-                const shareUrl = `https://example.com/post/${postId}`;
-                const shareText = `${post.description}\n\n${shareUrl}`;
-                
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'Check out this post',
-                        text: post.description,
-                        url: shareUrl
-                    }).catch(err => {
-                        console.log('Error sharing:', err);
-                        copyToClipboard(shareText);
-                    });
-                } else {
-                    copyToClipboard(shareText);
-                }
-            }
-        }
-
-           // Copy to Clipboard
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Link copied to clipboard!');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-                showToast('Failed to copy link');
-            });
-        }
-
-        // Image Modal Functions
-        function openModal(imageUrl) {
-            const modal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            modal.style.display = 'block';
-            modalImage.src = imageUrl;
-            currentImageUrl = imageUrl;
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.style.display = 'none';
-            currentImageUrl = '';
-        }
-
-        function downloadImage() {
-            if (currentImageUrl) {
-                const link = document.createElement('a');
-                link.href = currentImageUrl;
-                link.download = 'delivery-post.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-
-        // Show Popup Menu
-        function showPopup() {
-            const popup = document.getElementById('popupMenu');
-            popup.style.display = 'block';
-        }
-
-        // Close Popup Menu
-        function closePopup() {
-            const popup = document.getElementById('popupMenu');
-            popup.style.display = 'none';
-        }
-
-        // Open About Bottom Sheet
-        function openAbout() {
-            closePopup();
-            showBottomSheet('aboutSheet');
-        }
-
-        // Open Request Bottom Sheet
-        function openRequest() {
-            closePopup();
-            showBottomSheet('requestSheet');
-        }
-
-        // Open Report Bottom Sheet
-        function openReport() {
-            closePopup();
-            showBottomSheet('reportSheet');
-        }
-
-        // Open Settings (Placeholder)
-        function openSettings() {
-            closePopup();
-            showToast('Settings coming soon');
-        }
-
-        // Show Bottom Sheet
-        function showBottomSheet(id) {
-            const sheet = document.getElementById(id);
-            sheet.style.display = 'block';
-        }
-
-        // Close Bottom Sheet
-        function closeBottomSheet(id) {
-            const sheet = document.getElementById(id);
-            sheet.style.display = 'none';
-        }
-
-        // Submit Request
-        function submitRequest() {
-            const name = document.getElementById('requestName').value;
-            const details = document.getElementById('requestDetails').value;
-            if (!name || !details) {
-                showToast('Please fill all fields');
-                return;
-            }
-            showToast('Request submitted');
-            closeBottomSheet('requestSheet');
-        }
-
-        // Submit Report
-        function submitReport() {
-            const email = document.getElementById('reportEmail').value;
-            const details = document.getElementById('reportDetails').value;
-            if (!email || !details) {
-                showToast('Please fill all fields');
-                return;
-            }
-            showToast('Report submitted');
-            closeBottomSheet('reportSheet');
-        }
-
-        // Join WhatsApp Group
-        function joinWhatsApp() {
-            window.open('https://www.facebook.com/naylinaung888', '_blank');
-            showToast('Join our WhatsApp group');
-        }
-
-        // Send Email
-        function sendEmail() {
-            window.location.href = 'mailto:chaiaung088@gmail.com';
-            showToast('Send email');
-        }
-
-        // Show Toast Message
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
-
-        // Close Popup on Click Outside
-        document.addEventListener('click', (event) => {
-            const popup = document.getElementById('popupMenu');
-            if (popup.style.display === 'block' && !event.target.closest('.popup') && !event.target.closest('.menu-icon')) {
-                closePopup();
-            }
+          renderPosts(allPosts);
+        }, (error) => {
+          console.error("Error loading posts:", error);
         });
+      });
+    }
 
-        // Initialize
-        window.onload = () => {
-            fetchPosts();
-        };
-    </script>
+    // Search posts function
+    function searchPosts() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      if (!searchTerm) {
+        renderPosts(allPosts);
+        return;
+      }
+      
+      const filteredPosts = allPosts.filter(post => {
+        const description = (post.description || post.text || '').toLowerCase();
+        return description.includes(searchTerm);
+      });
+      
+      renderPosts(filteredPosts);
+    }
+
+    // Load users from Firebase
+    function loadUsers() {
+      return new Promise((resolve) => {
+        database.ref('users').on('value', (snapshot) => {
+          usersMap = {};
+          userDataGetStatus = {};
+          profileAllUsers = [];
+          
+          snapshot.forEach((childSnapshot) => {
+            const userKey = childSnapshot.key;
+            const userData = childSnapshot.val();
+            
+            // Store user data
+            usersMap[userKey] = userData;
+            
+            // Store online status
+            if (userData.uid) {
+              const isOnline = userData.is_online || false;
+              userDataGetStatus[userData.uid] = isOnline;
+            }
+            
+            // Prepare for "People You May Know" section
+            if (status === "all_post" && currentUser && userData.uid !== currentUser.uid) {
+              profileAllUsers.push({
+                pro_name: userData.name || 'User',
+                pro_uid: userData.uid,
+                pro_url: userData.profilepic || 'user_placeholder.png'
+              });
+            }
+          });
+          
+          // Shuffle the users for random display
+          profileAllUsers = shuffleArray(profileAllUsers);
+          resolve();
+        });
+      });
+    }
+
+    // Shuffle array function
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Render posts to the feed
+    function renderPosts(posts) {
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
+      
+      posts.forEach((post, index) => {
+        // Create post element
+        const postElement = document.createElement('div');
+        postElement.className = 'post-container';
+        postElement.dataset.key = post.key;
+        postElement.dataset.uid = post.uid || '';
+        
+        // Get user info from usersMap
+        const userData = usersMap[post.uid] || {};
+        const isVerified = userData.verified || false;
+        const isActive = userDataGetStatus[post.uid] || false;
+        const userName = userData.name || 'User';
+        const userProfilePic = userData.profilepic || 'user_placeholder.png';
+        
+        // Prepare post data
+        const timestamp = formatTimestamp(post.post_timestamp || post.time);
+        const description = post.description || post.text || '';
+        const images = parseImages(post.data || post.images || []);
+        const postType = post.post_type || post.postType || 'normal';
+        const hideComment = post.hide_comment === true || post.hide_comment === "true";
+        const hideShare = post.hide_share === true || post.hide_share === "true";
+        const likeCount = post.likes || post.like_count || 0;
+        const commentCount = post.comments || post.comment_count || 0;
+        const fileCount = post.file_count || images.length;
+        const videoDuration = post.video_duration || '';
+        const videoUrl = post.video_url || (images.length > 0 ? images[0] : '');
+        
+        // Build post HTML
+        postElement.innerHTML = `
+          <div class="post-header">
+            <div class="profile-pic-container">
+              <img class="profile-pic" src="${userProfilePic}" onerror="this.src='user_placeholder.png'" alt="Profile">
+              <div class="active-indicator ${isActive ? 'active' : 'inactive'}"></div>
+            </div>
+            <div class="user-info">
+              <div class="user-name">
+                ${userName}
+                ${isVerified ? '<span class="verified-badge">✓</span>' : ''}
+              </div>
+              <div class="post-time">${timestamp}</div>
+            </div>
+            <div class="options-icon" onclick="showOptionsMenu('${post.key}')">⋮</div>
+          </div>
+          
+          <div class="post-content">
+            ${renderPostText(description)}
+            ${postType === 'video' ? 
+              renderPostVideo(videoUrl, videoDuration, post.key) : 
+              renderPostImages(images, fileCount, post.key)}
+          </div>
+          
+          <div class="post-footer">
+            ${renderPostActions(post.key, likeCount, commentCount, hideComment, hideShare)}
+          </div>
+        `;
+
+        // Add user list section after 3rd post
+        if (index === 2 && status === "all_post" && profileAllUsers.length > 0) {
+          const userListSection = createUserListSection();
+          feed.appendChild(userListSection);
+        }
+
+        feed.appendChild(postElement);
+      });
+
+      // Add event listeners after rendering
+      addEventListeners();
+    }
+
+    // Render post video with data-key
+    function renderPostVideo(videoUrl, duration, postKey) {
+      if (!videoUrl) return '';
+      
+      return `
+        <div class="video-container" onclick="playVideo('${videoUrl}', '${postKey}')" data-key="${postKey}">
+          <img class="video-thumbnail" src="${videoUrl}" onerror="this.style.display='none'" alt="Video thumbnail">
+          <div class="video-indicator">▶</div>
+          ${duration ? `<div class="video-duration">${duration}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // Render post images with data-key
+    function renderPostImages(images, fileCount, postKey) {
+      if (images.length === 0) return '';
+      
+      let html = '<div class="post-images">';
+      
+      if (images.length === 1) {
+        html += `
+          <div class="single-image" onclick="viewFullImage('${images[0]}', '${postKey}')" data-key="${postKey}">
+            <img src="${images[0]}" onerror="this.style.display='none'" alt="Post image">
+          </div>
+        `;
+      } else {
+        html += '<div class="multi-image-grid">';
+        images.slice(0, 4).forEach((img, index) => {
+          html += `
+            <div class="image-container" onclick="viewFullImage('${img}', '${postKey}')" data-key="${postKey}">
+              <img src="${img}" onerror="this.style.display='none'" alt="Post image">
+              ${index === 0 && fileCount > 1 ? `<div class="image-counter">1/${fileCount}</div>` : ''}
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    // View full size image
+    function viewFullImage(imageUrl, postKey) {
+      const imageModal = document.getElementById('imageModal');
+      const fullSizeImage = document.getElementById('fullSizeImage');
+      
+      fullSizeImage.src = imageUrl;
+      fullSizeImage.alt = `Post image ${postKey}`;
+      imageModal.style.display = 'flex';
+    }
+
+    // Close image modal
+    function closeImageModal() {
+      document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // Play video in modal
+    function playVideo(videoUrl, postKey) {
+      const videoModal = document.getElementById('videoModal');
+      const videoPlayer = document.getElementById('videoPlayer');
+      
+      videoPlayer.src = videoUrl;
+      videoPlayer.dataset.key = postKey;
+      videoModal.style.display = 'flex';
+      videoPlayer.play();
+    }
+
+    // Close video modal
+    function closeVideoModal() {
+      const videoPlayer = document.getElementById('videoPlayer');
+      videoPlayer.pause();
+      videoPlayer.src = '';
+      document.getElementById('videoModal').style.display = 'none';
+    }
+
+    // View profile in modal
+    function viewProfile(uid) {
+      const userData = usersMap[uid] || {};
+      const profileModal = document.getElementById('profileModal');
+      const profileAvatar = document.getElementById('profileAvatar');
+      const profileName = document.getElementById('profileName');
+      const profileVerified = document.getElementById('profileVerified');
+      const profileStatus = document.getElementById('profileStatus');
+      
+      profileAvatar.src = userData.profilepic || 'user_placeholder.png';
+      profileName.textContent = userData.name || 'User';
+      profileVerified.innerHTML = userData.verified ? '✓' : '';
+      profileStatus.className = `active-dot ${userDataGetStatus[uid] ? 'active' : 'inactive'}`;
+      
+      profileModal.style.display = 'flex';
+    }
+
+    // Close profile modal
+    function closeProfileModal() {
+      document.getElementById('profileModal').style.display = 'none';
+    }
+
+    // Go to upload page
+    function goToUpload() {
+      window.location.href = "upload.html";
+    }
+
+    // Cancel action
+    function cancelAction() {
+      // You can add any cancel action here
+      console.log("Cancel action");
+    }
+
+    // Go to comment page
+    function goToComment(postKey) {
+      window.location.href = `comment.html?postId=${postKey}`;
+    }
+
+    function createUserListSection() {
+      const section = document.createElement('div');
+      section.className = 'user-list-container';
+      
+      let userListHTML = '';
+      profileAllUsers.slice(0, 10).forEach(user => {
+        userListHTML += `
+          <div class="user-card" onclick="viewProfile('${user.pro_uid}')">
+            <img class="user-avatar" src="${user.pro_url}" onerror="this.src='user_placeholder.png'" alt="${user.pro_name}">
+            <div class="user-name">${user.pro_name}</div>
+          </div>
+        `;
+      });
+      
+      section.innerHTML = `
+        <div class="user-list-header">
+          <div class="user-list-title">People You May Know</div>
+          <div class="see-all-btn" onclick="viewDiscoverPeople()">See All</div>
+        </div>
+        <div class="user-list">
+          ${userListHTML}
+        </div>
+      `;
+      
+      return section;
+    }
+
+    function renderPostText(text) {
+      if (!text) return '';
+      
+      if (text.length > 400) {
+        return `
+          <div class="post-text">
+            ${text.substring(0, 400)}...
+            <span class="read-more" onclick="expandPostText(this)">Read more</span>
+            <span class="full-text hidden">${text}</span>
+          </div>
+        `;
+      } else {
+        return `<div class="post-text">${text}</div>`;
+      }
+    }
+
+    function renderPostActions(postKey, likeCount, commentCount, hideComment, hideShare) {
+      return `
+        <div class="action-button like-btn" onclick="toggleLike('${postKey}', this)">
+          <span>♥</span> ${likeCount}
+        </div>
+        ${hideComment ? '' : `
+          <div class="action-button comment-btn" onclick="goToComment('${postKey}')">
+            <span>💬</span> ${commentCount}
+          </div>
+        `}
+        ${hideShare ? '' : `
+          <div class="action-button share-btn" onclick="sharePost('${postKey}')">
+            <span>↗</span> Share
+          </div>
+        `}
+      `;
+    }
+
+    function parseImages(data) {
+      try {
+        if (typeof data === 'string') {
+          return JSON.parse(data);
+        } else if (Array.isArray(data)) {
+          return data;
+        }
+        return [];
+      } catch (e) {
+        console.error("Error parsing images:", e);
+        return [];
+      }
+    }
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return '';
+      
+      if (typeof timestamp === 'number') {
+        const date = new Date(timestamp);
+        return date.toLocaleString();
+      }
+      
+      return timestamp;
+    }
+
+    function addEventListeners() {
+      document.querySelectorAll('.profile-pic, .user-name').forEach(el => {
+        el.addEventListener('click', function() {
+          const post = this.closest('.post-container');
+          const uid = post.dataset.uid;
+          viewProfile(uid);
+        });
+      });
+    }
+
+    // Toggle like using the likes API
+    function toggleLike(postKey, likeBtn) {
+      if (!currentUser) {
+        alert("Please sign in to like posts");
+        return;
+      }
+      
+      const isLiked = likeBtn.classList.contains('liked');
+      const likeRef = database.ref(`likes/${postKey}/${currentUser.uid}`);
+      
+      if (isLiked) {
+        // Unlike
+        likeRef.set(0).then(() => {
+          likeBtn.classList.remove('liked');
+          updateLikeCount(likeBtn, -1);
+          
+          // Update post likes count in the database
+          database.ref(`posts/${postKey}/likes`).transaction(currentLikes => {
+            return (currentLikes || 0) - 1;
+          });
+        });
+      } else {
+        // Like
+        likeRef.set(1).then(() => {
+          likeBtn.classList.add('liked');
+          updateLikeCount(likeBtn, 1);
+          
+          // Update post likes count in the database
+          database.ref(`posts/${postKey}/likes`).transaction(currentLikes => {
+            return (currentLikes || 0) + 1;
+          });
+        });
+      }
+    }
+
+    function updateLikeCount(likeBtn, change) {
+      const countElement = likeBtn.querySelector('span:last-child');
+      if (countElement) {
+        const currentCount = parseInt(countElement.textContent) || 0;
+        countElement.textContent = currentCount + change;
+      }
+    }
+
+    function sharePost(postKey) {
+      console.log("Sharing post:", postKey);
+      // Implement share functionality
+    }
+
+    function showOptionsMenu(postKey) {
+      console.log("Showing options for post:", postKey);
+    }
+
+    function expandPostText(element) {
+      const fullText = element.nextElementSibling.textContent;
+      element.parentElement.innerHTML = fullText;
+    }
+
+    function viewDiscoverPeople() {
+      console.log("Viewing discover people");
+    }
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged(user => {
+        currentUser = user;
+        if (user) {
+          console.log("User signed in:", user.uid);
+          loadPosts();
+        } else {
+          console.log("No user signed in");
+          // You might want to redirect to login page
+        }
+      });
+    });
+  </script>
 </body>
 </html>
