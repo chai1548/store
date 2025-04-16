@@ -133,6 +133,7 @@
             max-height: 500px;
             object-fit: contain;
             border-radius: 4px;
+            cursor: pointer;
         }
         
         .multi-image-container {
@@ -146,6 +147,7 @@
             height: 200px;
             object-fit: cover;
             border-radius: 4px;
+            cursor: pointer;
         }
         
         .video-indicator {
@@ -278,6 +280,49 @@
         .hidden {
             display: none;
         }
+        
+        /* Full screen image viewer styles */
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        
+        .image-viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .close-viewer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .image-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -316,6 +361,13 @@
         </div>
     </div>
 
+    <!-- Full screen image viewer -->
+    <div id="image-viewer" class="hidden image-viewer" onclick="closeImageViewer()">
+        <span class="close-viewer" onclick="closeImageViewer(event)">×</span>
+        <img id="full-size-image" src="" alt="Full size image">
+        <div id="image-counter" class="image-counter hidden"></div>
+    </div>
+
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -345,6 +397,7 @@
         let isLiked = false;
         let likeCount = 0;
         let commentCount = 0;
+        let allMediaUrls = [];
 
         // DOM elements
         const postContainer = document.getElementById('post-container');
@@ -354,6 +407,9 @@
         const commentList = document.getElementById('comment-list');
         const commentInput = document.getElementById('comment-input');
         const addComment = document.getElementById('add-comment');
+        const imageViewer = document.getElementById('image-viewer');
+        const fullSizeImage = document.getElementById('full-size-image');
+        const imageCounter = document.getElementById('image-counter');
 
         // Initialize the page
         function initPage() {
@@ -456,20 +512,22 @@
                         `;
                     } else if (postMediaData && postMediaData !== 'null') {
                         try {
-                            const mediaUrls = JSON.parse(postMediaData);
-                            if (mediaUrls.length === 1) {
+                            allMediaUrls = JSON.parse(postMediaData);
+                            if (allMediaUrls.length === 1) {
                                 postHTML += `
                                     <div class="post-media">
-                                        <img src="${mediaUrls[0]}" class="single-image" alt="Post image">
+                                        <img src="${allMediaUrls[0]}" class="single-image" alt="Post image" 
+                                             onclick="openImageViewer(0)">
                                     </div>
                                 `;
-                            } else if (mediaUrls.length > 1) {
+                            } else if (allMediaUrls.length > 1) {
                                 postHTML += '<div class="post-media"><div class="multi-image-container">';
                                 // Show first 4 images
-                                const imagesToShow = mediaUrls.slice(0, 4);
+                                const imagesToShow = allMediaUrls.slice(0, 4);
                                 imagesToShow.forEach((url, index) => {
                                     postHTML += `
-                                        <img src="${url}" class="multi-image" alt="Post image ${index + 1}">
+                                        <img src="${url}" class="multi-image" alt="Post image ${index + 1}" 
+                                             onclick="openImageViewer(${index})">
                                     `;
                                 });
                                 postHTML += '</div></div>';
@@ -485,6 +543,34 @@
                     // Add footer after main content is rendered
                     renderPostFooter();
                 });
+        }
+
+        // Open image viewer
+        function openImageViewer(index) {
+            if (!allMediaUrls || allMediaUrls.length === 0) return;
+            
+            fullSizeImage.src = allMediaUrls[index];
+            imageViewer.classList.remove('hidden');
+            
+            // Show image counter if multiple images
+            if (allMediaUrls.length > 1) {
+                imageCounter.textContent = `${index + 1}/${allMediaUrls.length}`;
+                imageCounter.classList.remove('hidden');
+            } else {
+                imageCounter.classList.add('hidden');
+            }
+            
+            // Prevent body scroll when viewer is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close image viewer
+        function closeImageViewer(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            imageViewer.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
 
         // Render post footer with actions
@@ -507,6 +593,7 @@
                     </div>
                 </div>
             `;
+            
             
             // Append or update footer
             const existingFooter = postContainer.querySelector('.post-footer');
@@ -566,7 +653,7 @@
             });
         }
 
-                // Post a new comment
+        // Post a new comment
         function postComment() {
             const commentText = commentInput.value.trim();
             if (commentText === '') return;
