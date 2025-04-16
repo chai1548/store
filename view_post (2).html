@@ -1,0 +1,659 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Post</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Glide.js for image carousel -->
+    <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
+    <style>
+        :root {
+            --primary-color: #FF554F;
+            --dark-bg: #282828;
+            --darker-bg: #212121;
+            --light-text: #FAFAFA;
+            --gray-text: #9E9E9E;
+            --card-bg: #424242;
+            --input-bg: #242424;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--light-text);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        .status-bar {
+            background-color: var(--dark-bg);
+            height: 24px;
+            width: 100%;
+        }
+        
+        .action-bar {
+            background-color: var(--dark-bg);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-button {
+            color: var(--light-text);
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .post-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            position: relative;
+        }
+        
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            background-color: #546F7A;
+        }
+        
+        .user-info {
+            flex-grow: 1;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .post-time {
+            color: var(--gray-text);
+            font-size: 12px;
+            margin: 0;
+        }
+        
+        .verified-badge {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+        }
+        
+        .options-icon {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: var(--gray-text);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .post-content {
+            padding: 0 12px 12px;
+        }
+        
+        .post-text {
+            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .post-media {
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .single-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .multi-image-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        
+        .multi-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-top: 1px solid #333;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+        }
+        
+        .action-icon {
+            margin-right: 5px;
+            font-size: 18px;
+        }
+        
+        .action-count {
+            font-size: 12px;
+        }
+        
+        .liked {
+            color: var(--primary-color);
+        }
+        
+        .comments-section {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        
+        .comments-title {
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        
+        .comment-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
+        .comment-item {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .comment-user-pic {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            background-color: #546F7A;
+        }
+        
+        .comment-content {
+            flex-grow: 1;
+        }
+        
+        .comment-user-name {
+            font-weight: 500;
+            font-size: 12px;
+            margin: 0 0 5px 0;
+        }
+        
+        .comment-text {
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .comment-time {
+            color: var(--gray-text);
+            font-size: 10px;
+            margin: 5px 0 0 0;
+        }
+        
+        .add-comment {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .comment-input {
+            flex-grow: 1;
+            background-color: var(--input-bg);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: var(--light-text);
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .send-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .comments-disabled {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray-text);
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+    <div class="container">
+        <!-- Action Bar -->
+        <div class="action-bar" id="action-bar">
+            <div class="back-button" onclick="goBack()">←</div>
+            <h3>Post</h3>
+        </div>
+        
+        <!-- Post Content -->
+        <div class="post-container" id="post-container">
+            <!-- Post content will be loaded here dynamically -->
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="comments-section" id="comments-section">
+            <h4 class="comments-title">Comments</h4>
+            
+            <!-- Comments List -->
+            <div class="comment-list" id="comment-list">
+                <!-- Comments will be loaded here dynamically -->
+            </div>
+            
+            <!-- Add Comment -->
+            <div class="add-comment" id="add-comment">
+                <input type="text" class="comment-input" id="comment-input" placeholder="Add a comment...">
+                <button class="send-button" onclick="postComment()">↑</button>
+            </div>
+        </div>
+        
+        <!-- Comments Disabled Message -->
+        <div class="comments-disabled hidden" id="comments-disabled">
+            <p>Comments are disabled for this post</p>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // Current user and post data
+        let currentUser = null;
+        let currentPost = null;
+        let postKey = null;
+        let postUserId = null;
+        let postType = null;
+        let hideComment = null;
+        let postMediaData = null;
+        let comments = [];
+        let isLiked = false;
+        let likeCount = 0;
+        let commentCount = 0;
+
+        // DOM elements
+        const postContainer = document.getElementById('post-container');
+        const actionBar = document.getElementById('action-bar');
+        const commentsSection = document.getElementById('comments-section');
+        const commentsDisabled = document.getElementById('comments-disabled');
+        const commentList = document.getElementById('comment-list');
+        const commentInput = document.getElementById('comment-input');
+        const addComment = document.getElementById('add-comment');
+
+        // Initialize the page
+        function initPage() {
+            // Get post data from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            postKey = urlParams.get('key');
+            postUserId = urlParams.get('uid');
+            postType = urlParams.get('post_type');
+            hideComment = urlParams.get('hide_comment') === 'true';
+            postMediaData = urlParams.get('data');
+            
+            // Check auth state
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadPost();
+                    loadComments();
+                    
+                    // Check if comments are disabled
+                    if (hideComment) {
+                        commentsSection.classList.add('hidden');
+                        commentsDisabled.classList.remove('hidden');
+                    } else {
+                        commentsSection.classList.remove('hidden');
+                        commentsDisabled.classList.add('hidden');
+                    }
+                    
+                    // Hide action bar for video posts
+                    if (postType === 'video') {
+                        actionBar.classList.add('hidden');
+                    }
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // Load post data
+        function loadPost() {
+            database.ref('posts/' + postKey).once('value')
+                .then((snapshot) => {
+                    currentPost = snapshot.val();
+                    if (currentPost) {
+                        renderPost();
+                        
+                        // Check if user liked the post
+                        return database.ref('likes/' + postKey + '/' + currentUser.uid).once('value');
+                    }
+                })
+                .then((snapshot) => {
+                    isLiked = snapshot.exists();
+                    
+                    // Get like count
+                    return database.ref('likes/' + postKey).once('value');
+                })
+                .then((snapshot) => {
+                    likeCount = snapshot.numChildren();
+                    renderPostFooter();
+                })
+                .catch((error) => {
+                    console.error("Error loading post:", error);
+                });
+        }
+
+        // Render post content
+        function renderPost() {
+            if (!currentPost) return;
+            
+            // Get user data
+            database.ref('users/' + postUserId).once('value')
+                .then((userSnapshot) => {
+                    const postUser = userSnapshot.val() || {};
+                    const isVerified = postUser.verified || false;
+                    
+                    let postHTML = `
+                        <div class="post-header">
+                            <img src="${postUser.profilepic || 'user.png'}" class="profile-pic" 
+                                 onerror="this.src='user.png'" alt="${postUser.name}">
+                            <div class="user-info">
+                                <div style="display: flex; align-items: center;">
+                                    <h3 class="user-name">${postUser.name || 'Unknown User'}</h3>
+                                    ${isVerified ? '<img src="verified.png" class="verified-badge" alt="Verified">' : ''}
+                                </div>
+                                <p class="post-time">${formatTime(currentPost.post_timestamp)}</p>
+                            </div>
+                            <div class="options-icon">⋮</div>
+                        </div>
+                        <div class="post-content">
+                            <div class="post-text">${currentPost.description || ''}</div>
+                    `;
+                    
+                    // Render media content based on post type
+                    if (postType === 'video') {
+                        postHTML += `
+                            <div class="post-media">
+                                <img src="${postMediaData || ''}" class="single-image" alt="Video thumbnail">
+                                <div class="video-indicator">${currentPost.video_duration || ''}</div>
+                            </div>
+                        `;
+                    } else if (postMediaData && postMediaData !== 'null') {
+                        try {
+                            const mediaUrls = JSON.parse(postMediaData);
+                            if (mediaUrls.length === 1) {
+                                postHTML += `
+                                    <div class="post-media">
+                                        <img src="${mediaUrls[0]}" class="single-image" alt="Post image">
+                                    </div>
+                                `;
+                            } else if (mediaUrls.length > 1) {
+                                postHTML += '<div class="post-media"><div class="multi-image-container">';
+                                // Show first 4 images
+                                const imagesToShow = mediaUrls.slice(0, 4);
+                                imagesToShow.forEach((url, index) => {
+                                    postHTML += `
+                                        <img src="${url}" class="multi-image" alt="Post image ${index + 1}">
+                                    `;
+                                });
+                                postHTML += '</div></div>';
+                            }
+                        } catch (e) {
+                            console.error("Error parsing media data:", e);
+                        }
+                    }
+                    
+                    postHTML += `</div>`;
+                    postContainer.innerHTML = postHTML;
+                    
+                    // Add footer after main content is rendered
+                    renderPostFooter();
+                });
+        }
+
+        // Render post footer with actions
+        function renderPostFooter() {
+            const footerHTML = `
+                <div class="post-footer">
+                    <div class="action-button ${isLiked ? 'liked' : ''}" onclick="toggleLike()">
+                        <span class="action-icon">${isLiked ? '❤️' : '♡'}</span>
+                        <span class="action-count">${likeCount}</span>
+                    </div>
+                    ${!hideComment ? `
+                    <div class="action-button" onclick="focusComment()">
+                        <span class="action-icon">💬</span>
+                        <span class="action-count">${commentCount}</span>
+                    </div>
+                    ` : ''}
+                    <div class="action-button" onclick="sharePost()">
+                        <span class="action-icon">↗️</span>
+                        <span class="action-count">Share</span>
+                    </div>
+                </div>
+            `;
+            
+            // Append or update footer
+            const existingFooter = postContainer.querySelector('.post-footer');
+            if (existingFooter) {
+                existingFooter.outerHTML = footerHTML;
+            } else {
+                postContainer.insertAdjacentHTML('beforeend', footerHTML);
+            }
+        }
+
+        // Load comments
+        function loadComments() {
+            database.ref('comments/' + postKey).orderByChild('timestamp').on('value', (snapshot) => {
+                comments = [];
+                commentCount = 0;
+                
+                snapshot.forEach((childSnapshot) => {
+                    const comment = childSnapshot.val();
+                    comment.key = childSnapshot.key;
+                    comments.unshift(comment); // Newest first
+                    commentCount++;
+                });
+                
+                renderComments();
+                renderPostFooter(); // Update comment count
+            });
+        }
+
+        // Render comments
+        function renderComments() {
+            commentList.innerHTML = '';
+            
+            if (comments.length === 0) {
+                commentList.innerHTML = '<p style="color: var(--gray-text); text-align: center;">No comments yet</p>';
+                return;
+            }
+            
+            comments.forEach(comment => {
+                database.ref('users/' + comment.uid).once('value')
+                    .then((userSnapshot) => {
+                        const commentUser = userSnapshot.val() || {};
+                        
+                        const commentHTML = `
+                            <div class="comment-item">
+                                <img src="${commentUser.profilepic || 'user.png'}" class="comment-user-pic" 
+                                     onerror="this.src='user.png'" alt="${commentUser.name}">
+                                <div class="comment-content">
+                                    <h4 class="comment-user-name">${commentUser.name || 'Unknown User'}</h4>
+                                    <p class="comment-text">${comment.text}</p>
+                                    <p class="comment-time">${formatTime(comment.timestamp)}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        commentList.insertAdjacentHTML('beforeend', commentHTML);
+                    });
+            });
+        }
+
+                                                               // Post a new comment
+        function postComment() {
+            const commentText = commentInput.value.trim();
+            if (commentText === '') return;
+            
+            const newComment = {
+                uid: currentUser.uid,
+                text: commentText,
+                timestamp: Date.now()
+            };
+            
+            database.ref('comments/' + postKey).push(newComment)
+                .then(() => {
+                    commentInput.value = '';
+                })
+                .catch((error) => {
+                    console.error("Error posting comment:", error);
+                });
+        }
+
+        // Toggle like on the post
+        function toggleLike() {
+            const likeRef = database.ref('likes/' + postKey + '/' + currentUser.uid);
+            
+            if (isLiked) {
+                // Unlike
+                likeRef.remove()
+                    .then(() => {
+                        isLiked = false;
+                        likeCount--;
+                        renderPostFooter();
+                    });
+            } else {
+                // Like
+                likeRef.set(true)
+                    .then(() => {
+                        isLiked = true;
+                        likeCount++;
+                        renderPostFooter();
+                    });
+            }
+        }
+
+        // Focus comment input
+        function focusComment() {
+            commentInput.focus();
+        }
+
+        // Share post
+        function sharePost() {
+            // In a real app, implement actual sharing functionality
+            alert('Sharing post: ' + postKey);
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 10000) { // Less than 10 seconds
+                return "Just now";
+            } else if (diff < 60000) { // Less than 1 minute
+                return Math.floor(diff / 1000) + " sec ago";
+            } else if (diff < 3600000) { // Less than 1 hour
+                return Math.floor(diff / 60000) + " min ago";
+            } else if (diff < 86400000) { // Less than 1 day
+                return Math.floor(diff / 3600000) + " hr ago";
+            } else if (diff < 604800000) { // Less than 1 week
+                return Math.floor(diff / 86400000) + " days ago";
+            } else if (diff < 2592000000) { // Less than 1 month (30 days)
+                return Math.floor(diff / 604800000) + " weeks ago";
+            } else if (diff < 31536000000) { // Less than 1 year (365 days)
+                return Math.floor(diff / 2592000000) + " months ago";
+            } else { // More than 1 year
+                return Math.floor(diff / 31536000000) + " years ago";
+            }
+        }
+
+        // Go back to previous page
+        function goBack() {
+            window.history.back();
+        }
+
+        // Initialize the page when loaded
+        window.onload = initPage;
+    </script>
+</body>
+</html>
