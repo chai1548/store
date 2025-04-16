@@ -8,9 +8,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <!-- Glide.js for image carousel -->
-    <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
             --primary-color: #FF554F;
@@ -34,8 +33,56 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 15px;
+            padding-bottom: 80px; /* Space for FAB */
         }
         
+        .search-bar {
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: var(--darker-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-input {
+            flex-grow: 1;
+            background-color: var(--input-bg);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .search-icon {
+            margin-left: 10px;
+            color: var(--gray-text);
+        }
+        
+        /* FAB Button */
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .fab-icon {
+            color: white;
+            font-size: 24px;
+        }
+        
+        /* Rest of your existing styles... */
         .post-card {
             background-color: var(--card-bg);
             border-radius: 8px;
@@ -43,206 +90,25 @@
             overflow: hidden;
         }
         
-        .post-header {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            position: relative;
-        }
-        
-        .profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-            background-color: #546F7A;
-        }
-        
-        .user-info {
-            flex-grow: 1;
-        }
-        
-        .user-name {
-            font-weight: 500;
-            margin: 0;
-            font-size: 14px;
-        }
-        
-        .post-time {
-            color: var(--gray-text);
-            font-size: 12px;
-            margin: 0;
-        }
-        
-        .verified-badge {
-            width: 16px;
-            height: 16px;
-            margin-left: 5px;
-        }
-        
-        .options-icon {
-            position: absolute;
-            right: 12px;
-            top: 12px;
-            color: var(--gray-text);
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        .post-content {
-            padding: 0 12px 12px;
-        }
-        
-        .post-text {
-            margin: 10px 0;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .read-more {
-            color: var(--primary-color);
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-block;
-            margin-top: 5px;
-        }
-        
-        .post-media {
-            margin-top: 10px;
-            position: relative;
-        }
-        
-        .single-image {
-            width: 100%;
-            max-height: 500px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-        
-        .multi-image-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-        }
-        
-        .multi-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        
-        .video-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 5px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .post-footer {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-top: 1px solid #333;
-        }
-        
-        .action-button {
-            display: flex;
-            align-items: center;
-            color: var(--gray-text);
-            cursor: pointer;
-        }
-        
-        .action-icon {
-            margin-right: 5px;
-            font-size: 18px;
-        }
-        
-        .action-count {
-            font-size: 12px;
-        }
-        
-        .liked {
-            color: var(--primary-color);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .profile-section {
-            background-color: var(--darker-bg);
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-        }
-        
-        .section-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .section-title h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-        
-        .see-more {
-            color: var(--primary-color);
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .profiles-scroll {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding-bottom: 10px;
-        }
-        
-        .profile-item {
-            text-align: center;
-            min-width: 80px;
-        }
-        
-        .profile-item-pic {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 5px;
-            background-color: #546F7A;
-        }
-        
-        .profile-item-name {
-            font-size: 12px;
-            margin: 0;
-        }
+        /* ... (keep all your existing styles) ... */
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Profile Suggestions Section -->
-        <div id="profile-section" class="profile-section hidden">
-            <div class="section-title">
-                <h3>Discover People</h3>
-                <span class="see-more" onclick="viewAllPeople()">See More</span>
-            </div>
-            <div class="profiles-scroll" id="profiles-container">
-                <!-- Profiles will be added here dynamically -->
-            </div>
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" class="search-input" id="search-input" placeholder="Search posts...">
+            <span class="search-icon material-icons">search</span>
         </div>
         
         <!-- Posts Container -->
         <div id="posts-container">
             <!-- Posts will be added here dynamically -->
+        </div>
+        
+        <!-- FAB Button -->
+        <div class="fab" onclick="goToUpload()">
+            <span class="fab-icon material-icons">add</span>
         </div>
     </div>
 
@@ -265,21 +131,23 @@
         
         // Current user and post data
         let currentUser = null;
-        let posts = [];
+        let allPosts = [];
+        let filteredPosts = [];
         let users = [];
-        let profileSuggestions = [];
         let likedPosts = {};
 
         // DOM elements
         const postsContainer = document.getElementById('posts-container');
-        const profileSection = document.getElementById('profile-section');
-        const profilesContainer = document.getElementById('profiles-container');
+        const searchInput = document.getElementById('search-input');
 
         // Check auth state
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
                 loadData();
+                
+                // Setup search functionality
+                searchInput.addEventListener('input', handleSearch);
             } else {
                 // Redirect to login if not authenticated
                 window.location.href = 'index.html';
@@ -291,12 +159,13 @@
             // Load posts
             database.ref('posts').orderByChild('post_timestamp').once('value')
                 .then((snapshot) => {
-                    posts = [];
+                    allPosts = [];
                     snapshot.forEach((childSnapshot) => {
                         const post = childSnapshot.val();
                         post.key = childSnapshot.key;
-                        posts.unshift(post); // Newest first
+                        allPosts.unshift(post); // Newest first
                     });
+                    filteredPosts = [...allPosts];
                     
                     // Load users
                     return database.ref('users').once('value');
@@ -318,19 +187,7 @@
                         }
                     });
                     
-                    // Load profile suggestions (excluding current user)
-                    profileSuggestions = [];
-                    Object.keys(users).forEach(userId => {
-                        if (userId !== currentUser.uid) {
-                            profileSuggestions.push({
-                                id: userId,
-                                ...users[userId]
-                            });
-                        }
-                    });
-                    
                     // Display data
-                    renderProfileSuggestions();
                     renderPosts();
                 })
                 .catch((error) => {
@@ -338,39 +195,38 @@
                 });
         }
 
-        // Render profile suggestions
-        function renderProfileSuggestions() {
-            if (profileSuggestions.length > 0) {
-                profileSection.classList.remove('hidden');
-                profilesContainer.innerHTML = '';
-                
-                // Show first 10 profiles
-                const profilesToShow = profileSuggestions.slice(0, 10);
-                profilesToShow.forEach(profile => {
-                    const profileItem = document.createElement('div');
-                    profileItem.className = 'profile-item';
-                    profileItem.innerHTML = `
-                        <img src="${profile.profilepic || 'user.png'}" class="profile-item-pic" 
-                             onerror="this.src='user.png'" alt="${profile.name}">
-                        <p class="profile-item-name">${profile.name}</p>
-                    `;
-                    profileItem.onclick = () => viewProfile(profile.id);
-                    profilesContainer.appendChild(profileItem);
+        // Handle search input
+        function handleSearch() {
+            const searchQuery = searchInput.value.trim().toLowerCase();
+            
+            if (searchQuery === '') {
+                filteredPosts = [...allPosts];
+            } else {
+                filteredPosts = allPosts.filter(post => {
+                    const description = post.description ? post.description.toLowerCase() : '';
+                    return description.includes(searchQuery);
                 });
             }
+            
+            renderPosts();
         }
 
         // Render posts
         function renderPosts() {
             postsContainer.innerHTML = '';
             
-            posts.forEach(post => {
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = '<p style="text-align: center; color: var(--gray-text);">No posts found</p>';
+                return;
+            }
+            
+            filteredPosts.forEach(post => {
                 const postElement = createPostElement(post);
                 postsContainer.appendChild(postElement);
             });
         }
 
-        // Create a post element
+        // Create a post element (same as before)
         function createPostElement(post) {
             const postUser = users[post.uid] || {};
             const isLiked = likedPosts[post.key] || false;
@@ -473,8 +329,31 @@
         // Format timestamp
         function formatTime(timestamp) {
             if (!timestamp) return '';
-            const date = new Date(timestamp);
-            return date.toLocaleString();
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 10000) { // Less than 10 seconds
+                return "Just now";
+            } else if (diff < 60000) { // Less than 1 minute
+                return Math.floor(diff / 1000) + " sec ago";
+            } else if (diff < 3600000) { // Less than 1 hour
+                return Math.floor(diff / 60000) + " min ago";
+            } else if (diff < 86400000) { // Less than 1 day
+                return Math.floor(diff / 3600000) + " hr ago";
+            } else if (diff < 604800000) { // Less than 1 week
+                return Math.floor(diff / 86400000) + " days ago";
+            } else if (diff < 2592000000) { // Less than 1 month (30 days)
+                return Math.floor(diff / 604800000) + " weeks ago";
+            } else if (diff < 31536000000) { // Less than 1 year (365 days)
+                return Math.floor(diff / 2592000000) + " months ago";
+            } else { // More than 1 year
+                return Math.floor(diff / 31536000000) + " years ago";
+            }
+        }
+
+        // Go to upload page
+        function goToUpload() {
+            window.location.href = 'upload.html';
         }
 
         // Toggle like on a post
@@ -500,14 +379,18 @@
 
         // View full post
         function viewFullPost(postKey) {
-            // In a real app, you would navigate to a full post view
-            alert(`Viewing full post: ${postKey}`);
+            const post = allPosts.find(p => p.key === postKey);
+            if (post) {
+                window.location.href = `view_post.html?key=${postKey}&uid=${post.uid}&post_type=${post.post_type || 'normal'}&hide_comment=${post.hide_comment || 'false'}&data=${encodeURIComponent(post.data || '')}`;
+            }
         }
 
         // View comments
         function viewComments(postKey) {
-            // In a real app, you would navigate to a comments view
-            alert(`Viewing comments for post: ${postKey}`);
+            const post = allPosts.find(p => p.key === postKey);
+            if (post && post.hide_comment !== 'true') {
+                window.location.href = `view_post.html?key=${postKey}#comments`;
+            }
         }
 
         // Share post
@@ -515,26 +398,6 @@
             // In a real app, you would implement sharing functionality
             alert(`Sharing post: ${postKey}`);
         }
-
-        // View profile
-        function viewProfile(userId) {
-            // In a real app, you would navigate to a profile view
-            alert(`Viewing profile: ${userId}`);
-        }
-
-        // View all people
-        function viewAllPeople() {
-            // In a real app, you would navigate to a discover people view
-            alert('Viewing all people');
-        }
-
-        // Logout function (you might want to add a logout button)
-        function logout() {
-            auth.signOut()
-                .then(() => {
-                    window.location.href = 'index.html';
-                });
-        }
     </script>
 </body>
-  </html>
+</html>
