@@ -535,8 +535,7 @@
                 renderPostFooter(); // Update comment count
             });
         }
-
-        // Render comments
+// Render comments
         function renderComments() {
             commentList.innerHTML = '';
             
@@ -580,4 +579,80 @@
             
             database.ref('comments/' + postKey).push(newComment)
                 .then(() => {
-          
+                    commentInput.value = '';
+                })
+                .catch((error) => {
+                    console.error("Error posting comment:", error);
+                });
+        }
+
+        // Toggle like on the post
+        function toggleLike() {
+            const likeRef = database.ref('likes/' + postKey + '/' + currentUser.uid);
+            
+            if (isLiked) {
+                // Unlike
+                likeRef.remove()
+                    .then(() => {
+                        isLiked = false;
+                        likeCount--;
+                        renderPostFooter();
+                    });
+            } else {
+                // Like
+                likeRef.set(true)
+                    .then(() => {
+                        isLiked = true;
+                        likeCount++;
+                        renderPostFooter();
+                    });
+            }
+        }
+
+        // Focus comment input
+        function focusComment() {
+            commentInput.focus();
+        }
+
+        // Share post
+        function sharePost() {
+            // In a real app, implement actual sharing functionality
+            alert('Sharing post: ' + postKey);
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 10000) { // Less than 10 seconds
+                return "Just now";
+            } else if (diff < 60000) { // Less than 1 minute
+                return Math.floor(diff / 1000) + " sec ago";
+            } else if (diff < 3600000) { // Less than 1 hour
+                return Math.floor(diff / 60000) + " min ago";
+            } else if (diff < 86400000) { // Less than 1 day
+                return Math.floor(diff / 3600000) + " hr ago";
+            } else if (diff < 604800000) { // Less than 1 week
+                return Math.floor(diff / 86400000) + " days ago";
+            } else if (diff < 2592000000) { // Less than 1 month (30 days)
+                return Math.floor(diff / 604800000) + " weeks ago";
+            } else if (diff < 31536000000) { // Less than 1 year (365 days)
+                return Math.floor(diff / 2592000000) + " months ago";
+            } else { // More than 1 year
+                return Math.floor(diff / 31536000000) + " years ago";
+            }
+        }
+
+        // Go back to previous page
+        function goBack() {
+            window.history.back();
+        }
+
+        // Initialize the page when loaded
+        window.onload = initPage;
+    </script>
+</body>
+</html>
