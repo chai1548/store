@@ -1,843 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Social Media Feed</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <style>
-    /* Previous styles remain the same */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      padding: 0;
-      margin: 0;
-      position: relative;
-      padding-bottom: 70px;
-    }
-    
-    /* Search bar */
-    .search-container {
-      padding: 10px 15px;
-      background: white;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .search-bar {
-      display: flex;
-      align-items: center;
-      background: #f0f0f0;
-      border-radius: 20px;
-      padding: 8px 15px;
-    }
-    
-    .search-bar i {
-      color: #757575;
-      margin-right: 10px;
-    }
-    
-    .search-bar input {
-      border: none;
-      background: transparent;
-      width: 100%;
-      outline: none;
-      font-size: 14px;
-    }
-    
-    /* FAB button */
-    .fab {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      background-color: #4285F4;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-      cursor: pointer;
-      z-index: 100;
-    }
-    
-    .fab.cancel {
-      background-color: #EF5350;
-      bottom: 90px;
-    }
-    
-    /* Image full view modal */
-    .image-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.9);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .image-modal-content {
-      max-width: 90%;
-      max-height: 90%;
-    }
-    
-    .image-modal-content img {
-      max-width: 100%;
-      max-height: 90vh;
-      object-fit: contain;
-    }
-    
-    .close-image {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      color: white;
-      font-size: 30px;
-      cursor: pointer;
-    }
-    
-    /* Keep all previous styles */
-    .post-container {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-      margin: 15px;
-      padding: 15px;
-    }
-    
-    .profile-pic-container {
-      position: relative;
-      width: 50px;
-      height: 50px;
-      margin-right: 10px;
-    }
-    
-    .profile-pic {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      background-color: #546F7A;
-    }
-    
-    .active-indicator {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 2px solid white;
-    }
-    
-    .active {
-      background-color: #43A047;
-    }
-    
-    .inactive {
-      background-color: #EF5350;
-    }
-    
-    .user-info {
-      flex-grow: 1;
-    }
-    
-    .verified-badge {
-      color: #4285F4;
-      margin-left: 5px;
-      font-size: 14px;
-    }
-    
-    .post-time {
-      color: #757575;
-      font-size: 0.8em;
-    }
-    
-    .options-icon {
-      font-size: 20px;
-      cursor: pointer;
-    }
-    
-    .post-text {
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-    
-    .read-more {
-      color: #4285F4;
-      cursor: pointer;
-      font-size: 0.9em;
-    }
-    
-    .post-images {
-      margin-top: 10px;
-      position: relative;
-    }
-    
-    .multi-image-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 5px;
-    }
-    
-    .multi-image-grid img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
-    .image-counter {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 0.8em;
-    }
-    
-    .video-container {
-      position: relative;
-      width: 100%;
-      cursor: pointer;
-    }
-    
-    .video-thumbnail {
-      width: 100%;
-      border-radius: 8px;
-    }
-    
-    .video-indicator {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.5);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 24px;
-    }
-    
-    .video-duration {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(255,85,79,0.9);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 0.8em;
-    }
-    
-    .post-footer {
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid #e0e0e0;
-      padding-top: 10px;
-    }
-    
-    .action-button {
-      display: flex;
-      align-items: center;
-      color: #757575;
-      cursor: pointer;
-    }
-    
-    .liked {
-      color: #F44336;
-    }
-    
-    /* Profile and Video modals (keep from previous) */
-    .profile-modal, .video-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .profile-content, .video-player {
-      background-color: white;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      padding: 20px;
-      position: relative;
-    }
-    
-    .close-modal, .close-video {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    
-    .video-player {
-      max-width: 800px;
-    }
-    
-    .video-player video {
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #424242;
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .topbar {
+            background-color: #282828;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .logo {
+            width: 70px;
+            height: 70px;
+            margin: 10px auto;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        .tab {
+            padding: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .tab.active {
+            color: #FF554F;
+            border-bottom: 2px solid #FF554F;
+        }
+        .tab.inactive {
+            color: #9E9E9E;
+        }
+        .content {
+            background-color: #FAFAFA;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+        }
+        .form-title {
+            color: #FF554F;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .input-field {
+            background-color: #242424;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            color: white;
+            border-radius: 4px;
+        }
+        .input-field::placeholder {
+            color: #9E9E9E;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-back {
+            background-color: #212121;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #FF554F;
+            color: white;
+        }
+        .email-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .email-action-btn {
+            color: #FF554F;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .password-toggle {
+            color: #9E9E9E;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <!-- Search Bar -->
-  <div class="search-container">
-    <div class="search-bar">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search posts..." onkeyup="searchPosts()">
-    </div>
-  </div>
-
-  <div id="feed"></div>
-  
-  <!-- FAB Buttons -->
-  <div class="fab" onclick="goToUpload()">
-    <i class="fas fa-plus"></i>
-  </div>
-  <div class="fab cancel" onclick="cancelAction()">
-    <i class="fas fa-times"></i>
-  </div>
-  
-  <!-- Profile Modal -->
-  <div id="profileModal" class="profile-modal">
-    <div class="profile-content">
-      <span class="close-modal" onclick="closeProfileModal()">&times;</span>
-      <div class="profile-header">
-        <img id="profileAvatar" class="profile-avatar" src="" alt="Profile">
-        <div class="profile-info">
-          <h2 id="profileName">User Name <span id="profileVerified" class="verified-badge"></span></h2>
-          <div id="profileStatus" class="active-dot"></div>
+    <div class="container">
+        <div class="topbar">
+            <img src="logo.png" alt="Logo" class="logo">
+            <div class="tabs">
+                <div id="login-tab" class="tab active" onclick="showLogin()">Login</div>
+                <div id="register-tab" class="tab inactive" onclick="showRegister()">Register</div>
+                <div id="forgot-tab" class="tab inactive" onclick="showForgot()">Forgot</div>
+            </div>
         </div>
-      </div>
+        
+        <!-- Login Form -->
+        <div id="login-form" class="content">
+            <div class="form-title">LOGIN</div>
+            <div class="form-group">
+                <input type="email" id="login-email" class="input-field" placeholder="Email Address">
+            </div>
+            <div class="form-group">
+                <div style="display: flex; align-items: center;">
+                    <input type="password" id="login-password" class="input-field" placeholder="Password">
+                    <span id="toggle-login-password" class="password-toggle" onclick="togglePassword('login-password', 'toggle-login-password')">Show</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-back" onclick="goBack()">BACK</button>
+                <button class="btn btn-primary" onclick="login()">LOGIN</button>
+            </div>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="register-form" class="content hidden">
+            <div class="form-title">REGISTER</div>
+            <div class="form-group">
+                <input type="text" id="register-name" class="input-field" placeholder="Name">
+            </div>
+            <div class="form-group">
+                <input type="text" id="register-username" class="input-field" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <input type="email" id="register-email" class="input-field" placeholder="Email Address">
+            </div>
+            <div class="form-group">
+                <div style="display: flex; align-items: center;">
+                    <input type="password" id="register-password" class="input-field" placeholder="Password">
+                    <span id="toggle-register-password" class="password-toggle" onclick="togglePassword('register-password', 'toggle-register-password')">Show</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-back" onclick="goBack()">BACK</button>
+                <button class="btn btn-primary" onclick="register()">REGISTER</button>
+            </div>
+        </div>
+        
+        <!-- Forgot Password Form -->
+        <div id="forgot-form" class="content hidden">
+            <div class="form-title">FORGOT PASSWORD</div>
+            <div class="form-group">
+                <input type="email" id="forgot-email" class="input-field" placeholder="Email Address">
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-back" onclick="goBack()">BACK</button>
+                <button class="btn btn-primary" onclick="resetPassword()">RESET</button>
+            </div>
+        </div>
     </div>
-  </div>
-  
-  <!-- Video Modal -->
-  <div id="videoModal" class="video-modal">
-    <span class="close-video" onclick="closeVideoModal()">&times;</span>
-    <div class="video-player">
-      <video id="videoPlayer" controls>
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  </div>
-  
-  <!-- Image Full View Modal -->
-  <div id="imageModal" class="image-modal">
-    <span class="close-image" onclick="closeImageModal()">&times;</span>
-    <div class="image-modal-content">
-      <img id="fullSizeImage" src="" alt="Full size image">
-    </div>
-  </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
 
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-      authDomain: "onlineshop-849c8.firebaseapp.com",
-      databaseURL: "https://onlineshop-849c8.firebaseio.com",
-      projectId: "onlineshop-849c8",
-      storageBucket: "onlineshop-849c8.appspot.com",
-      messagingSenderId: "883512833370",
-      appId: "1:883512833370:android:a1c8412b158f8744afef63"
-    };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const auth = firebase.auth();
+        // Tab navigation functions
+        function showLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-form').classList.add('hidden');
+            document.getElementById('login-tab').className = 'tab active';
+            document.getElementById('register-tab').className = 'tab inactive';
+            document.getElementById('forgot-tab').className = 'tab inactive';
+        }
 
-    // Global variables
-    let currentUser = null;
-    let usersMap = {};
-    let userDataGetStatus = {};
-    let profileAllUsers = [];
-    let status = "all_post";
-    let allPosts = [];
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('forgot-form').classList.add('hidden');
+            document.getElementById('login-tab').className = 'tab inactive';
+            document.getElementById('register-tab').className = 'tab active';
+            document.getElementById('forgot-tab').className = 'tab inactive';
+        }
 
-    // Main function to load posts
-    function loadPosts() {
-      const feed = document.getElementById('feed');
-      feed.innerHTML = '';
+        function showForgot() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('forgot-form').classList.remove('hidden');
+            document.getElementById('login-tab').className = 'tab inactive';
+            document.getElementById('register-tab').className = 'tab inactive';
+            document.getElementById('forgot-tab').className = 'tab active';
+        }
 
-      // Load users first
-      loadUsers().then(() => {
-        // Then load posts
-        const postsRef = database.ref('posts').orderByChild('post_timestamp');
+        function goBack() {
+            showLogin();
+        }
 
-        postsRef.on('value', (snapshot) => {
-          allPosts = [];
-          snapshot.forEach((childSnapshot) => {
-            allPosts.unshift({
-              key: childSnapshot.key,
-              ...childSnapshot.val()
-            });
-          });
-
-          renderPosts(allPosts);
-        }, (error) => {
-          console.error("Error loading posts:", error);
-        });
-      });
-    }
-
-    // Search posts function
-    function searchPosts() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      if (!searchTerm) {
-        renderPosts(allPosts);
-        return;
-      }
-      
-      const filteredPosts = allPosts.filter(post => {
-        const description = (post.description || post.text || '').toLowerCase();
-        return description.includes(searchTerm);
-      });
-      
-      renderPosts(filteredPosts);
-    }
-
-    // Load users from Firebase
-    function loadUsers() {
-      return new Promise((resolve) => {
-        database.ref('users').on('value', (snapshot) => {
-          usersMap = {};
-          userDataGetStatus = {};
-          profileAllUsers = [];
-          
-          snapshot.forEach((childSnapshot) => {
-            const userKey = childSnapshot.key;
-            const userData = childSnapshot.val();
+        // Password toggle function
+        function togglePassword(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
             
-            // Store user data
-            usersMap[userKey] = userData;
-            
-            // Store online status
-            if (userData.uid) {
-              const isOnline = userData.is_online || false;
-              userDataGetStatus[userData.uid] = isOnline;
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                toggle.textContent = 'Show';
             }
+        }
+
+        // Authentication functions
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             
-            // Prepare for "People You May Know" section
-            if (status === "all_post" && currentUser && userData.uid !== currentUser.uid) {
-              profileAllUsers.push({
-                pro_name: userData.name || 'User',
-                pro_uid: userData.uid,
-                pro_url: userData.profilepic || 'user_placeholder.png'
-              });
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in
+                    const user = userCredential.user;
+                    window.location.href = 'home.html'; // Redirect to home page
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+
+        function register() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed up
+                    const user = userCredential.user;
+                    // You can save additional user info (name, username) to Firestore here
+                    window.location.href = 'home.html'; // Redirect to home page
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+
+        function resetPassword() {
+            const email = document.getElementById('forgot-email').value;
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    alert('Password reset email sent!');
+                    showLogin();
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        }
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, redirect to home page
+                window.location.href = 'home.html';
             }
-          });
-          
-          // Shuffle the users for random display
-          profileAllUsers = shuffleArray(profileAllUsers);
-          resolve();
         });
-      });
-    }
-
-    // Shuffle array function
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    // Render posts to the feed
-    function renderPosts(posts) {
-      const feed = document.getElementById('feed');
-      feed.innerHTML = '';
-      
-      posts.forEach((post, index) => {
-        // Create post element
-        const postElement = document.createElement('div');
-        postElement.className = 'post-container';
-        postElement.dataset.key = post.key;
-        postElement.dataset.uid = post.uid || '';
-        
-        // Get user info from usersMap
-        const userData = usersMap[post.uid] || {};
-        const isVerified = userData.verified || false;
-        const isActive = userDataGetStatus[post.uid] || false;
-        const userName = userData.name || 'User';
-        const userProfilePic = userData.profilepic || 'user_placeholder.png';
-        
-        // Prepare post data
-        const timestamp = formatTimestamp(post.post_timestamp || post.time);
-        const description = post.description || post.text || '';
-        const images = parseImages(post.data || post.images || []);
-        const postType = post.post_type || post.postType || 'normal';
-        const hideComment = post.hide_comment === true || post.hide_comment === "true";
-        const hideShare = post.hide_share === true || post.hide_share === "true";
-        const likeCount = post.likes || post.like_count || 0;
-        const commentCount = post.comments || post.comment_count || 0;
-        const fileCount = post.file_count || images.length;
-        const videoDuration = post.video_duration || '';
-        const videoUrl = post.video_url || (images.length > 0 ? images[0] : '');
-        
-        // Build post HTML
-        postElement.innerHTML = `
-          <div class="post-header">
-            <div class="profile-pic-container">
-              <img class="profile-pic" src="${userProfilePic}" onerror="this.src='user_placeholder.png'" alt="Profile">
-              <div class="active-indicator ${isActive ? 'active' : 'inactive'}"></div>
-            </div>
-            <div class="user-info">
-              <div class="user-name">
-                ${userName}
-                ${isVerified ? '<span class="verified-badge">✓</span>' : ''}
-              </div>
-              <div class="post-time">${timestamp}</div>
-            </div>
-            <div class="options-icon" onclick="showOptionsMenu('${post.key}')">⋮</div>
-          </div>
-          
-          <div class="post-content">
-            ${renderPostText(description)}
-            ${postType === 'video' ? 
-              renderPostVideo(videoUrl, videoDuration, post.key) : 
-              renderPostImages(images, fileCount, post.key)}
-          </div>
-          
-          <div class="post-footer">
-            ${renderPostActions(post.key, likeCount, commentCount, hideComment, hideShare)}
-          </div>
-        `;
-
-        // Add user list section after 3rd post
-        if (index === 2 && status === "all_post" && profileAllUsers.length > 0) {
-          const userListSection = createUserListSection();
-          feed.appendChild(userListSection);
-        }
-
-        feed.appendChild(postElement);
-      });
-
-      // Add event listeners after rendering
-      addEventListeners();
-    }
-
-    // Render post video with data-key
-    function renderPostVideo(videoUrl, duration, postKey) {
-      if (!videoUrl) return '';
-      
-      return `
-        <div class="video-container" onclick="playVideo('${videoUrl}', '${postKey}')" data-key="${postKey}">
-          <img class="video-thumbnail" src="${videoUrl}" onerror="this.style.display='none'" alt="Video thumbnail">
-          <div class="video-indicator">▶</div>
-          ${duration ? `<div class="video-duration">${duration}</div>` : ''}
-        </div>
-      `;
-    }
-
-    // Render post images with data-key
-    function renderPostImages(images, fileCount, postKey) {
-      if (images.length === 0) return '';
-      
-      let html = '<div class="post-images">';
-      
-      if (images.length === 1) {
-        html += `
-          <div class="single-image" onclick="viewFullImage('${images[0]}', '${postKey}')" data-key="${postKey}">
-            <img src="${images[0]}" onerror="this.style.display='none'" alt="Post image">
-          </div>
-        `;
-      } else {
-        html += '<div class="multi-image-grid">';
-        images.slice(0, 4).forEach((img, index) => {
-          html += `
-            <div class="image-container" onclick="viewFullImage('${img}', '${postKey}')" data-key="${postKey}">
-              <img src="${img}" onerror="this.style.display='none'" alt="Post image">
-              ${index === 0 && fileCount > 1 ? `<div class="image-counter">1/${fileCount}</div>` : ''}
-            </div>
-          `;
-        });
-        html += '</div>';
-      }
-      
-      html += '</div>';
-      return html;
-    }
-
-    // View full size image
-    function viewFullImage(imageUrl, postKey) {
-      const imageModal = document.getElementById('imageModal');
-      const fullSizeImage = document.getElementById('fullSizeImage');
-      
-      fullSizeImage.src = imageUrl;
-      fullSizeImage.alt = `Post image ${postKey}`;
-      imageModal.style.display = 'flex';
-    }
-
-    // Close image modal
-    function closeImageModal() {
-      document.getElementById('imageModal').style.display = 'none';
-    }
-
-    // Play video in modal
-    function playVideo(videoUrl, postKey) {
-      const videoModal = document.getElementById('videoModal');
-      const videoPlayer = document.getElementById('videoPlayer');
-      
-      videoPlayer.src = videoUrl;
-      videoPlayer.dataset.key = postKey;
-      videoModal.style.display = 'flex';
-      videoPlayer.play();
-    }
-
-    // Close video modal
-    function closeVideoModal() {
-      const videoPlayer = document.getElementById('videoPlayer');
-      videoPlayer.pause();
-      videoPlayer.src = '';
-      document.getElementById('videoModal').style.display = 'none';
-    }
-
-    // View profile in modal
-    function viewProfile(uid) {
-      const userData = usersMap[uid] || {};
-      const profileModal = document.getElementById('profileModal');
-      const profileAvatar = document.getElementById('profileAvatar');
-      const profileName = document.getElementById('profileName');
-      const profileVerified = document.getElementById('profileVerified');
-      const profileStatus = document.getElementById('profileStatus');
-      
-      profileAvatar.src = userData.profilepic || 'user_placeholder.png';
-      profileName.textContent = userData.name || 'User';
-      profileVerified.innerHTML = userData.verified ? '✓' : '';
-      profileStatus.className = `active-dot ${userDataGetStatus[uid] ? 'active' : 'inactive'}`;
-      
-      profileModal.style.display = 'flex';
-    }
-
-    // Close profile modal
-    function closeProfileModal() {
-      document.getElementById('profileModal').style.display = 'none';
-    }
-
-    // Go to upload page
-    function goToUpload() {
-      window.location.href = "upload.html";
-    }
-
-    // Cancel action
-    function cancelAction() {
-      // You can add any cancel action here
-      console.log("Cancel action");
-    }
-
-    // Go to comment page
-    function goToComment(postKey) {
-      window.location.href = `comment.html?postId=${postKey}`;
-    }
-
-    function createUserListSection() {
-      const section = document.createElement('div');
-      section.className = 'user-list-container';
-      
-      let userListHTML = '';
-      profileAllUsers.slice(0, 10).forEach(user => {
-        userListHTML += `
-          <div class="user-card" onclick="viewProfile('${user.pro_uid}')">
-            <img class="user-avatar" src="${user.pro_url}" onerror="this.src='user_placeholder.png'" alt="${user.pro_name}">
-            <div class="user-name">${user.pro_name}</div>
-          </div>
-        `;
-      });
-      
-      section.innerHTML = `
-        <div class="user-list-header">
-          <div class="user-list-title">People You May Know</div>
-          <div class="see-all-btn" onclick="viewDiscoverPeople()">See All</div>
-        </div>
-        <div class="user-list">
-          ${userListHTML}
-        </div>
-      `;
-      
-      return section;
-    }
-
-    function renderPostText(text) {
-      if (!text) return '';
-      
-      if (text.length > 400) {
-        return `
-          <div class="post-text">
-            ${text.substring(0, 400)}...
-            <span class="read-more" onclick="expandPostText(this)">Read more</span>
-            <span class="full-text hidden">${text}</span>
-          </div>
-        `;
-      } else {
-        return `<div class="post-text">${text}</div>`;
-      }
-    }
-
-    function renderPostActions(postKey, likeCount, commentCount, hideComment, hideShare) {
-      return `
-        <div class="action-button like-btn" onclick="toggleLike('${postKey}', this)">
-          <span>♥</span> ${likeCount}
-        </div>
-        ${hideComment ? '' : `
-          <div class="action-button comment-btn" onclick="goToComment('${postKey}')">
-            <span>💬</span> ${commentCount}
-          </div>
-        `}
-        ${hideShare ? '' : `
-          <div class="action-button share-btn" onclick="sharePost('${postKey}')">
-            <span>↗</span> Share
-          </div>
-        `}
-      `;
-    }
-
-    function parseImages(data) {
-      try {
-        if (typeof data === 'string') {
-          return JSON.parse(data);
-        } else if (Array.isArray(data)) {
-          return data;
-        }
-        return [];
-      } catch (e) {
-        console.error("Error parsing images:", e);
-        return [];
-      }
-    }
-
-    function formatTimestamp(timestamp) {
-      if (!timestamp) return '';
-      
-      if (typeof timestamp === 'number') {
-        const date = new Date(timestamp);
-        return date.toLocaleString();
-      }
-      
-      return timestamp;
-    }
-
-    function addEventListeners() {
-      document.querySelectorAll('.profile-pic, .user-name').forEach(el => {
-        el.addEventListener('click', function() {
-          const post = this.closest('.post-container');
-          const uid = post.dataset.uid;
-          viewProfile(uid);
-        });
-      });
-    }
-
-    // Toggle like using the likes API
-    function toggleLike(postKey, likeBtn) {
-      if (!currentUser) {
-        alert("Please sign in to like posts");
-        return;
-      }
-      
-      const isLiked = likeBtn.classList.contains('liked');
-      const likeRef = database.ref(`likes/${postKey}/${currentUser.uid}`);
-      
-      if (isLiked) {
-        // Unlike
-        likeRef.set(0).then(() => {
-          likeBtn.classList.remove('liked');
-          updateLikeCount(likeBtn, -1);
-          
-          // Update post likes count in the database
-          database.ref(`posts/${postKey}/likes`).transaction(currentLikes => {
-            return (currentLikes || 0) - 1;
-          });
-        });
-      } else {
-        // Like
-        likeRef.set(1).then(() => {
-          likeBtn.classList.add('liked');
-          updateLikeCount(likeBtn, 1);
-          
-          // Update post likes count in the database
-          database.ref(`posts/${postKey}/likes`).transaction(currentLikes => {
-            return (currentLikes || 0) + 1;
-          });
-        });
-      }
-    }
-
-    function updateLikeCount(likeBtn, change) {
-      const countElement = likeBtn.querySelector('span:last-child');
-      if (countElement) {
-        const currentCount = parseInt(countElement.textContent) || 0;
-        countElement.textContent = currentCount + change;
-      }
-    }
-
-    function sharePost(postKey) {
-      console.log("Sharing post:", postKey);
-      // Implement share functionality
-    }
-
-    function showOptionsMenu(postKey) {
-      console.log("Showing options for post:", postKey);
-    }
-
-    function expandPostText(element) {
-      const fullText = element.nextElementSibling.textContent;
-      element.parentElement.innerHTML = fullText;
-    }
-
-    function viewDiscoverPeople() {
-      console.log("Viewing discover people");
-    }
-
-    // Initialize the app
-    document.addEventListener('DOMContentLoaded', () => {
-      auth.onAuthStateChanged(user => {
-        currentUser = user;
-        if (user) {
-          console.log("User signed in:", user.uid);
-          loadPosts();
-        } else {
-          console.log("No user signed in");
-          // You might want to redirect to login page
-        }
-      });
-    });
-  </script>
+    </script>
 </body>
 </html>
