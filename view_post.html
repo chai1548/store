@@ -311,18 +311,6 @@
             cursor: pointer;
             z-index: 1001;
         }
-        
-        .image-counter {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 16px;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
-            border-radius: 20px;
-        }
     </style>
 </head>
 <body>
@@ -365,7 +353,6 @@
     <div id="image-viewer" class="hidden image-viewer" onclick="closeImageViewer()">
         <span class="close-viewer" onclick="closeImageViewer(event)">×</span>
         <img id="full-size-image" src="" alt="Full size image">
-        <div id="image-counter" class="image-counter hidden"></div>
     </div>
 
     <script>
@@ -409,7 +396,6 @@
         const addComment = document.getElementById('add-comment');
         const imageViewer = document.getElementById('image-viewer');
         const fullSizeImage = document.getElementById('full-size-image');
-        const imageCounter = document.getElementById('image-counter');
 
         // Initialize the page
         function initPage() {
@@ -517,7 +503,7 @@
                                 postHTML += `
                                     <div class="post-media">
                                         <img src="${allMediaUrls[0]}" class="single-image" alt="Post image" 
-                                             onclick="openImageViewer(0)">
+                                             onclick="openImageViewer('${allMediaUrls[0]}')">
                                     </div>
                                 `;
                             } else if (allMediaUrls.length > 1) {
@@ -527,7 +513,7 @@
                                 imagesToShow.forEach((url, index) => {
                                     postHTML += `
                                         <img src="${url}" class="multi-image" alt="Post image ${index + 1}" 
-                                             onclick="openImageViewer(${index})">
+                                             onclick="openImageViewer('${url}')">
                                     `;
                                 });
                                 postHTML += '</div></div>';
@@ -546,21 +532,9 @@
         }
 
         // Open image viewer
-        function openImageViewer(index) {
-            if (!allMediaUrls || allMediaUrls.length === 0) return;
-            
-            fullSizeImage.src = allMediaUrls[index];
+        function openImageViewer(imageUrl) {
+            fullSizeImage.src = imageUrl;
             imageViewer.classList.remove('hidden');
-            
-            // Show image counter if multiple images
-            if (allMediaUrls.length > 1) {
-                imageCounter.textContent = `${index + 1}/${allMediaUrls.length}`;
-                imageCounter.classList.remove('hidden');
-            } else {
-                imageCounter.classList.add('hidden');
-            }
-            
-            // Prevent body scroll when viewer is open
             document.body.style.overflow = 'hidden';
         }
 
@@ -594,7 +568,6 @@
                 </div>
             `;
             
-            
             // Append or update footer
             const existingFooter = postContainer.querySelector('.post-footer');
             if (existingFooter) {
@@ -622,7 +595,7 @@
             });
         }
 
-        // Render comments
+            // Render comments
         function renderComments() {
             commentList.innerHTML = '';
             
