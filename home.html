@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Social App</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Glide.js for image carousel -->
+    <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
+    <style>
+        :root {
+            --primary-color: #FF554F;
+            --dark-bg: #424242;
+            --darker-bg: #282828;
+            --light-text: #FAFAFA;
+            --gray-text: #9E9E9E;
+            --card-bg: #212121;
+            --input-bg: #242424;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--light-text);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        .post-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            position: relative;
+        }
+        
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            background-color: #546F7A;
+        }
+        
+        .user-info {
+            flex-grow: 1;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .post-time {
+            color: var(--gray-text);
+            font-size: 12px;
+            margin: 0;
+        }
+        
+        .verified-badge {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+        }
+        
+        .options-icon {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: var(--gray-text);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .post-content {
+            padding: 0 12px 12px;
+        }
+        
+        .post-text {
+            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .read-more {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .post-media {
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .single-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .multi-image-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        
+        .multi-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-top: 1px solid #333;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+        }
+        
+        .action-icon {
+            margin-right: 5px;
+            font-size: 18px;
+        }
+        
+        .action-count {
+            font-size: 12px;
+        }
+        
+        .liked {
+            color: var(--primary-color);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .profile-section {
+            background-color: var(--darker-bg);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-title h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        
+        .see-more {
+            color: var(--primary-color);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .profiles-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding-bottom: 10px;
+        }
+        
+        .profile-item {
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .profile-item-pic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 5px;
+            background-color: #546F7A;
+        }
+        
+        .profile-item-name {
+            font-size: 12px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Suggestions Section -->
+        <div id="profile-section" class="profile-section hidden">
+            <div class="section-title">
+                <h3>Discover People</h3>
+                <span class="see-more" onclick="viewAllPeople()">See More</span>
+            </div>
+            <div class="profiles-scroll" id="profiles-container">
+                <!-- Profiles will be added here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Posts Container -->
+        <div id="posts-container">
+            <!-- Posts will be added here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // Current user and post data
+        let currentUser = null;
+        let posts = [];
+        let users = [];
+        let profileSuggestions = [];
+        let likedPosts = {};
+
+        // DOM elements
+        const postsContainer = document.getElementById('posts-container');
+        const profileSection = document.getElementById('profile-section');
+        const profilesContainer = document.getElementById('profiles-container');
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadData();
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Load all data
+        function loadData() {
+            // Load posts
+            database.ref('posts').orderByChild('post_timestamp').once('value')
+                .then((snapshot) => {
+                    posts = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const post = childSnapshot.val();
+                        post.key = childSnapshot.key;
+                        posts.unshift(post); // Newest first
+                    });
+                    
+                    // Load users
+                    return database.ref('users').once('value');
+                })
+                .then((snapshot) => {
+                    users = snapshot.val() || {};
+                    
+                    // Load liked posts
+                    return database.ref('likes').once('value');
+                })
+                .then((snapshot) => {
+                    const likesData = snapshot.val() || {};
+                    likedPosts = {};
+                    
+                    // Check which posts the current user has liked
+                    Object.keys(likesData).forEach(postKey => {
+                        if (likesData[postKey][currentUser.uid]) {
+                            likedPosts[postKey] = true;
+                        }
+                    });
+                    
+                    // Load profile suggestions (excluding current user)
+                    profileSuggestions = [];
+                    Object.keys(users).forEach(userId => {
+                        if (userId !== currentUser.uid) {
+                            profileSuggestions.push({
+                                id: userId,
+                                ...users[userId]
+                            });
+                        }
+                    });
+                    
+                    // Display data
+                    renderProfileSuggestions();
+                    renderPosts();
+                })
+                .catch((error) => {
+                    console.error("Error loading data:", error);
+                });
+        }
+
+        // Render profile suggestions
+        function renderProfileSuggestions() {
+            if (profileSuggestions.length > 0) {
+                profileSection.classList.remove('hidden');
+                profilesContainer.innerHTML = '';
+                
+                // Show first 10 profiles
+                const profilesToShow = profileSuggestions.slice(0, 10);
+                profilesToShow.forEach(profile => {
+                    const profileItem = document.createElement('div');
+                    profileItem.className = 'profile-item';
+                    profileItem.innerHTML = `
+                        <img src="${profile.profilepic || 'user.png'}" class="profile-item-pic" 
+                             onerror="this.src='user.png'" alt="${profile.name}">
+                        <p class="profile-item-name">${profile.name}</p>
+                    `;
+                    profileItem.onclick = () => viewProfile(profile.id);
+                    profilesContainer.appendChild(profileItem);
+                });
+            }
+        }
+
+        // Render posts
+        function renderPosts() {
+            postsContainer.innerHTML = '';
+            
+            posts.forEach(post => {
+                const postElement = createPostElement(post);
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Create a post element
+        function createPostElement(post) {
+            const postUser = users[post.uid] || {};
+            const isLiked = likedPosts[post.key] || false;
+            const isVerified = postUser.verified || false;
+            
+            const postElement = document.createElement('div');
+            postElement.className = 'post-card';
+            
+            // Post header with user info
+            let headerHTML = `
+                <div class="post-header">
+                    <img src="${postUser.profilepic || 'user.png'}" class="profile-pic" 
+                         onerror="this.src='user.png'" alt="${postUser.name}">
+                    <div class="user-info">
+                        <div style="display: flex; align-items: center;">
+                            <h3 class="user-name">${postUser.name || 'Unknown User'}</h3>
+                            ${isVerified ? '<img src="verified.png" class="verified-badge" alt="Verified">' : ''}
+                        </div>
+                        <p class="post-time">${formatTime(post.post_timestamp)}</p>
+                    </div>
+                    <div class="options-icon">⋮</div>
+                </div>
+                <div class="post-content">
+            `;
+            
+            // Post text content
+            let description = post.description || '';
+            let showReadMore = false;
+            
+            if (description.length > 400) {
+                description = description.substring(0, 400) + '...';
+                showReadMore = true;
+            }
+            
+            headerHTML += `
+                <div class="post-text">${description}</div>
+                ${showReadMore ? '<span class="read-more" onclick="viewFullPost(\'' + post.key + '\')">Read More</span>' : ''}
+            `;
+            
+            // Post media content
+            if (post.post_type === 'video') {
+                headerHTML += `
+                    <div class="post-media">
+                        <img src="${post.data || ''}" class="single-image" alt="Video thumbnail">
+                        <div class="video-indicator">${post.video_duration || ''}</div>
+                    </div>
+                `;
+            } else if (post.data && post.data !== 'null') {
+                try {
+                    const mediaUrls = JSON.parse(post.data);
+                    if (mediaUrls.length === 1) {
+                        headerHTML += `
+                            <div class="post-media">
+                                <img src="${mediaUrls[0]}" class="single-image" alt="Post image">
+                            </div>
+                        `;
+                    } else if (mediaUrls.length > 1) {
+                        headerHTML += '<div class="post-media"><div class="multi-image-container">';
+                        // Show first 4 images
+                        const imagesToShow = mediaUrls.slice(0, 4);
+                        imagesToShow.forEach((url, index) => {
+                            headerHTML += `
+                                <img src="${url}" class="multi-image" alt="Post image ${index + 1}">
+                            `;
+                        });
+                        headerHTML += '</div></div>';
+                    }
+                } catch (e) {
+                    console.error("Error parsing media data:", e);
+                }
+            }
+            
+            // Post footer with actions
+            headerHTML += `
+                </div>
+                <div class="post-footer">
+                    <div class="action-button ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.key}')">
+                        <span class="action-icon">${isLiked ? '❤️' : '♡'}</span>
+                        <span class="action-count">${post.likes || 0}</span>
+                    </div>
+                    ${post.hide_comment !== 'true' ? `
+                    <div class="action-button" onclick="viewComments('${post.key}')">
+                        <span class="action-icon">💬</span>
+                        <span class="action-count">${post.comments || 0}</span>
+                    </div>
+                    ` : ''}
+                    ${post.hide_share !== 'true' ? `
+                    <div class="action-button" onclick="sharePost('${post.key}')">
+                        <span class="action-icon">↗️</span>
+                        <span class="action-count">Share</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            postElement.innerHTML = headerHTML;
+            return postElement;
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        // Toggle like on a post
+        function toggleLike(postKey) {
+            const likeRef = database.ref(`likes/${postKey}/${currentUser.uid}`);
+            
+            if (likedPosts[postKey]) {
+                // Unlike
+                likeRef.remove()
+                    .then(() => {
+                        likedPosts[postKey] = false;
+                        renderPosts();
+                    });
+            } else {
+                // Like
+                likeRef.set(1)
+                    .then(() => {
+                        likedPosts[postKey] = true;
+                        renderPosts();
+                    });
+            }
+        }
+
+        // View full post
+        function viewFullPost(postKey) {
+            // In a real app, you would navigate to a full post view
+            alert(`Viewing full post: ${postKey}`);
+        }
+
+        // View comments
+        function viewComments(postKey) {
+            // In a real app, you would navigate to a comments view
+            alert(`Viewing comments for post: ${postKey}`);
+        }
+
+        // Share post
+        function sharePost(postKey) {
+            // In a real app, you would implement sharing functionality
+            alert(`Sharing post: ${postKey}`);
+        }
+
+        // View profile
+        function viewProfile(userId) {
+            // In a real app, you would navigate to a profile view
+            alert(`Viewing profile: ${userId}`);
+        }
+
+        // View all people
+        function viewAllPeople() {
+            // In a real app, you would navigate to a discover people view
+            alert('Viewing all people');
+        }
+
+        // Logout function (you might want to add a logout button)
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = 'index.html';
+                });
+        }
+    </script>
+</body>
+  </html>
