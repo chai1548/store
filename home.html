@@ -33,7 +33,7 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 15px;
-            padding-bottom: 80px; /* Space for FAB */
+            padding-bottom: 80px;
         }
         
         .search-bar {
@@ -60,7 +60,6 @@
             color: var(--gray-text);
         }
         
-        /* FAB Button */
         .fab {
             position: fixed;
             bottom: 20px;
@@ -82,15 +81,152 @@
             font-size: 24px;
         }
         
-        /* Rest of your existing styles... */
         .post-card {
             background-color: var(--card-bg);
             border-radius: 8px;
             margin-bottom: 20px;
             overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
         
-        /* ... (keep all your existing styles) ... */
+        .post-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            position: relative;
+        }
+        
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+            background-color: #546F7A;
+        }
+        
+        .user-info {
+            flex-grow: 1;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .post-time {
+            color: var(--gray-text);
+            font-size: 12px;
+            margin: 0;
+        }
+        
+        .verified-badge {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+        }
+        
+        .options-icon {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: var(--gray-text);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .post-content {
+            padding: 0 12px 12px;
+        }
+        
+        .post-text {
+            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .read-more {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .post-media {
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .single-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .multi-image-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        
+        .multi-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-top: 1px solid #333;
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+        }
+        
+        .action-icon {
+            margin-right: 5px;
+            font-size: 18px;
+        }
+        
+        .action-count {
+            font-size: 12px;
+        }
+        
+        .liked {
+            color: var(--primary-color);
+        }
+        
+        .no-posts {
+            text-align: center;
+            color: var(--gray-text);
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -103,7 +239,7 @@
         
         <!-- Posts Container -->
         <div id="posts-container">
-            <!-- Posts will be added here dynamically -->
+            <p class="no-posts">Loading posts...</p>
         </div>
         
         <!-- FAB Button -->
@@ -192,6 +328,7 @@
                 })
                 .catch((error) => {
                     console.error("Error loading data:", error);
+                    postsContainer.innerHTML = '<p class="no-posts">Error loading posts. Please try again.</p>';
                 });
         }
 
@@ -213,20 +350,30 @@
 
         // Render posts
         function renderPosts() {
-            postsContainer.innerHTML = '';
-            
             if (filteredPosts.length === 0) {
-                postsContainer.innerHTML = '<p style="text-align: center; color: var(--gray-text);">No posts found</p>';
+                postsContainer.innerHTML = '<p class="no-posts">No posts found</p>';
                 return;
             }
+            
+            postsContainer.innerHTML = '';
             
             filteredPosts.forEach(post => {
                 const postElement = createPostElement(post);
                 postsContainer.appendChild(postElement);
+                
+                // Add click event to the entire post card
+                postElement.addEventListener('click', (e) => {
+                    // Don't navigate if user clicked on an action button
+                    if (!e.target.classList.contains('action-button') && 
+                        !e.target.classList.contains('action-icon') && 
+                        !e.target.classList.contains('action-count')) {
+                        viewFullPost(post.key);
+                    }
+                });
             });
         }
 
-        // Create a post element (same as before)
+        // Create a post element
         function createPostElement(post) {
             const postUser = users[post.uid] || {};
             const isLiked = likedPosts[post.key] || false;
@@ -263,7 +410,7 @@
             
             headerHTML += `
                 <div class="post-text">${description}</div>
-                ${showReadMore ? '<span class="read-more" onclick="viewFullPost(\'' + post.key + '\')">Read More</span>' : ''}
+                ${showReadMore ? '<span class="read-more">Read More</span>' : ''}
             `;
             
             // Post media content
@@ -303,18 +450,18 @@
             headerHTML += `
                 </div>
                 <div class="post-footer">
-                    <div class="action-button ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.key}')">
+                    <div class="action-button ${isLiked ? 'liked' : ''}">
                         <span class="action-icon">${isLiked ? '❤️' : '♡'}</span>
                         <span class="action-count">${post.likes || 0}</span>
                     </div>
                     ${post.hide_comment !== 'true' ? `
-                    <div class="action-button" onclick="viewComments('${post.key}')">
+                    <div class="action-button">
                         <span class="action-icon">💬</span>
                         <span class="action-count">${post.comments || 0}</span>
                     </div>
                     ` : ''}
                     ${post.hide_share !== 'true' ? `
-                    <div class="action-button" onclick="sharePost('${post.key}')">
+                    <div class="action-button">
                         <span class="action-icon">↗️</span>
                         <span class="action-count">Share</span>
                     </div>
@@ -332,28 +479,48 @@
             const now = Date.now();
             const diff = now - timestamp;
             
-            if (diff < 10000) { // Less than 10 seconds
-                return "Just now";
-            } else if (diff < 60000) { // Less than 1 minute
-                return Math.floor(diff / 1000) + " sec ago";
-            } else if (diff < 3600000) { // Less than 1 hour
-                return Math.floor(diff / 60000) + " min ago";
-            } else if (diff < 86400000) { // Less than 1 day
-                return Math.floor(diff / 3600000) + " hr ago";
-            } else if (diff < 604800000) { // Less than 1 week
-                return Math.floor(diff / 86400000) + " days ago";
-            } else if (diff < 2592000000) { // Less than 1 month (30 days)
-                return Math.floor(diff / 604800000) + " weeks ago";
-            } else if (diff < 31536000000) { // Less than 1 year (365 days)
-                return Math.floor(diff / 2592000000) + " months ago";
-            } else { // More than 1 year
-                return Math.floor(diff / 31536000000) + " years ago";
-            }
+            if (diff < 10000) return "Just now";
+            if (diff < 60000) return Math.floor(diff / 1000) + " sec ago";
+            if (diff < 3600000) return Math.floor(diff / 60000) + " min ago";
+            if (diff < 86400000) return Math.floor(diff / 3600000) + " hr ago";
+            if (diff < 604800000) return Math.floor(diff / 86400000) + " days ago";
+            if (diff < 2592000000) return Math.floor(diff / 604800000) + " weeks ago";
+            if (diff < 31536000000) return Math.floor(diff / 2592000000) + " months ago";
+            return Math.floor(diff / 31536000000) + " years ago";
         }
 
         // Go to upload page
         function goToUpload() {
             window.location.href = 'upload.html';
+        }
+
+        // View full post
+        function viewFullPost(postKey) {
+            const post = allPosts.find(p => p.key === postKey);
+            if (post) {
+                const params = new URLSearchParams();
+                params.append('key', postKey);
+                params.append('uid', post.uid);
+                params.append('post_type', post.post_type || 'normal');
+                params.append('hide_comment', post.hide_comment || 'false');
+                params.append('data', post.data || '');
+                
+                window.location.href = `view_post.html?${params.toString()}`;
+            }
+        }
+
+        // Initialize action buttons after rendering
+        function initializeActionButtons() {
+            document.querySelectorAll('.action-button').forEach(button => {
+                const likeButton = button.querySelector('.action-icon');
+                if (likeButton && (likeButton.textContent === '♡' || likeButton.textContent === '❤️')) {
+                    button.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const postKey = button.closest('.post-card').getAttribute('data-key');
+                        toggleLike(postKey);
+                    });
+                }
+            });
         }
 
         // Toggle like on a post
@@ -375,28 +542,6 @@
                         renderPosts();
                     });
             }
-        }
-
-        // View full post
-        function viewFullPost(postKey) {
-            const post = allPosts.find(p => p.key === postKey);
-            if (post) {
-                window.location.href = `view_post.html?key=${postKey}&uid=${post.uid}&post_type=${post.post_type || 'normal'}&hide_comment=${post.hide_comment || 'false'}&data=${encodeURIComponent(post.data || '')}`;
-            }
-        }
-
-        // View comments
-        function viewComments(postKey) {
-            const post = allPosts.find(p => p.key === postKey);
-            if (post && post.hide_comment !== 'true') {
-                window.location.href = `view_post.html?key=${postKey}#comments`;
-            }
-        }
-
-        // Share post
-        function sharePost(postKey) {
-            // In a real app, you would implement sharing functionality
-            alert(`Sharing post: ${postKey}`);
         }
     </script>
 </body>
