@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Post</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FF554F;
+            --dark-bg: #282828;
+            --light-text: #FAFAFA;
+            --gray-text: #9E9E9E;
+            --card-bg: #212121;
+            --input-bg: #242424;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--light-text);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        .action-bar {
+            background-color: var(--dark-bg);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-button {
+            color: var(--light-text);
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        .action-title {
+            flex-grow: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .post-button {
+            color: var(--primary-color);
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .content {
+            background-color: #FAFAFA;
+            min-height: calc(100vh - 56px);
+            padding: 15px;
+        }
+        
+        .section-title {
+            color: var(--gray-text);
+            font-size: 14px;
+            margin: 15px 0 8px 0;
+        }
+        
+        .post-input {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            color: var(--light-text);
+            font-size: 14px;
+            resize: none;
+            min-height: 150px;
+            box-sizing: border-box;
+        }
+        
+        .post-input::placeholder {
+            color: var(--gray-text);
+        }
+        
+        .attachment-button {
+            display: flex;
+            align-items: center;
+            background-color: var(--input-bg);
+            color: var(--gray-text);
+            padding: 10px 15px;
+            border-radius: 8px;
+            width: fit-content;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        
+        .attachment-icon {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+        
+        .selected-images {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        
+        .selected-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+            position: relative;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .video-section {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .video-details {
+            background-color: var(--input-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .detail-label {
+            width: 80px;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .detail-value {
+            flex-grow: 1;
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-button i {
+            margin-right: 8px;
+        }
+        
+        .thumbnail-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .thumbnail-preview.small {
+            width: 180px;
+            height: 180px;
+        }
+        
+        .advance-options {
+            margin-top: 20px;
+        }
+        
+        .option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--input-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .option-label {
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .uploading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #FAFAFA;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .uploading-image {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+        
+        .uploading-text {
+            color: var(--primary-color);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .task-text {
+            color: var(--gray-text);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            max-width: 300px;
+            height: 6px;
+            background-color: #E0E0E0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+        }
+        
+        .progress-text {
+            color: var(--light-text);
+            font-size: 16px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="back-button" onclick="goBack()">←</div>
+            <div class="action-title">New Post</div>
+            <div class="post-button" onclick="uploadPost()">Post</div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content" id="main-content">
+            <div class="section-title">Say Something!</div>
+            <textarea class="post-input" id="post-text" placeholder="What's your &quot;MANN&quot; ???"></textarea>
+            
+            <!-- Attachment Button -->
+            <label for="image-upload" class="attachment-button">
+                <i class="material-icons attachment-icon">attach_file</i>
+                <span>Attachment</span>
+            </label>
+            <input type="file" id="image-upload" accept="image/*" multiple>
+            <input type="file" id="video-upload" accept="video/*">
+            
+            <!-- Selected Images -->
+            <div class="selected-images" id="selected-images"></div>
+            
+            <!-- Video Section -->
+            <div class="video-section" id="video-section">
+                <div class="section-title">Video Details</div>
+                
+                <button class="action-button" id="change-video-btn">
+                    <i class="material-icons">videocam</i>
+                    Change Video
+                </button>
+                
+                <div class="video-details">
+                    <div class="detail-row">
+                        <div class="detail-label">Name:</div>
+                        <div class="detail-value" id="video-name">No video selected</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Size:</div>
+                        <div class="detail-value" id="video-size">0 MB</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Duration:</div>
+                        <div class="detail-value" id="video-duration">00:00</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">ADD Video Thumbnail</div>
+                
+                <label for="thumbnail-upload" class="action-button" id="thumbnail-btn">
+                    <i class="material-icons">image</i>
+                    Pick Thumbnail
+                </label>
+                <input type="file" id="thumbnail-upload" accept="image/*">
+                
+                <img src="" class="thumbnail-preview" id="thumbnail-preview">
+                <img src="" class="thumbnail-preview small" id="short-thumbnail-preview">
+                
+                <div class="section-title">Video Title</div>
+                <input type="text" class="post-input" id="video-title" placeholder="Video Title" style="min-height: auto;">
+                
+                <div class="section-title advance-options">Advance</div>
+                
+                <div class="option-row">
+                    <div class="option-label">Disable Comment</div>
+                    <label class="switch">
+                        <input type="checkbox" id="disable-comment">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <div class="option-row">
+                    <div class="option-label">Disable Share</div>
+                    <label class="switch">
+                        <input type="checkbox" id="disable-share">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <div class="option-row">
+                    <div class="option-label">Disable Download</div>
+                    <label class="switch">
+                        <input type="checkbox" id="disable-download">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Uploading Screen -->
+        <div class="uploading-screen" id="uploading-screen">
+            <img src="logo.png" class="uploading-image" onerror="this.src='user.png'">
+            <div class="uploading-text">Uploading Please Wait...</div>
+            <div class="task-text" id="task-text">TASK 0/0</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0% Uploaded...</div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        const storage = firebase.storage();
+        
+        // Current user and upload data
+        let currentUser = null;
+        let selectedImages = [];
+        let selectedVideo = null;
+        let selectedThumbnail = null;
+        let isShortVideo = false;
+        let uploadTasks = [];
+        let currentUploadIndex = 0;
+        let postKey = null;
+        
+        // DOM elements
+        const postText = document.getElementById('post-text');
+        const imageUpload = document.getElementById('image-upload');
+        const videoUpload = document.getElementById('video-upload');
+        const thumbnailUpload = document.getElementById('thumbnail-upload');
+        const selectedImagesContainer = document.getElementById('selected-images');
+        const videoSection = document.getElementById('video-section');
+        const videoName = document.getElementById('video-name');
+        const videoSize = document.getElementById('video-size');
+        const videoDuration = document.getElementById('video-duration');
+        const thumbnailPreview = document.getElementById('thumbnail-preview');
+        const shortThumbnailPreview = document.getElementById('short-thumbnail-preview');
+        const videoTitle = document.getElementById('video-title');
+        const changeVideoBtn = document.getElementById('change-video-btn');
+        const thumbnailBtn = document.getElementById('thumbnail-btn');
+        const uploadingScreen = document.getElementById('uploading-screen');
+        const taskText = document.getElementById('task-text');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const disableComment = document.getElementById('disable-comment');
+        const disableShare = document.getElementById('disable-share');
+        const disableDownload = document.getElementById('disable-download');
+        
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = 'index.html';
+            }
+        });
+        
+        // Handle image upload
+        imageUpload.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                // Hide video section if showing
+                videoSection.style.display = 'none';
+                selectedVideo = null;
+                selectedThumbnail = null;
+                
+                // Clear previous selections
+                selectedImages = [];
+                selectedImagesContainer.innerHTML = '';
+                
+                // Process each file
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            selectedImages.push({
+                                file: file,
+                                url: event.target.result
+                            });
+                            
+                            // Create image element
+                            const imgContainer = document.createElement('div');
+                            imgContainer.style.position = 'relative';
+                            imgContainer.style.display = 'inline-block';
+                            
+                            const img = document.createElement('img');
+                            img.src = event.target.result;
+                            img.className = 'selected-image';
+                            
+                            const removeBtn = document.createElement('div');
+                            removeBtn.className = 'remove-image';
+                            removeBtn.innerHTML = '×';
+                            removeBtn.onclick = () => {
+                                selectedImages = selectedImages.filter(item => item.url !== event.target.result);
+                                imgContainer.remove();
+                            };
+                            
+                            imgContainer.appendChild(img);
+                            imgContainer.appendChild(removeBtn);
+                            selectedImagesContainer.appendChild(imgContainer);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+        
+        // Handle video upload
+        videoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('video/')) {
+                // Clear any image selections
+                selectedImages = [];
+                selectedImagesContainer.innerHTML = '';
+                
+                // Show video section
+                videoSection.style.display = 'block';
+                selectedVideo = file;
+                
+                // Set video details
+                videoName.textContent = file.name;
+                
+                // Calculate file size
+                let sizeText;
+                if (file.size < 1024 * 1024) {
+                    sizeText = (file.size / 1024).toFixed(2) + ' KB';
+                } else {
+                    sizeText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                }
+                videoSize.textContent = sizeText;
+                
+                // Create video element to get duration
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = () => {
+                    window.URL.revokeObjectURL(video.src);
+                    const duration = video.duration;
+                    const minutes = Math.floor(duration / 60);
+                    const seconds = Math.floor(duration % 60);
+                    videoDuration.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    // Check if it's a short video (30 seconds or less)
+                    isShortVideo = duration <= 30;
+                    if (isShortVideo) {
+                        thumbnailBtn.textContent = 'Pick Thumbnail For Short Video';
+                        thumbnailPreview.style.display = 'none';
+                        document.getElementById('video-title').style.display = 'none';
+                        document.querySelector('#video-section .section-title:nth-last-child(2)').style.display = 'none';
+                    } else {
+                        thumbnailBtn.textContent = 'Pick Thumbnail';
+                        shortThumbnailPreview.style.display = 'none';
+                        document.getElementById('video-title').style.display = 'block';
+                        document.querySelector('#video-section .section-title:nth-last-child(2)').style.display = 'block';
+                    }
+                };
+                video.src = URL.createObjectURL(file);
+            }
+        });
+        
+        // Handle thumbnail upload
+         thumbnailUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                selectedThumbnail = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (isShortVideo) {
+                        shortThumbnailPreview.src = event.target.result;
+                        shortThumbnailPreview.style.display = 'block';
+                        thumbnailBtn.innerHTML = '<i class="material-icons">image</i> Change Thumbnail';
+                    } else {
+                        thumbnailPreview.src = event.target.result;
+                        thumbnailPreview.style.display = 'block';
+                        thumbnailBtn.innerHTML = '<i class="material-icons">image</i> Change Thumbnail';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Upload post
+        function uploadPost() {
+            if (!currentUser) {
+                alert('Please sign in to post');
+                return;
+            }
+            
+            const postContent = postText.value.trim();
+            
+            // Validate input
+            if (selectedImages.length === 0 && !selectedVideo) {
+                if (postContent === '') {
+                    alert('Please add some content or media to your post');
+                    return;
+                }
+            }
+            
+            if (selectedVideo && !selectedThumbnail) {
+                alert('Please select a thumbnail for your video');
+                return;
+            }
+            
+            // Generate a unique key for the post
+            postKey = database.ref('posts').push().key;
+            
+            // Show uploading screen
+            document.getElementById('main-content').style.display = 'none';
+            uploadingScreen.style.display = 'flex';
+            
+            // Prepare upload tasks
+            uploadTasks = [];
+            
+            if (selectedImages.length > 0) {
+                // Upload images
+                taskText.textContent = `TASK: 1/${selectedImages.length + 1}`;
+                
+                selectedImages.forEach((image, index) => {
+                    const uploadTask = storage.ref(`posts/${postKey}_image_${index}`).put(image.file);
+                    
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            // Update progress
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            progressFill.style.width = `${progress}%`;
+                            progressText.textContent = `${Math.round(progress)}% Uploaded...`;
+                        },
+                        (error) => {
+                            console.error('Upload failed:', error);
+                            alert('Upload failed: ' + error.message);
+                        },
+                        () => {
+                            // Upload completed
+                            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                                uploadTasks.push({
+                                    type: 'image',
+                                    url: downloadURL
+                                });
+                                
+                                // Check if all images are uploaded
+                                if (uploadTasks.length === selectedImages.length) {
+                                    // All images uploaded, now upload post data
+                                    const imageUrls = uploadTasks.map(task => task.url);
+                                    uploadPostData({
+                                        post_type: 'normal',
+                                        data: JSON.stringify(imageUrls),
+                                        description: postContent,
+                                        uid: currentUser.uid,
+                                        post_timestamp: Date.now(),
+                                        posttime: new Date().toLocaleString(),
+                                        hide_comment: disableComment.checked ? 'true' : 'false',
+                                        hide_share: disableShare.checked ? 'true' : 'false'
+                                    });
+                                }
+                            });
+                        }
+                    );
+                });
+            } else if (selectedVideo) {
+                // Upload video
+                taskText.textContent = 'TASK: 1/2';
+                
+                const videoUploadTask = storage.ref(`posts/${postKey}_video`).put(selectedVideo);
+                
+                videoUploadTask.on('state_changed',
+                    (snapshot) => {
+                        // Update progress
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `${Math.round(progress)}% Uploaded...`;
+                    },
+                    (error) => {
+                        console.error('Video upload failed:', error);
+                        alert('Video upload failed: ' + error.message);
+                    },
+                    () => {
+                        // Video upload completed
+                        videoUploadTask.snapshot.ref.getDownloadURL().then((videoUrl) => {
+                            // Now upload thumbnail
+                            taskText.textContent = 'TASK: 2/2';
+                            progressFill.style.width = '0%';
+                            progressText.textContent = '0% Uploaded...';
+                            
+                            const thumbnailUploadTask = storage.ref(`posts/${postKey}_thumbnail`).put(selectedThumbnail);
+                            
+                            thumbnailUploadTask.on('state_changed',
+                                (snapshot) => {
+                                    // Update progress
+                                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                    progressFill.style.width = `${progress}%`;
+                                    progressText.textContent = `${Math.round(progress)}% Uploaded...`;
+                                },
+                                (error) => {
+                                    console.error('Thumbnail upload failed:', error);
+                                    alert('Thumbnail upload failed: ' + error.message);
+                                },
+                                () => {
+                                    // Thumbnail upload completed
+                                    thumbnailUploadTask.snapshot.ref.getDownloadURL().then((thumbnailUrl) => {
+                                        // Upload post data
+                                        uploadPostData({
+                                            post_type: 'video',
+                                            data: thumbnailUrl,
+                                            video_url: videoUrl,
+                                            video_title: videoTitle.value,
+                                            video_duration: videoDuration.textContent,
+                                            description: postContent,
+                                            uid: currentUser.uid,
+                                            post_timestamp: Date.now(),
+                                            posttime: new Date().toLocaleString(),
+                                            hide_comment: disableComment.checked ? 'true' : 'false',
+                                            hide_share: disableShare.checked ? 'true' : 'false',
+                                            disable_download: disableDownload.checked ? 'true' : 'false'
+                                        });
+                                    });
+                                }
+                            );
+                        });
+                    }
+                );
+            } else {
+                // Text-only post
+                uploadPostData({
+                    post_type: 'normal',
+                    data: '',
+                    description: postContent,
+                    uid: currentUser.uid,
+                    post_timestamp: Date.now(),
+                    posttime: new Date().toLocaleString(),
+                    hide_comment: disableComment.checked ? 'true' : 'false',
+                    hide_share: disableShare.checked ? 'true' : 'false'
+                });
+            }
+        }
+        
+        // Upload post data to database
+        function uploadPostData(postData) {
+            taskText.textContent = 'TASK: 2/2';
+            taskText.style.color = '#03A9F4';
+            progressText.textContent = 'Done!';
+            
+            // Add the key to the post data
+            postData.key = postKey;
+            
+            // Save to database
+            database.ref('posts/' + postKey).set(postData)
+                .then(() => {
+                    // Success - redirect to home after short delay
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1000);
+                })
+                .catch((error) => {
+                    console.error('Database error:', error);
+                    alert('Failed to save post: ' + error.message);
+                });
+        }
+        
+        // Go back
+        function goBack() {
+            window.history.back();
+        }
+        
+        // Initialize switches
+        function initSwitches() {
+            // You can add any switch initialization logic here
+        }
+        
+        // Initialize the page
+        window.onload = initSwitches;
+    </script>
+</body>
+</html>
