@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Social App</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
+    <!-- Material Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary-color: #FF554F;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --light-text: #FAFAFA;
+            --gray-text: #9E9E9E;
+            --card-bg: #1E1E1E;
+            --input-bg: #242424;
+            --border-color: #333333;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Noto Sans Myanmar', sans-serif;
+            background-color: var(--dark-bg);
+            margin: 0;
+            padding: 0;
+            color: var(--light-text);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        
+        .search-bar {
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: var(--darker-bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar:focus-within {
+            box-shadow: 0 2px 10px rgba(255,85,79,0.3);
+        }
+        
+        .search-input {
+            flex-grow: 1;
+            background-color: var(--input-bg);
+            border: none;
+            border-radius: 20px;
+            padding: 12px 15px;
+            color: var(--light-text);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            background-color: rgba(36,36,36,0.8);
+        }
+        
+        .search-icon {
+            margin-left: 10px;
+            color: var(--gray-text);
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255,85,79,0.4);
+            cursor: pointer;
+            z-index: 100;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .fab:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 16px rgba(255,85,79,0.5);
+        }
+        
+        .fab-icon {
+            color: white;
+            font-size: 26px;
+        }
+        
+        .post-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .post-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+            background-color: #455A64;
+            border: 2px solid var(--border-color);
+        }
+        
+        .user-info {
+            flex-grow: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin: 0;
+            font-size: 15px;
+        }
+        
+        .post-time {
+            color: var(--gray-text);
+            font-size: 13px;
+            margin: 3px 0 0 0;
+        }
+        
+        .verified-badge {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+        }
+        
+        .options-icon {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            color: var(--gray-text);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .options-icon:hover {
+            color: var(--light-text);
+        }
+        
+        .post-content {
+            padding: 0 15px 15px;
+        }
+        
+        .post-text {
+            margin: 10px 0 15px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .read-more {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 5px;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+        
+        .read-more:hover {
+            opacity: 0.8;
+        }
+        
+        .post-media {
+            margin-top: 15px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #1a1a1a;
+        }
+        
+        .single-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            display: block;
+            border-radius: 8px;
+            transition: opacity 0.2s ease;
+        }
+        
+        .multi-image-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+        
+        .multi-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            transition: opacity 0.2s ease;
+        }
+        
+        .multi-image:hover, .single-image:hover {
+            opacity: 0.95;
+        }
+        
+        .video-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .video-indicator::before {
+            content: "▶";
+            margin-right: 5px;
+            font-size: 10px;
+        }
+        
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .action-button {
+            display: flex;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        
+        .action-button:hover {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--light-text);
+        }
+        
+        .action-icon {
+            margin-right: 6px;
+            font-size: 18px;
+        }
+        
+        .action-count {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .liked {
+            color: var(--primary-color);
+        }
+        
+        .no-posts {
+            text-align: center;
+            color: var(--gray-text);
+            padding: 30px;
+            font-size: 16px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, var(--card-bg) 25%, #2a2a2a 50%, var(--card-bg) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+        
+        .skeleton-card {
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+        }
+        
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .skeleton-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+        
+        .skeleton-line {
+            height: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-image {
+            height: 200px;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 15, 15, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+        
+        /* Responsive video */
+        .post-video {
+            width: 100%;
+            border-radius: 8px;
+            max-height: 500px;
+            background-color: #000;
+        }
+        
+        /* Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            background-color: var(--darker-bg);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .user-menu {
+            position: relative;
+        }
+        
+        .user-menu-pic {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 45px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            min-width: 150px;
+            display: none;
+        }
+        
+        .dropdown-menu.active {
+            display: block;
+        }
+        
+        .menu-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+        
+        .menu-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">Social App</div>
+        <div class="user-menu" id="user-menu">
+            <img src="user.png" id="user-menu-pic" class="user-menu-pic" alt="User">
+            <div class="dropdown-menu" id="dropdown-menu">
+                <div class="menu-item" onclick="goToProfile()">
+                    <span class="menu-icon">👤</span>
+                    Profile
+                </div>
+                <div class="menu-item" onclick="goToSettings()">
+                    <span class="menu-icon">⚙️</span>
+                    Settings
+                </div>
+                <div class="menu-item" onclick="logout()">
+                    <span class="menu-icon">🚪</span>
+                    Logout
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" class="search-input" id="search-input" placeholder="ပိုစ့်များကို ရှာရန်...">
+            <span class="search-icon">🔍</span>
+        </div>
+        
+        <!-- Posts Container -->
+        <div id="posts-container">
+            <!-- Skeleton loading -->
+            <div class="skeleton-card">
+                <div class="skeleton-header">
+                    <div class="skeleton skeleton-pic"></div>
+                    <div style="margin-left: 12px; flex: 1;">
+                        <div class="skeleton skeleton-line" style="width: 40%;"></div>
+                        <div class="skeleton skeleton-line" style="width: 25%;"></div>
+                    </div>
+                </div>
+                <div class="skeleton skeleton-line" style="width: 100%;"></div>
+                <div class="skeleton skeleton-line" style="width: 90%;"></div>
+                <div class="skeleton skeleton-image"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-header">
+                    <div class="skeleton skeleton-pic"></div>
+                    <div style="margin-left: 12px; flex: 1;">
+                        <div class="skeleton skeleton-line" style="width: 40%;"></div>
+                        <div class="skeleton skeleton-line" style="width: 25%;"></div>
+                    </div>
+                </div>
+                <div class="skeleton skeleton-line" style="width: 100%;"></div>
+                <div class="skeleton skeleton-line" style="width: 85%;"></div>
+                <div class="skeleton skeleton-image"></div>
+            </div>
+        </div>
+        
+        <!-- FAB Button -->
+        <div class="fab" onclick="goToUpload()">
+            <span class="fab-icon">+</span>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // Current user and post data
+        let currentUser = null;
+        let allPosts = [];
+        let filteredPosts = [];
+        let users = {};
+        let likedPosts = {};
+
+        // DOM elements
+        const postsContainer = document.getElementById('posts-container');
+        const searchInput = document.getElementById('search-input');
+        const userMenuPic = document.getElementById('user-menu-pic');
+        const userMenu = document.getElementById('user-menu');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const toast = document.getElementById('toast');
+
+        // Toggle dropdown menu
+        userMenu.addEventListener('click', () => {
+            dropdownMenu.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('active');
+            }
+        });
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadData();
+                
+                // Get user profile pic
+                database.ref(`users/${user.uid}/profilepic`).once('value')
+                    .then(snapshot => {
+                        const profilePic = snapshot.val();
+                        if (profilePic) {
+                            userMenuPic.src = profilePic;
+                        }
+                    });
+                
+                // Setup search functionality
+                searchInput.addEventListener('input', handleSearch);
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Show toast notification
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('visible');
+            
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, duration);
+        }
+
+        // Load all data
+        function loadData() {
+            // Load posts
+            database.ref('posts').orderByChild('post_timestamp').once('value')
+                .then((snapshot) => {
+                    allPosts = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const post = childSnapshot.val();
+                        post.key = childSnapshot.key;
+                        allPosts.unshift(post); // Newest first
+                    });
+                    filteredPosts = [...allPosts];
+                    
+                    // Load users
+                    return database.ref('users').once('value');
+                })
+                .then((snapshot) => {
+                    users = snapshot.val() || {};
+                    
+                    // Load liked posts
+                    return database.ref('likes').once('value');
+                })
+                .then((snapshot) => {
+                    const likesData = snapshot.val() || {};
+                    likedPosts = {};
+                    
+                    // Check which posts the current user has liked
+                    Object.keys(likesData).forEach(postKey => {
+                        if (likesData[postKey] && likesData[postKey][currentUser.uid]) {
+                            likedPosts[postKey] = true;
+                        }
+                    });
+                    
+                    // Display data
+                    renderPosts();
+                })
+                .catch((error) => {
+                    console.error("Error loading data:", error);
+                    postsContainer.innerHTML = '<p class="no-posts">ပိုစ့်များ ဖတ်ရန် အခက်အခဲ ရှိနေပါသည်။ ထပ်မံကြိုးစားပါ။</p>';
+                });
+        }
+
+        // Handle search input
+        function handleSearch() {
+            const searchQuery = searchInput.value.trim().toLowerCase();
+            
+            if (searchQuery === '') {
+                filteredPosts = [...allPosts];
+            } else {
+                filteredPosts = allPosts.filter(post => {
+                    const description = post.description ? post.description.toLowerCase() : '';
+                    const userName = users[post.uid] ? users[post.uid].name.toLowerCase() : '';
+                    return description.includes(searchQuery) || userName.includes(searchQuery);
+                });
+            }
+            
+            renderPosts();
+        }
+
+        // Render posts
+        function renderPosts() {
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = '<p class="no-posts">ပိုစ့်များ မတွေ့ရှိပါ</p>';
+                return;
+            }
+            
+            postsContainer.innerHTML = '';
+            
+            filteredPosts.forEach(post => {
+                const postElement = createPostElement(post);
+                postsContainer.appendChild(postElement);
+            });
+            
+            // Initialize action buttons after rendering
+            initializeActionButtons();
+        }
+
+        // Create a post element
+        function createPostElement(post) {
+            const postUser = users[post.uid] || {};
+            const isLiked = likedPosts[post.key] || false;
+            const isVerified = postUser.verified || false;
+            
+            const postElement = document.createElement('div');
+            postElement.className = 'post-card';
+            postElement.setAttribute('data-key', post.key);
+            
+            // Post header with user info
+            let headerHTML = `
+                <div class="post-header">
+                    <img src="${postUser.profilepic || 'user.png'}" class="profile-pic" 
+                         onerror="this.src='user.png'" alt="${postUser.name || 'User'}">
+                    <div class="user-info">
+                        <div style="display: flex; align-items: center;">
+                            <h3 class="user-name">${postUser.name || 'အမည်မသိ အသုံးပြုသူ'}</h3>
+                            ${isVerified ? '<img src="verified.png" class="verified-badge" alt="Verified">' : ''}
+                        </div>
+                        <p class="post-time">${formatTime(post.post_timestamp)}</p>
+                    </div>
+                    <div class="options-icon">⋯</div>
+                </div>
+                <div class="post-content">
+            `;
+            
+            // Post text content
+            let description = post.description || '';
+            let showReadMore = false;
+            
+            if (description.length > 400) {
+                description = description.substring(0, 400) + '...';
+                showReadMore = true;
+            }
+            
+            headerHTML += `
+                <div class="post-text">${description}</div>
+                ${showReadMore ? '<span class="read-more">ဆက်လက်ဖတ်ရှုရန်</span>' : ''}
+            `;
+            
+            // Post media content
+            if (post.post_type === 'video') {
+                headerHTML += `
+                    <div class="post-media">
+                        ${post.data ? `
+                            <video controls playsinline webkit-playsinline class="post-video">
+                                <source src="${post.data}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        ` : `
+                            <img src="${post.thumbnail || ''}" class="single-image" alt="Video thumbnail">
+                            <div class="video-indicator">${post.video_duration || ''}</div>
+                        `}
+                    </div>
+                `;
+            } else if (post.data && post.data !== 'null') {
+                try {
+                    const mediaUrls = JSON.parse(post.data);
+                    if (mediaUrls.length === 1) {
+                        headerHTML += `
+                            <div class="post-media">
+                                <img src="${mediaUrls[0]}" class="single-image" alt="Post image" loading="lazy">
+                            </div>
+                        `;
+                    } else if (mediaUrls.length > 1) {
+                        headerHTML += '<div class="post-media"><div class="multi-image-container">';
+                        // Show first 4 images
+                        const imagesToShow = mediaUrls.slice(0, 4);
+                        imagesToShow.forEach((url, index) => {
+                            headerHTML += `
+                                <img src="${url}" class="multi-image" alt="Post image ${index + 1}" loading="lazy">
+                            `;
+                        });
+                        if (mediaUrls.length > 4) {
+                            headerHTML += `<div class="multi-image" style="display:flex;align-items:center;justify-content:center;background:#222;color:#fff;font-weight:bold;">+${mediaUrls.length - 4} ဓာတ်ပုံများ</div>`;
+                        }
+                        headerHTML += '</div></div>';
+                    }
+                } catch (e) {
+                    console.error("Error parsing media data:", e);
+                }
+            }
+            
+            // Post footer with actions
+            headerHTML += `
+                </div>
+                <div class="post-footer">
+                    <div class="action-button ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.key}', event)">
+                        <span class="action-icon">${isLiked ? '❤️' : '♡'}</span>
+                        <span class="action-count">${post.likes || 0}</span>
+                    </div>
+                    ${post.hide_comment !== 'true' ? `
+                    <div class="action-button" onclick="viewComments('${post.key}', event)">
+                        <span class="action-icon">💬</span>
+                        <span class="action-count">${post.comments || 0}</span>
+                    </div>
+                    ` : ''}
+                    ${post.hide_share !== 'true' ? `
+                    <div class="action-button" onclick="sharePost('${post.key}', event)">
+                        <span class="action-icon">↗️</span>
+                        <span class="action-count">မျှဝေရန်</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            postElement.innerHTML = headerHTML;
+            
+            // Add click event to the entire post card
+            postElement.addEventListener('click', () => {
+                viewFullPost(post.key);
+            });
+            
+            return postElement;
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 10000) return "ယခုအတွင်း";
+            if (diff < 60000) return Math.floor(diff / 1000) + " စက္ကန့်အကြာက";
+            if (diff < 3600000) return Math.floor(diff / 60000) + " မိနစ်အကြာက";
+            if (diff < 86400000) return Math.floor(diff / 3600000) + " နာရီအကြာက";
+            if (diff < 604800000) return Math.floor(diff / 86400000) + " ရက်အကြာက";
+            if (diff < 2592000000) return Math.floor(diff / 604800000) + " ပတ်အကြာက";
+            if (diff < 31536000000) return Math.floor(diff / 2592000000) + " လအကြာက";
+            return Math.floor(diff / 31536000000) + " နှစ်အကြာက";
+        }
+
+        // Initialize action buttons after rendering
+        function initializeActionButtons() {
+            document.querySelectorAll('.action-button').forEach(button => {
+                const likeIcon = button.querySelector('.action-icon');
+                if (likeIcon && (likeIcon.textContent === '♡' || likeIcon.textContent === '❤️')) {
+                    button.onclick = (e) => {
+                        e.stopPropagation();
+                        const postKey = button.closest('.post-card').getAttribute('data-key');
+                        toggleLike(postKey, e);
+                    };
+                }
+            });
+        }
+
+        // Toggle like on a post
+        function toggleLike(postKey, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            const likeRef = database.ref(`likes/${postKey}/${currentUser.uid}`);
+            const postRef = database.ref(`posts/${postKey}/likes`);
+            
+            if (likedPosts[postKey]) {
+                // Unlike
+                likeRef.remove()
+                    .then(() => {
+                        likedPosts[postKey] = false;
+                        
+                        // Decrement like count
+                        return postRef.transaction(currentLikes => {
+                            return (currentLikes || 0) - 1;
+                        });
+                    })
+                    .then(() => {
+                        // Update UI
+                        const likeButton = document.querySelector(`.post-card[data-key="${postKey}"] .action-button`);
+                        if (likeButton) {
+                            likeButton.classList.remove('liked');
+                            likeButton.querySelector('.action-icon').textContent = '♡';
+                            const countElement = likeButton.querySelector('.action-count');
+                            const currentCount = parseInt(countElement.textContent);
+                            countElement.textContent = Math.max(0, currentCount - 1);
+                        }
+                        
+                        // Update post data
+                        const postIndex = allPosts.findIndex(p => p.key === postKey);
+                        if (postIndex >= 0) {
+                            allPosts[postIndex].likes = Math.max(0, (allPosts[postIndex].likes || 0) - 1);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error unliking post:", error);
+                        showToast("လုပ်ဆောင်ချက် မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။");
+                    });
+            } else {
+                // Like
+                likeRef.set(true)
+                    .then(() => {
+                        likedPosts[postKey] = true;
+                        
+                        // Increment like count
+                        return postRef.transaction(currentLikes => {
+                            return (currentLikes || 0) + 1;
+                        });
+                    })
+                    .then(() => {
+                        // Update UI
+                        const likeButton = document.querySelector(`.post-card[data-key="${postKey}"] .action-button`);
+                        if (likeButton) {
+                            likeButton.classList.add('liked');
+                            likeButton.querySelector('.action-icon').textContent = '❤️';
+                            const countElement = likeButton.querySelector('.action-count');
+                            const currentCount = parseInt(countElement.textContent);
+                            countElement.textContent = currentCount + 1;
+                        }
+                        
+                        // Update post data
+                        const postIndex = allPosts.findIndex(p => p.key === postKey);
+                        if (postIndex >= 0) {
+                            allPosts[postIndex].likes = (allPosts[postIndex].likes || 0) + 1;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error liking post:", error);
+                        showToast("လုပ်ဆောင်ချက် မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။");
+                    });
+            }
+        }
+
+        // View full post
+        function viewFullPost(postKey) {
+            const post = allPosts.find(p => p.key === postKey);
+            if (post) {
+                const params = new URLSearchParams();
+                params.append('key', postKey);
+                params.append('uid', post.uid);
+                params.append('post_type', post.post_type || 'normal');
+                params.append('hide_comment', post.hide_comment || 'false');
+                params.append('data', post.data || '');
+                
+                window.location.href = `view_post.html?${params.toString()}`;
+            }
+        }
+
+        // View comments
+        function viewComments(postKey, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            viewFullPost(postKey);
+        }
+
+        // Share post
+        function sharePost(postKey, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            // Get post info
+            const post = allPosts.find(p => p.key === postKey);
+            if (!post) return;
+            
+            // Create share URL
+            const shareUrl = `${window.location.origin}/view_post.html?key=${postKey}`;
+            
+            // If Web Share API is available
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Share Post',
+                    text: post.description ? post.description.substring(0, 100) + '...' : 'Check out this post!',
+                    url: shareUrl
+                })
+                .catch(error => {
+                    console.error('Error sharing:', error);
+                    copyToClipboard(shareUrl);
+                });
+            } else {
+                // Fallback to clipboard
+                copyToClipboard(shareUrl);
+            }
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("လင့်ခ်ကို ကူးယူပြီးပါပြီ");
+        }
+
+        // Go to upload page
+        function goToUpload() {
+            window.location.href = 'upload.html';
+        }
+        
+        // Go to profile page
+        function goToProfile() {
+            window.location.href = 'profile.html';
+        }
+        
+        // Go to settings page
+        function goToSettings() {
+            window.location.href = 'settings.html';
+        }
+        
+        // Logout
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error("Error signing out:", error);
+                    showToast("အကောင့်ထွက်ရန် မအောင်မြင်ပါ");
+                });
+        }
+        
+        // Lazy loading for images
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if the browser supports IntersectionObserver
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const image = entry.target;
+                            image.src = image.dataset.src;
+                            imageObserver.unobserve(image);
+                        }
+                    });
+                });
+                
+                // Observe all images with data-src
+                document.querySelectorAll('img[data-src]').forEach(img => {
+                    imageObserver.observe(img);
+                });
+            } else {
+                // Fallback for browsers that don't support IntersectionObserver
+                document.querySelectorAll('img[data-src]').forEach(img => {
+                    img.src = img.dataset.src;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
