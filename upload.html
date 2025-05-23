@@ -1,264 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Post</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>ဗီဒီယို တင်သွင်းရန်</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #FF554F;
-            --dark-bg: #282828;
-            --light-text: #FAFAFA;
-            --gray-text: #9E9E9E;
-            --card-bg: #212121;
-            --input-bg: #242424;
-        }
-        
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--dark-bg);
-            margin: 0;
-            padding: 0;
-            color: var(--light-text);
+            font-family: 'Padauk', sans-serif;
+            background-color: #f8f9fa;
         }
-        
-        .container {
-            max-width: 600px;
+        .upload-container {
+            max-width: 800px;
             margin: 0 auto;
-            padding: 0;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        
-        .action-bar {
-            background-color: var(--dark-bg);
-            padding: 15px;
+        .video-preview {
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            height: 300px;
             display: flex;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .back-button {
-            color: var(--light-text);
-            font-size: 24px;
-            margin-right: 15px;
-            cursor: pointer;
-        }
-        
-        .action-title {
-            flex-grow: 1;
-            font-size: 16px;
-            font-weight: 500;
-        }
-        
-        .post-button {
-            color: var(--primary-color);
-            font-weight: 500;
-            cursor: pointer;
-        }
-        
-        .content {
-            background-color: #FAFAFA;
-            min-height: calc(100vh - 56px);
-            padding: 15px;
-        }
-        
-        .section-title {
-            color: var(--gray-text);
-            font-size: 14px;
-            margin: 15px 0 8px 0;
-        }
-        
-        .post-input {
-            width: 100%;
-            background-color: var(--input-bg);
-            border: none;
-            border-radius: 8px;
-            padding: 15px;
-            color: var(--light-text);
-            font-size: 14px;
-            resize: none;
-            min-height: 150px;
-            box-sizing: border-box;
-        }
-        
-        .post-input::placeholder {
-            color: var(--gray-text);
-        }
-        
-        .attachment-options {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .attachment-button {
-            display: flex;
-            align-items: center;
-            background-color: var(--input-bg);
-            color: var(--gray-text);
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            flex: 1;
             justify-content: center;
-            transition: background-color 0.3s;
+            overflow: hidden;
         }
-        
-        .attachment-button:hover {
-            background-color: #333;
+        .video-preview video {
+            max-height: 100%;
+            max-width: 100%;
         }
-        
-        .attachment-button.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .attachment-icon {
-            margin-right: 8px;
-            font-size: 20px;
-        }
-        
-        .selected-images {
-            display: flex;
-            overflow-x: auto;
-            gap: 10px;
-            padding: 10px 0;
-        }
-        
-        .selected-image {
-            width: 120px;
-            height: 120px;
-            border-radius: 8px;
-            object-fit: cover;
+        .file-upload-btn {
             position: relative;
+            overflow: hidden;
         }
-        
-        .image-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .remove-image {
+        .file-upload-btn input[type=file] {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: var(--primary-color);
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
             cursor: pointer;
+            display: block;
         }
-        
-        .video-section {
-            margin-top: 20px;
-            display: none;
-        }
-        
-        .video-details {
-            background-color: var(--input-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .detail-row {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        
-        .detail-label {
-            width: 80px;
-            color: var(--light-text);
-            font-size: 14px;
-        }
-        
-        .detail-value {
-            flex-grow: 1;
-            color: var(--light-text);
-            font-size: 14px;
-        }
-        
-        .action-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px;
-            width: 100%;
-            font-size: 14px;
-            font-weight: 500;
-            margin: 10px 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .action-button i {
-            margin-right: 8px;
-        }
-        
-        .thumbnail-preview {
-            width: 100%;
-            height: 200px;
-            border-radius: 8px;
-            object-fit: cover;
-            margin: 10px 0;
-            display: none;
-        }
-        
-        .thumbnail-preview.small {
-            width: 180px;
-            height: 180px;
-        }
-        
-        .advance-options {
-            margin-top: 20px;
-        }
-        
-        .option-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: var(--input-bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        
-        .option-label {
-            color: var(--light-text);
-            font-size: 14px;
-        }
-        
-        /* Toggle Switch Styles */
-        .switch {
+        .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
+            width: 50px;
+            height: 24px;
         }
-
-        .switch input {
+        .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
-        .slider {
+        .toggle-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -267,625 +70,365 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
+            border-radius: 24px;
         }
-
-        .slider:before {
+        .toggle-slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
+            height: 16px;
+            width: 16px;
             left: 4px;
             bottom: 4px;
             background-color: white;
             transition: .4s;
-        }
-
-        input:checked + .slider {
-            background-color: var(--primary-color);
-        }
-
-        input:focus + .slider {
-            box-shadow: 0 0 1px var(--primary-color);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        .slider.round {
-            border-radius: 34px;
-        }
-
-        .slider.round:before {
             border-radius: 50%;
         }
-        
-        .uploading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #FAFAFA;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            display: none;
+        input:checked + .toggle-slider {
+            background-color: #4C51BF;
         }
-        
-        .uploading-image {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-            margin-bottom: 20px;
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
         }
-        
-        .uploading-text {
-            color: var(--primary-color);
-            font-size: 16px;
-            margin-bottom: 10px;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: all 0.3s ease;
         }
-        
-        .task-text {
-            color: var(--gray-text);
-            font-size: 14px;
-            margin-bottom: 15px;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-        
         .progress-bar {
-            width: 100%;
-            max-width: 300px;
-            height: 6px;
-            background-color: #E0E0E0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary-color);
-            width: 0%;
+            height: 5px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
             transition: width 0.3s ease;
         }
-        
-        .progress-text {
-            color: var(--light-text);
-            font-size: 16px;
+        .thumbnail-preview {
+            width: 80px;
+            height: 60px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            margin-right: 5px;
+            cursor: pointer;
         }
-        
-        .hidden {
-            display: none;
+        .thumbnail-preview.selected {
+            border: 2px solid #4C51BF;
         }
-        
-        input[type="file"] {
-            display: none;
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
-
-        .video-preview {
-            width: 100%;
-            max-width: 300px;
-            height: 200px;
-            border-radius: 8px;
-            margin: 10px 0;
-            background-color: #000;
-        }
-
-        .error-message {
-            color: var(--primary-color);
-            font-size: 12px;
-            margin-top: 5px;
+        .upload-icon {
+            animation: pulse 2s infinite;
+            color: #5a67d8;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Action Bar -->
-        <div class="action-bar">
-            <div class="back-button" onclick="goBack()">←</div>
-            <div class="action-title">New Post</div>
-            <div class="post-button" onclick="uploadPost()">Post</div>
-        </div>
+<body class="py-8 px-4">
+    <div class="upload-container p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-center mb-8">ဗီဒီယို တင်သွင်းရန်</h1>
         
-        <!-- Main Content -->
-        <div class="content" id="main-content">
-            <div class="section-title">Say Something!</div>
-            <textarea class="post-input" id="post-text" placeholder="What's your &quot;MANN&quot; ???"></textarea>
-            
-            <!-- Attachment Options -->
-            <div class="attachment-options">
-                <label for="image-upload" class="attachment-button" id="image-btn">
-                    <i class="material-icons attachment-icon">image</i>
-                    <span>Images</span>
-                </label>
-                <label for="video-upload" class="attachment-button" id="video-btn">
-                    <i class="material-icons attachment-icon">videocam</i>
-                    <span>Video</span>
-                </label>
+        <!-- Video Upload Section -->
+        <div class="mb-8">
+            <div class="video-preview mb-4" id="videoPreviewContainer">
+                <div class="text-center" id="uploadPrompt">
+                    <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
+                    <p class="text-gray-600">ဗီဒီယိုဖိုင် ရွေးချယ်ရန်</p>
+                </div>
+                <video id="videoPreview" class="hidden" controls playsinline webkit-playsinline></video>
             </div>
             
-            <input type="file" id="image-upload" accept="image/*" multiple>
-            <input type="file" id="video-upload" accept="video/*">
-            <input type="file" id="thumbnail-upload" accept="image/*">
-            
-            <!-- Selected Images -->
-            <div class="selected-images" id="selected-images"></div>
-            
-            <!-- Video Section -->
-            <div class="video-section" id="video-section">
-                <div class="section-title">Video Details</div>
-                
-                <button class="action-button" id="change-video-btn" onclick="document.getElementById('video-upload').click()">
-                    <i class="material-icons">videocam</i>
-                    Change Video
+            <div class="flex flex-wrap items-center gap-4 mt-4">
+                <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
+                    <i class="fas fa-file-video mr-2"></i> ဗီဒီယိုဖိုင် ရွေးရန်
+                    <input type="file" id="videoUpload" accept="video/*" />
                 </button>
                 
-                <div class="video-details">
-                    <div class="detail-row">
-                        <div class="detail-label">Name:</div>
-                        <div class="detail-value" id="video-name">No video selected</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Size:</div>
-                        <div class="detail-value" id="video-size">0 MB</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Duration:</div>
-                        <div class="detail-value" id="video-duration">00:00</div>
-                    </div>
+                <div class="flex-1 min-w-[200px]">
+                    <div class="text-sm text-gray-600 mb-1">ဖိုင်အမည်: <span id="fileName">ဗီဒီယိုဖိုင် မရွေးရသေးပါ</span></div>
+                    <div class="text-sm text-gray-600 mb-1">ဖိုင်အရွယ်အစား: <span id="fileSize">0 MB</span></div>
+                    <div class="text-sm text-gray-600">ကြာချိန်: <span id="fileDuration">00:00</span></div>
                 </div>
-                
-                <!-- Video Preview -->
-                <video id="video-preview" class="video-preview" controls style="display: none;">
-                    Your browser does not support the video tag.
-                </video>
-                
-                <div class="section-title" id="thumbnail-section-title">Add Video Thumbnail</div>
-                
-                <button class="action-button" id="thumbnail-btn" onclick="document.getElementById('thumbnail-upload').click()">
-                    <i class="material-icons">image</i>
-                    Pick Thumbnail
-                </button>
-                
-                <img src="" class="thumbnail-preview" id="thumbnail-preview">
-                <img src="" class="thumbnail-preview small" id="short-thumbnail-preview">
-                
-                <div class="section-title" id="video-title-section">Video Title</div>
-                <input type="text" class="post-input" id="video-title" placeholder="Video Title" style="min-height: auto;">
-                
-                <div class="section-title advance-options">Advanced Options</div>
-                
-                <div class="option-row">
-                    <div class="option-label">Disable Comments</div>
-                    <label class="switch">
-                        <input type="checkbox" id="disable-comment">
-                        <span class="slider round"></span>
+            </div>
+        </div>
+
+        <!-- Video Information -->
+        <div class="mb-8">
+            <div class="mb-4">
+                <label for="videoTitle" class="block text-gray-700 font-medium mb-2">ဗီဒီယို ခေါင်းစဉ်</label>
+                <input type="text" id="videoTitle" placeholder="ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="mb-4">
+                <label for="videoDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
+                <textarea id="videoDescription" rows="4" placeholder="ဗီဒီယိုအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+        </div>
+        
+        <!-- Thumbnail Selection -->
+        <div class="mb-8">
+            <label class="block text-gray-700 font-medium mb-3">ဗီဒီယို အနှစ်ချုပ်ပုံ</label>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3" id="thumbnailContainer">
+                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                </div>
+                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                </div>
+                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                </div>
+                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                </div>
+            </div>
+            
+            <button id="customThumbnailBtn" class="text-blue-600 hover:text-blue-800 flex items-center text-sm">
+                <i class="fas fa-plus-circle mr-1"></i> ပုံတစ်ခု တင်သွင်းရန်
+                <input type="file" id="customThumbnail" accept="image/*" class="hidden" />
+            </button>
+        </div>
+        
+        <!-- Advanced Options -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="disableComments">
+                        <span class="toggle-slider"></span>
                     </label>
                 </div>
                 
-                <div class="option-row">
-                    <div class="option-label">Disable Share</div>
-                    <label class="switch">
-                        <input type="checkbox" id="disable-share">
-                        <span class="slider round"></span>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="disableSharing">
+                        <span class="toggle-slider"></span>
                     </label>
                 </div>
                 
-                <div class="option-row">
-                    <div class="option-label">Disable Download</div>
-                    <label class="switch">
-                        <input type="checkbox" id="disable-download">
-                        <span class="slider round"></span>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="disableDownload">
+                        <span class="toggle-slider"></span>
                     </label>
                 </div>
             </div>
         </div>
         
-        <!-- Uploading Screen -->
-        <div class="uploading-screen" id="uploading-screen">
-            <img src="https://via.placeholder.com/150x150/FF554F/FFFFFF?text=LOGO" class="uploading-image">
-            <div class="uploading-text">Uploading Please Wait...</div>
-            <div class="task-text" id="task-text">TASK 0/0</div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
+        <!-- Upload Button & Progress -->
+        <div id="uploadSection">
+            <button id="uploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
+                <i class="fas fa-upload mr-2"></i> ဗီဒီယို တင်သွင်းရန်
+            </button>
+        </div>
+        
+        <!-- Progress Section (Initially Hidden) -->
+        <div id="progressSection" class="mt-6 hidden">
+            <p class="text-center text-gray-700 mb-2">တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...</p>
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
             </div>
-            <div class="progress-text" id="progress-text">0% Uploaded...</div>
+            <div class="flex justify-between text-sm text-gray-600">
+                <span id="progressTask">လုပ်ငန်း 0/3</span>
+                <span id="progressPercent">0% တင်သွင်းပြီးပါပြီ</span>
+            </div>
         </div>
     </div>
 
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-            authDomain: "onlineshop-849c8.firebaseapp.com",
-            databaseURL: "https://onlineshop-849c8.firebaseio.com",
-            projectId: "onlineshop-849c8",
-            storageBucket: "onlineshop-849c8.appspot.com",
-            messagingSenderId: "883512833370",
-            appId: "1:883512833370:web:a1c8412b158f8744afef63"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-        const storage = firebase.storage();
-        
-        // Current user and upload data
-        let currentUser = null;
-        let selectedImages = [];
-        let selectedVideo = null;
-        let selectedThumbnail = null;
-        let isShortVideo = false;
-        let uploadTasks = [];
-        let currentUploadIndex = 0;
-        let postKey = null;
-        let currentMode = 'text'; // 'text', 'image', 'video'
-        
-        // DOM elements
-        const postText = document.getElementById('post-text');
-        const imageUpload = document.getElementById('image-upload');
-        const videoUpload = document.getElementById('video-upload');
-        const thumbnailUpload = document.getElementById('thumbnail-upload');
-        const selectedImagesContainer = document.getElementById('selected-images');
-        const videoSection = document.getElementById('video-section');
-        const videoName = document.getElementById('video-name');
-        const videoSize = document.getElementById('video-size');
-        const videoDuration = document.getElementById('video-duration');
-        const videoPreview = document.getElementById('video-preview');
-        const thumbnailPreview = document.getElementById('thumbnail-preview');
-        const shortThumbnailPreview = document.getElementById('short-thumbnail-preview');
-        const videoTitle = document.getElementById('video-title');
-        const changeVideoBtn = document.getElementById('change-video-btn');
-        const thumbnailBtn = document.getElementById('thumbnail-btn');
-        const uploadingScreen = document.getElementById('uploading-screen');
-        const taskText = document.getElementById('task-text');
-        const progressFill = document.getElementById('progress-fill');
-        const progressText = document.getElementById('progress-text');
-        const disableComment = document.getElementById('disable-comment');
-        const disableShare = document.getElementById('disable-share');
-        const disableDownload = document.getElementById('disable-download');
-        const imageBtn = document.getElementById('image-btn');
-        const videoBtn = document.getElementById('video-btn');
-        const thumbnailSectionTitle = document.getElementById('thumbnail-section-title');
-        const videoTitleSection = document.getElementById('video-title-section');
-        
-        // Check auth state
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-            } else {
-                // Redirect to login if not authenticated
-                window.location.href = 'index.html';
-            }
-        });
-        
-        // Helper function to format file size
-        function formatFileSize(bytes) {
-            if (bytes < 1024) {
-                return bytes + ' B';
-            } else if (bytes < 1024 * 1024) {
-                return (bytes / 1024).toFixed(2) + ' KB';
-            } else {
-                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-            }
-        }
-        
-        // Helper function to format duration
-        function formatDuration(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = Math.floor(seconds % 60);
-            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-        }
-        
-        // Reset all selections
-        function resetSelections() {
-            selectedImages = [];
-            selectedVideo = null;
-            selectedThumbnail = null;
-            isShortVideo = false;
-            selectedImagesContainer.innerHTML = '';
-            videoSection.style.display = 'none';
-            imageBtn.classList.remove('active');
-            videoBtn.classList.remove('active');
-            videoPreview.style.display = 'none';
-            thumbnailPreview.style.display = 'none';
-            shortThumbnailPreview.style.display = 'none';
-            videoTitle.value = '';
-        }
-        
-               // Handle image upload
-        imageUpload.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length > 0) {
-                resetSelections();
-                currentMode = 'image';
-                imageBtn.classList.add('active');
-                
-                // Process each file
-                files.forEach(file => {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            selectedImages.push({
-                                file: file,
-                                url: event.target.result
-                            });
-                            
-                            // Display selected images
-                            renderSelectedImages();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-        });
-
-        // Render selected images
-        function renderSelectedImages() {
-            selectedImagesContainer.innerHTML = '';
-            selectedImages.forEach((image, index) => {
-                const imageContainer = document.createElement('div');
-                imageContainer.className = 'image-container';
-                
-                const img = document.createElement('img');
-                img.src = image.url;
-                img.className = 'selected-image';
-                
-                const removeBtn = document.createElement('div');
-                removeBtn.className = 'remove-image';
-                removeBtn.innerHTML = '×';
-                removeBtn.onclick = () => removeImage(index);
-                
-                imageContainer.appendChild(img);
-                imageContainer.appendChild(removeBtn);
-                selectedImagesContainer.appendChild(imageContainer);
-            });
-        }
-
-        // Remove selected image
-        function removeImage(index) {
-            selectedImages.splice(index, 1);
-            renderSelectedImages();
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoUpload = document.getElementById('videoUpload');
+            const videoPreview = document.getElementById('videoPreview');
+            const uploadPrompt = document.getElementById('uploadPrompt');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const fileDuration = document.getElementById('fileDuration');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressSection = document.getElementById('progressSection');
+            const uploadSection = document.getElementById('uploadSection');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressTask = document.getElementById('progressTask');
+            const thumbnailContainer = document.getElementById('thumbnailContainer');
+            const customThumbnailBtn = document.getElementById('customThumbnailBtn');
+            const customThumbnail = document.getElementById('customThumbnail');
             
-            if (selectedImages.length === 0) {
-                currentMode = 'text';
-                imageBtn.classList.remove('active');
-            }
-        }
-
-        // Handle video upload
-        videoUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('video/')) {
-                resetSelections();
-                currentMode = 'video';
-                videoBtn.classList.add('active');
-                videoSection.style.display = 'block';
+            // Handle video file selection
+            videoUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
                 
-                selectedVideo = file;
-                videoName.textContent = file.name;
-                videoSize.textContent = formatFileSize(file.size);
-                
-                // Create video element to get duration
-                const video = document.createElement('video');
-                video.preload = 'metadata';
-                video.onloadedmetadata = () => {
-                    window.URL.revokeObjectURL(video.src);
-                    videoDuration.textContent = formatDuration(video.duration);
-                    isShortVideo = video.duration <= 60; // 1 minute or less
+                if (file) {
+                    // Update file info
+                    fileName.textContent = file.name;
+                    fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
                     
                     // Show video preview
-                    videoPreview.src = URL.createObjectURL(file);
-                    videoPreview.style.display = 'block';
+                    const videoURL = URL.createObjectURL(file);
+                    videoPreview.src = videoURL;
+                    videoPreview.classList.remove('hidden');
+                    uploadPrompt.classList.add('hidden');
                     
-                    // Set default thumbnail section title based on video length
-                    thumbnailSectionTitle.textContent = isShortVideo ? 
-                        'Add Short Video Thumbnail' : 'Add Video Thumbnail';
-                    videoTitleSection.style.display = isShortVideo ? 'none' : 'block';
-                };
-                video.src = URL.createObjectURL(file);
-            }
-        });
-
-        // Handle thumbnail upload
-        thumbnailUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                selectedThumbnail = file;
-                
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (isShortVideo) {
-                        shortThumbnailPreview.src = event.target.result;
-                        shortThumbnailPreview.style.display = 'block';
-                    } else {
-                        thumbnailPreview.src = event.target.result;
-                        thumbnailPreview.style.display = 'block';
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Go back button
-        function goBack() {
-            window.history.back();
-        }
-
-        // Upload post to Firebase
-        function uploadPost() {
-            if (!currentUser) {
-                alert('Please sign in to post');
-                return;
-            }
-            
-            const text = postText.value.trim();
-            const timestamp = Date.now();
-            postKey = database.ref('posts').push().key;
-            
-            // Validate inputs based on mode
-            if (currentMode === 'image' && selectedImages.length === 0) {
-                alert('Please select at least one image');
-                return;
-            }
-            
-            if (currentMode === 'video' && !selectedVideo) {
-                alert('Please select a video');
-                return;
-            }
-            
-            if (currentMode === 'video' && !isShortVideo && !selectedThumbnail) {
-                alert('Please select a thumbnail for your video');
-                return;
-            }
-            
-            // Show uploading screen
-            uploadingScreen.style.display = 'flex';
-            
-            // Prepare post data
-            const postData = {
-                uid: currentUser.uid,
-                text: text,
-                timestamp: timestamp,
-                likes: 0,
-                comments: 0,
-                shares: 0,
-                type: currentMode,
-                disableComment: disableComment.checked,
-                disableShare: disableShare.checked,
-                disableDownload: disableDownload.checked
-            };
-            
-            // Reset upload tasks
-            uploadTasks = [];
-            currentUploadIndex = 0;
-            
-            // Handle different post types
-            if (currentMode === 'image') {
-                uploadImages(postData);
-            } 
-            else if (currentMode === 'video') {
-                uploadVideo(postData);
-            } 
-            else {
-                savePost(postData);
-            }
-        }
-
-        function uploadImages(postData) {
-            selectedImages.forEach((image, index) => {
-                const imagePath = `posts/${currentUser.uid}/${postKey}/images/${index}`;
-                const uploadTask = storage.ref(imagePath).put(image.file);
-                
-                uploadTask.on('state_changed', 
-                    (snapshot) => updateProgress(snapshot, index),
-                    (error) => handleUploadError(error),
-                    () => {
-                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                            if (!postData.images) postData.images = [];
-                            postData.images.push(downloadURL);
-                            
-                            if (postData.images.length === selectedImages.length) {
-                                savePost(postData);
-                            }
-                        });
-                    }
-                );
-                
-                uploadTasks.push(uploadTask);
+                    // Load video metadata to get duration
+                    videoPreview.onloadedmetadata = function() {
+                        const minutes = Math.floor(videoPreview.duration / 60);
+                        const seconds = Math.floor(videoPreview.duration % 60);
+                        fileDuration.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        
+                        // Generate thumbnails
+                        generateThumbnails(videoPreview);
+                    };
+                }
             });
             
-            taskText.textContent = `Uploading images (1/${selectedImages.length})`;
-        }
-
-        function uploadVideo(postData) {
-            const videoPath = `posts/${currentUser.uid}/${postKey}/video`;
-            const videoUploadTask = storage.ref(videoPath).put(selectedVideo);
-            
-            videoUploadTask.on('state_changed', 
-                (snapshot) => updateProgress(snapshot, 0),
-                (error) => handleUploadError(error),
-                () => {
-                    videoUploadTask.snapshot.ref.getDownloadURL().then((videoURL) => {
-                        postData.videoUrl = videoURL;
+            // Generate video thumbnails
+            function generateThumbnails(video) {
+                thumbnailContainer.innerHTML = '';
+                
+                for (let i = 1; i <= 4; i++) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 160;
+                    canvas.height = 90;
+                    
+                    const thumbnailDiv = document.createElement('div');
+                    thumbnailDiv.className = 'thumbnail-preview bg-gray-200 rounded-md h-16 overflow-hidden';
+                    thumbnailDiv.dataset.time = Math.floor(i * (video.duration / 5));
+                    
+                    thumbnailDiv.addEventListener('click', function() {
+                        // Remove selected class from all thumbnails
+                        document.querySelectorAll('.thumbnail-preview').forEach(t => t.classList.remove('border-2', 'border-blue-500'));
                         
-                        if (isShortVideo) {
-                            savePost(postData);
-                        } 
-                        else if (selectedThumbnail) {
-                            uploadThumbnail(postData);
-                        }
-                    });
-                }
-            );
-            
-            uploadTasks.push(videoUploadTask);
-            taskText.textContent = 'Uploading video (1/2)';
-        }
-
-        function uploadThumbnail(postData) {
-            taskText.textContent = 'Uploading thumbnail';
-            
-            const thumbPath = `posts/${currentUser.uid}/${postKey}/thumbnail`;
-            const thumbUploadTask = storage.ref(thumbPath).put(selectedThumbnail);
-            
-            thumbUploadTask.on('state_changed', 
-                (snapshot) => updateProgress(snapshot, 1),
-                (error) => handleUploadError(error),
-                () => {
-                    thumbUploadTask.snapshot.ref.getDownloadURL().then((thumbURL) => {
-                        postData.thumbnailUrl = thumbURL;
-                        postData.videoTitle = videoTitle.value;
-                        savePost(postData);
-                    });
-                }
-            );
-            
-            uploadTasks.push(thumbUploadTask);
-        }
-
-        function updateProgress(snapshot, taskIndex) {
-            currentUploadIndex = taskIndex;
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressFill.style.width = `${progress}%`;
-            progressText.textContent = `${Math.round(progress)}% Uploaded...`;
-            
-            if (currentMode === 'image') {
-                taskText.textContent = `Uploading images (${currentUploadIndex + 1}/${selectedImages.length})`;
-            } else if (currentMode === 'video') {
-                const totalTasks = isShortVideo ? 1 : 2;
-                taskText.textContent = `Uploading ${currentUploadIndex === 0 ? 'video' : 'thumbnail'} (${currentUploadIndex + 1}/${totalTasks})`;
-            }
-        }
-
-        function handleUploadError(error) {
-            console.error('Upload failed:', error);
-            alert('Upload failed: ' + error.message);
-            uploadingScreen.style.display = 'none';
-        }
-
-        function savePost(postData) {
-            database.ref('posts/' + postKey).set(postData)
-                .then(() => {
-                    // Update user's posts count
-                    database.ref('users/' + currentUser.uid + '/postCount').transaction((count) => {
-                        return (count || 0) + 1;
+                        // Add selected class to clicked thumbnail
+                        this.classList.add('border-2', 'border-blue-500');
                     });
                     
+                    thumbnailContainer.appendChild(thumbnailDiv);
+                    
+                    // Set video to specific time and capture thumbnail
                     setTimeout(() => {
-                        uploadingScreen.style.display = 'none';
-                        window.location.href = 'home.html';
-                    }, 1000);
-                })
-                .catch((error) => {
-                    console.error('Error saving post:', error);
-                    alert('Error saving post: ' + error.message);
-                    uploadingScreen.style.display = 'none';
-                });
-        }
+                        video.currentTime = Math.floor(i * (video.duration / 5));
+                    }, i * 300);
+                    
+                    video.addEventListener('seeked', function handler() {
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        thumbnailDiv.style.backgroundImage = `url(${canvas.toDataURL()})`;
+                        thumbnailDiv.style.backgroundSize = 'cover';
+                        thumbnailDiv.style.backgroundPosition = 'center';
+                        
+                        // Remove event listener after all thumbnails are generated
+                        if (i === 4) {
+                            video.removeEventListener('seeked', handler);
+                        }
+                    }, { once: i === 4 });
+                }
+            }
+            
+            // Custom thumbnail upload
+            customThumbnailBtn.addEventListener('click', function() {
+                customThumbnail.click();
+            });
+            
+            customThumbnail.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const thumbnailDiv = document.createElement('div');
+                        thumbnailDiv.className = 'thumbnail-preview bg-gray-200 rounded-md h-16 overflow-hidden';
+                        thumbnailDiv.style.backgroundImage = `url(${event.target.result})`;
+                        thumbnailDiv.style.backgroundSize = 'cover';
+                        thumbnailDiv.style.backgroundPosition = 'center';
+                        
+                        thumbnailDiv.addEventListener('click', function() {
+                            // Remove selected class from all thumbnails
+                            document.querySelectorAll('.thumbnail-preview').forEach(t => t.classList.remove('border-2', 'border-blue-500'));
+                            
+                            // Add selected class to clicked thumbnail
+                            this.classList.add('border-2', 'border-blue-500');
+                        });
+                        
+                        // Insert custom thumbnail at the beginning
+                        if (thumbnailContainer.firstChild) {
+                            thumbnailContainer.insertBefore(thumbnailDiv, thumbnailContainer.firstChild);
+                        } else {
+                            thumbnailContainer.appendChild(thumbnailDiv);
+                        }
+                        
+                        // Automatically select this thumbnail
+                        thumbnailDiv.click();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Handle upload button click
+            uploadBtn.addEventListener('click', function() {
+                const videoFile = videoUpload.files[0];
+                const videoTitleValue = document.getElementById('videoTitle').value;
+                
+                // Form validation
+                if (!videoFile) {
+                    alert('ကျေးဇူးပြု၍ ဗီဒီယိုဖိုင် ရွေးချယ်ပါ။');
+                    return;
+                }
+                
+                if (!videoTitleValue) {
+                    alert('ကျေးဇူးပြု၍ ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ။');
+                    return;
+                }
+                
+                // Show progress UI
+                uploadSection.classList.add('hidden');
+                progressSection.classList.remove('hidden');
+                
+                // Simulate upload process
+                let progress = 0;
+                const uploadInterval = setInterval(() => {
+                    progress += 1;
+                    progressBar.style.width = progress + '%';
+                    progressPercent.textContent = progress + '% တင်သွင်းပြီးပါပြီ';
+                    
+                    if (progress < 33) {
+                        progressTask.textContent = 'လုပ်ငန်း 1/3: ဖိုင်တင်နေသည်';
+                    } else if (progress < 66) {
+                        progressTask.textContent = 'လုပ်ငန်း 2/3: ပုံစံပြောင်းနေသည်';
+                    } else {
+                        progressTask.textContent = 'လုပ်ငန်း 3/3: စာရင်းသွင်းနေသည်';
+                    }
+                    
+                    if (progress >= 100) {
+                        clearInterval(uploadInterval);
+                        alert('ဗီဒီယို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
+                        
+                        // Reset UI
+                        setTimeout(() => {
+                            progressSection.classList.add('hidden');
+                            uploadSection.classList.remove('hidden');
+                            progressBar.style.width = '0%';
+                            progressPercent.textContent = '0% တင်သွင်းပြီးပါပြီ';
+                        }, 1500);
+                    }
+                }, 50);
+            });
+        });
     </script>
 </body>
-</html>
+    </html>
+    
