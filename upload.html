@@ -1,1076 +1,2213 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>စာ၊ ပုံ၊ ဗီဒီယို တင်သွင်းရန်</title>
+    <title>Social App - Publish and Share Content with Firebase</title>
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Global Styles */
         body {
-            font-family: 'Padauk', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
         }
-        .upload-container {
-            max-width: 800px;
+        
+        /* App Container */
+        .app-container {
+            max-width: 1200px;
             margin: 0 auto;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
         }
-        .video-preview, .image-preview-container {
-            background-color: #f0f0f0;
-            border-radius: 8px;
-            height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .video-preview video {
-            max-height: 100%;
-            max-width: 100%;
-        }
-        .file-upload-btn {
+        
+        /* Navigation */
+        .nav-link {
             position: relative;
-            overflow: hidden;
-        }
-        .file-upload-btn input[type=file] {
-            position: absolute;
-            top: 0;
-            right: 0;
-            min-width: 100%;
-            min-height: 100%;
-            font-size: 100px;
-            text-align: right;
-            filter: alpha(opacity=0);
-            opacity: 0;
-            outline: none;
-            cursor: pointer;
-            display: block;
-        }
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .toggle-slider {
-            background-color: #4C51BF;
-        }
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 0.5rem 1rem;
             transition: all 0.3s ease;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        
+        .nav-link.active {
+            color: #4f46e5;
+            font-weight: 600;
         }
-        .progress-bar {
-            height: 5px;
-            border-radius: 10px;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            transition: width 0.3s ease;
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #4f46e5;
         }
-        .thumbnail-preview {
-            width: 80px;
-            height: 60px;
-            border-radius: 4px;
+        
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
             overflow: hidden;
-            display: inline-block;
-            margin-right: 5px;
-            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .thumbnail-preview.selected {
-            border: 2px solid #4C51BF;
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
-        .tab-active {
-            background-color: #4C51BF;
-            color: white;
-            font-weight: bold;
+        
+        /* Post Styles */
+        .post-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
         }
-        .tab-inactive {
-            background-color: #E2E8F0;
-            color: #4A5568;
+        
+        .post-video {
+            width: 100%;
+            max-height: 400px;
         }
-        .tab-content {
+        
+        .post-content {
+            padding: 1.25rem;
+        }
+        
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid #edf2f7;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        /* Upload Page */
+        .tab {
             display: none;
         }
-        .tab-content.active {
+        
+        .tab.active {
             display: block;
         }
-        #editor {
-            height: 300px;
-            background-color: #fff;
+        
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
         }
-        .image-preview {
-            width: 150px;
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 5px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            position: relative;
+        
+        .tab-btn.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            font-weight: 600;
         }
-        .image-preview .remove-btn {
+        
+        /* File Upload */
+        .file-input {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(255, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .dropzone {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .dropzone:hover {
+            border-color: #4f46e5;
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-btn {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(0, 0, 0, 0.5);
             color: white;
             border-radius: 50%;
-            width: 25px;
-            height: 25px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
         }
-        .images-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            margin-top: 10px;
+        
+        /* Comment Section */
+        .comment {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #edf2f7;
         }
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+        
+        .comment:last-child {
+            border-bottom: none;
         }
-        .upload-icon {
-            animation: pulse 2s infinite;
-            color: #5a67d8;
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        /* For PDF optimization */
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        /* PDF Optimization */
         @media print {
             body {
                 width: 100%;
-                height: auto;
-                overflow: visible;
+                margin: 0;
+                padding: 0;
             }
+            
+            .app-container {
+                max-width: 100%;
+            }
+            
+            .card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                margin-bottom: 2rem;
+            }
+            
+            .hide-in-print {
+                display: none;
+            }
+        }
+
+        /* Auth Forms */
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dark Mode */
+        .dark-theme {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .dark-theme .bg-white {
+            background-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .dark-theme .text-gray-700, 
+        .dark-theme .text-gray-800, 
+        .dark-theme .text-gray-600, 
+        .dark-theme .text-gray-500 {
+            color: #cbd5e0;
+        }
+
+        .dark-theme .border-gray-200,
+        .dark-theme .border-gray-300,
+        .dark-theme .border-gray-100 {
+            border-color: #4a5568;
+        }
+
+        .dark-theme .card,
+        .dark-theme .auth-form,
+        .dark-theme .bg-gray-100 {
+            background-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .dark-theme input,
+        .dark-theme textarea,
+        .dark-theme select {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        .dark-theme input::placeholder,
+        .dark-theme textarea::placeholder {
+            color: #a0aec0;
         }
     </style>
 </head>
-<body class="py-8 px-4">
-    <div class="upload-container p-6 md:p-8">
-        <h1 class="text-3xl font-bold text-center mb-6">စာ၊ ပုံ၊ ဗီဒီယို တင်သွင်းရန်</h1>
-        
-        <!-- Tab Navigation -->
-        <div class="flex mb-6 border-b border-gray-200">
-            <button id="textTabBtn" class="tab-btn tab-active flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
-                <i class="fas fa-font mr-2"></i> စာသားရေးရန်
-            </button>
-            <button id="imageTabBtn" class="tab-btn tab-inactive flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
-                <i class="fas fa-image mr-2"></i> ပုံများတင်ရန်
-            </button>
-            <button id="videoTabBtn" class="tab-btn tab-inactive flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
-                <i class="fas fa-video mr-2"></i> ဗီဒီယိုတင်ရန်
-            </button>
-        </div>
-        
-        <!-- Text Content Tab -->
-        <div id="textContent" class="tab-content active">
-            <div class="mb-4">
-                <label for="postTitle" class="block text-gray-700 font-medium mb-2">ခေါင်းစဉ်</label>
-                <input type="text" id="postTitle" placeholder="ခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-            </div>
-            
-            <div class="mb-6">
-                <label class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ</label>
-                <div id="editor"></div>
-            </div>
-            
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
-                
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="textDisableComments">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="textDisableSharing">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            
-            <button id="textUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
-                <i class="fas fa-paper-plane mr-2"></i> စာသား တင်သွင်းရန်
-            </button>
-        </div>
-        
-        <!-- Image Upload Tab -->
-        <div id="imageContent" class="tab-content">
-            <!-- Image Upload Section -->
-            <div class="mb-6">
-                <div class="image-preview-container mb-4 flex flex-col items-center justify-center" id="imageUploadContainer">
-                    <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
-                    <p class="text-gray-600 mb-4">ပုံများ ရွေးချယ်ရန်</p>
-                    <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
-                        <i class="fas fa-images mr-2"></i> ပုံဖိုင်များ ရွေးရန်
-                        <input type="file" id="imageUpload" accept="image/*" multiple />
-                    </button>
-                </div>
-                
-                <div class="images-wrapper" id="imagesPreviewContainer">
-                    <!-- Image previews will be added here dynamically -->
-                </div>
-            </div>
-            
-            <!-- Image Information -->
-            <div class="mb-4">
-                <label for="imageTitle" class="block text-gray-700 font-medium mb-2">ပုံခေါင်းစဉ်</label>
-                <input type="text" id="imageTitle" placeholder="ပုံခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-            </div>
-            
-            <div class="mb-6">
-                <label for="imageDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
-                <textarea id="imageDescription" rows="4" placeholder="ပုံအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
-            </div>
-            
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
-                
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="imageDisableComments">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="imageDisableSharing">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="imageDisableDownload">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            
-            <button id="imageUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
-                <i class="fas fa-upload mr-2"></i> ပုံများ တင်သွင်းရန်
-            </button>
-        </div>
-        
-        <!-- Video Upload Tab -->
-        <div id="videoContent" class="tab-content">
-            <!-- Video Upload Section -->
-            <div class="mb-8">
-                <div class="video-preview mb-4" id="videoPreviewContainer">
-                    <div class="text-center" id="uploadPrompt">
-                        <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
-                        <p class="text-gray-600">ဗီဒီယိုဖိုင် ရွေးချယ်ရန်</p>
-                    </div>
-                    <video id="videoPreview" class="hidden" controls playsinline webkit-playsinline></video>
-                </div>
-                
-                <div class="flex flex-wrap items-center gap-4 mt-4">
-                    <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
-                        <i class="fas fa-file-video mr-2"></i> ဗီဒီယိုဖိုင် ရွေးရန်
-                        <input type="file" id="videoUpload" accept="video/*" />
-                    </button>
-                    
-                    <div class="flex-1 min-w-[200px]">
-                        <div class="text-sm text-gray-600 mb-1">ဖိုင်အမည်: <span id="fileName">ဗီဒီယိုဖိုင် မရွေးရသေးပါ</span></div>
-                        <div class="text-sm text-gray-600 mb-1">ဖိုင်အရွယ်အစား: <span id="fileSize">0 MB</span></div>
-                        <div class="text-sm text-gray-600">ကြာချိန်: <span id="fileDuration">00:00</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Information -->
-            <div class="mb-8">
-                <div class="mb-4">
-                    <label for="videoTitle" class="block text-gray-700 font-medium mb-2">ဗီဒီယို ခေါင်းစဉ်</label>
-                    <input type="text" id="videoTitle" placeholder="ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-                </div>
-                
-                <div class="mb-4">
-                    <label for="videoDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
-                    <textarea id="videoDescription" rows="4" placeholder="ဗီဒီယိုအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
-                </div>
-            </div>
-            
-            <!-- Thumbnail Selection -->
-            <div class="mb-8">
-                <label class="block text-gray-700 font-medium mb-3">ဗီဒီယို အနှစ်ချုပ်ပုံ</label>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3" id="thumbnailContainer">
-                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                    </div>
-                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                    </div>
-                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                    </div>
-                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                    </div>
-                </div>
-                
-                <button id="customThumbnailBtn" class="text-blue-600 hover:text-blue-800 flex items-center text-sm">
-                    <i class="fas fa-plus-circle mr-1"></i> ပုံတစ်ခု တင်သွင်းရန်
-                    <input type="file" id="customThumbnail" accept="image/*" class="hidden" />
+<body>
+    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="auth-form">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold" id="auth-modal-title">Sign In</h2>
+                <button id="close-auth-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            
-            <!-- Advanced Options -->
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
-                
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="videoDisableComments">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="videoDisableSharing">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="videoDisableDownload">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-            </div>
-            
-            <button id="videoUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
-                <i class="fas fa-upload mr-2"></i> ဗီဒီယို တင်သွင်းရန်
-            </button>
-        </div>
-        
-        <!-- Progress Section (Initially Hidden) -->
-        <div id="progressSection" class="mt-6 hidden">
-            <p class="text-center text-gray-700 mb-2" id="progressMessage">တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...</p>
-            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
-            </div>
-            <div class="flex justify-between text-sm text-gray-600">
-                <span id="progressTask">လုပ်ငန်း 0/3</span>
-                <span id="progressPercent">0% တင်သွင်းပြီးပါပြီ</span>
-            </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md">Sign In</button>
+                </div>
+                <div class="text-center text-sm">
+                    <p>Don't have an account? <a href="#" id="show-signup" class="text-indigo-600 hover:text-indigo-800">Sign Up</a></p>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="signup-form" class="space-y-4 hidden">
+                <div>
+                    <label for="signup-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="signup-name" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="signup-email" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signup-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md">Sign Up</button>
+                </div>
+                <div class="text-center text-sm">
+                    <p>Already have an account? <a href="#" id="show-login" class="text-indigo-600 hover:text-indigo-800">Sign In</a></p>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Add Quill.js for text editor -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
-    <script>
-        // Firebase configuration - Replace with your own Firebase project config
-        const firebaseConfig = {
-            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-            authDomain: "onlineshop-849c8.firebaseapp.com",
-            databaseURL: "https://onlineshop-849c8.firebaseio.com",
-            projectId: "onlineshop-849c8",
-            storageBucket: "onlineshop-849c8.appspot.com",
-            messagingSenderId: "883512833370",
-            appId: "1:883512833370:web:a1c8412b158f8744afef63"
-        };
+    <header class="bg-white shadow-sm">
+        <div class="app-container">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-indigo-600 mr-2">SocialApp</h1>
+                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">Beta</span>
+                </div>
+                <div class="flex items-center">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 mr-2" aria-label="Toggle dark mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="relative" id="user-profile-container">
+                        <button id="login-button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                            Sign In
+                        </button>
+                        <div id="user-profile" class="hidden">
+                            <img src="https://via.placeholder.com/40" alt="User profile" class="user-avatar cursor-pointer" id="profile-image">
+                            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-10">
+                                <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-page="profile">Your Profile</a>
+                                <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-page="settings">Settings</a>
+                                <div class="border-t border-gray-100"></div>
+                                <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex space-x-4 py-2 overflow-x-auto hide-in-print" id="main-nav">
+                <a href="#home" class="nav-link active" data-page="home">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+                <a href="#upload" class="nav-link auth-required" data-page="upload">
+                    <i class="fas fa-plus mr-2"></i>Create
+                </a>
+                <a href="#profile" class="nav-link auth-required" data-page="profile">
+                    <i class="fas fa-user mr-2"></i>Profile
+                </a>
+                <a href="#settings" class="nav-link auth-required" data-page="settings">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </a>
+            </nav>
+        </div>
+    </header>
 
+    <main class="app-container py-6">
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold">News Feed</h2>
+                    <div class="flex items-center">
+                        <div class="relative mr-4">
+                            <input type="text" placeholder="Search posts..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-full w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <select class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="latest">Latest</option>
+                            <option value="popular">Popular</option>
+                            <option value="trending">Trending</option>
+                        </select>
+                    </div>
+                </div>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        
-        // Firebase services
-        const storage = firebase.storage();
-        const firestore = firebase.firestore();
-        const auth = firebase.auth();
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Quill editor
-            const quill = new Quill('#editor', {
-                theme: 'snow',
-                placeholder: 'အကြောင်းအရာဖော်ပြချက် ရေးသားပါ...',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['link'],
-                        ['clean']
-                    ]
-                }
-            });
+                <!-- Stories -->
+                <div class="flex space-x-4 overflow-x-auto pb-3 mb-4 hide-in-print auth-content">
+                    <div class="flex-shrink-0 w-20">
+                        <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-0.5">
+                            <div class="w-full h-full bg-white rounded-full p-0.5">
+                                <div class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-plus text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-center mt-1">Add Story</p>
+                    </div>
+                    
+                    <div class="flex-shrink-0 w-20">
+                        <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-0.5">
+                            <img src="https://via.placeholder.com/150" alt="User story" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        <p class="text-xs text-center mt-1">Your Story</p>
+                    </div>
+                </div>
+
+                <!-- Posts -->
+                <div class="posts-container" id="posts-container">
+                    <!-- Posts will be loaded dynamically from Firebase -->
+                    <div class="text-center py-10" id="posts-loading">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+                        <p class="mt-2 text-gray-600">Loading posts...</p>
+                    </div>
+                </div>
+
+                <!-- Load More Button -->
+                <div class="text-center mt-6" id="load-more-container">
+                    <button id="load-more" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Load More
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Page -->
+        <div id="upload-page" class="page hidden">
+            <h2 class="text-2xl font-bold mb-6">Create New Post</h2>
             
-            // Tab switching functionality
-            const tabs = {
-                text: {
-                    btn: document.getElementById('textTabBtn'),
-                    content: document.getElementById('textContent')
-                },
-                image: {
-                    btn: document.getElementById('imageTabBtn'),
-                    content: document.getElementById('imageContent')
-                },
-                video: {
-                    btn: document.getElementById('videoTabBtn'),
-                    content: document.getElementById('videoContent')
-                }
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 mb-6 hide-in-print">
+                <button class="tab-btn active" data-tab="text-tab">
+                    <i class="fas fa-font mr-2"></i>Text
+                </button>
+                <button class="tab-btn" data-tab="image-tab">
+                    <i class="fas fa-image mr-2"></i>Image
+                </button>
+                <button class="tab-btn" data-tab="video-tab">
+                    <i class="fas fa-video mr-2"></i>Video
+                </button>
+            </div>
+            
+            <!-- Text Upload Tab -->
+            <div id="text-tab" class="tab active">
+                <form id="text-form" class="space-y-6">
+                    <div>
+                        <label for="text-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="text-title" placeholder="Add a title to your post" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="text-content" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                        <textarea id="text-content" rows="6" placeholder="What's on your mind?" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="text-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <input type="text" id="text-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-sm text-gray-500 mt-1">Example: #lifestyle, #inspiration, #design</p>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="text-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                        <label for="text-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
+                            <i class="fas fa-paper-plane mr-2"></i>Publish Post
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Image Upload Tab -->
+            <div id="image-tab" class="tab">
+                <form id="image-form" class="space-y-6">
+                    <div>
+                        <label for="image-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="image-title" placeholder="Add a title to your post" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Images</label>
+                        <div id="image-dropzone" class="dropzone">
+                            <input type="file" id="image-upload" class="file-input" accept="image/*" multiple>
+                            <div class="text-center">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Drag and drop images here, or click to select files</p>
+                                <p class="text-gray-500 text-sm mt-1">JPG, PNG, GIF files are allowed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-container" id="image-preview-container">
+                        <!-- Image previews will appear here -->
+                    </div>
+                    
+                    <div>
+                        <label for="image-caption" class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+                        <textarea id="image-caption" rows="3" placeholder="Add a caption to your images" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="image-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <input type="text" id="image-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="image-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                            <label for="image-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="image-download" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                            <label for="image-download" class="ml-2 block text-sm text-gray-700">Allow downloads</label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
+                            <i class="fas fa-images mr-2"></i>Publish Images
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Video Upload Tab -->
+            <div id="video-tab" class="tab">
+                <form id="video-form" class="space-y-6">
+                    <div>
+                        <label for="video-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="video-title" placeholder="Add a title to your video" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Video</label>
+                        <div id="video-dropzone" class="dropzone">
+                            <input type="file" id="video-upload" class="file-input" accept="video/*">
+                            <div class="text-center">
+                                <i class="fas fa-film text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">Drag and drop video here, or click to select file</p>
+                                <p class="text-gray-500 text-sm mt-1">MP4, WebM, Ogg files are allowed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="video-preview-container" class="hidden">
+                        <div class="mb-4">
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Video Preview</h3>
+                            <div class="rounded-lg overflow-hidden">
+                                <video id="video-preview" controls playsinline webkit-playsinline class="w-full max-h-96 bg-black"></video>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-700 mb-2">Select Thumbnail</h3>
+                            <div class="grid grid-cols-3 gap-3 mb-3" id="thumbnail-container">
+                                <!-- Thumbnails will appear here -->
+                            </div>
+                            
+                            <div>
+                                <label class="flex items-center cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm">
+                                    <i class="fas fa-plus-circle mr-1"></i> 
+                                    <span>Upload custom thumbnail</span>
+                                    <input type="file" id="custom-thumbnail" accept="image/*" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="video-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="video-description" rows="3" placeholder="Add a description to your video" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="video-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <input type="text" id="video-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="video-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                            <label for="video-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="video-download" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                            <label for="video-download" class="ml-2 block text-sm text-gray-700">Allow downloads</label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
+                            <i class="fas fa-video mr-2"></i>Publish Video
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Profile Page (Hidden by Default) -->
+        <div id="profile-page" class="page hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="text-center mb-6">
+                    <div class="relative inline-block">
+                        <img src="https://via.placeholder.com/150" alt="Profile picture" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg" id="profile-page-image">
+                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <h2 class="text-2xl font-bold mt-4" id="profile-user-name">User Name</h2>
+                    <p class="text-gray-600" id="profile-user-bio">User Bio</p>
+                    <div class="flex justify-center mt-2" id="user-tags">
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">Photography</span>
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">Travel</span>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">Design</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                    <div>
+                        <h4 class="text-2xl font-bold" id="user-post-count">0</h4>
+                        <p class="text-gray-600">Posts</p>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold" id="user-followers">0</h4>
+                        <p class="text-gray-600">Followers</p>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold" id="user-following">0</h4>
+                        <p class="text-gray-600">Following</p>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">About Me</h3>
+                        <button class="text-indigo-600 hover:text-indigo-800 text-sm" id="edit-profile-btn">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                    </div>
+                    <p class="text-gray-700" id="user-about">User biography and information will appear here.</p>
+                </div>
+            </div>
+            
+            <!-- User Posts -->
+            <div class="mt-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold">My Posts</h3>
+                    <div class="flex space-x-2">
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-md active" id="grid-view-btn">
+                            <i class="fas fa-th mr-1"></i>Grid
+                        </button>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-md" id="list-view-btn">
+                            <i class="fas fa-list mr-1"></i>List
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3" id="user-posts-grid">
+                    <!-- User posts will be loaded here -->
+                    <div class="text-center py-10 col-span-3" id="user-posts-loading">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+                        <p class="mt-2 text-gray-600">Loading your posts...</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4 hidden" id="user-posts-list">
+                    <!-- List view of posts will be here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Page -->
+        <div id="settings-page" class="page hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6">Account Settings</h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="fullname" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input type="text" id="fullname" placeholder="Enter your full name" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" id="username" placeholder="Enter your username" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label for="settings-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input type="email" id="settings-email" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" disabled>
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input type="tel" id="phone" placeholder="Enter your phone number" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Biography</label>
+                                <textarea id="bio" rows="4" placeholder="Tell us about yourself" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold mb-4">Privacy Settings</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Profile Visibility</h4>
+                                    <p class="text-sm text-gray-600">Control who can see your profile</p>
+                                </div>
+                                <select id="profile-visibility" class="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="public">Public</option>
+                                    <option value="friends">Friends Only</option>
+                                    <option value="private">Private</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Post Comments</h4>
+                                    <p class="text-sm text-gray-600">Allow others to comment on your posts</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer" id="allow-comments">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Tag Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive notifications when tagged</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer" id="tag-notifications">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Download Permission</h4>
+                                    <p class="text-sm text-gray-600">Allow users to download your content</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" id="download-permission">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold mb-4">Notification Settings</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Email Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive notifications via email</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer" id="email-notifications">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Push Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive notifications on your device</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer" id="push-notifications">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium">Marketing Emails</h4>
+                                    <p class="text-sm text-gray-600">Receive promotional content</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" id="marketing-emails">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-md" id="settings-cancel">Cancel</button>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md" id="settings-save">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6 mt-8 hide-in-print">
+        <div class="app-container">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-xl font-bold text-indigo-600">SocialApp</h3>
+                    <p class="text-gray-600 text-sm">Connect, Share, and Discover</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-600 hover:text-indigo-600">
+                        <i class="fab fa-facebook-square text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-indigo-600">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-indigo-600">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-indigo-600">
+                        <i class="fab fa-youtube text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center text-gray-500 text-sm">
+                <p>&copy; 2023 SocialApp. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Firebase initialization
+            const firebaseConfig = {
+                apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+                authDomain: "onlineshop-849c8.firebaseapp.com",
+                databaseURL: "https://onlineshop-849c8.firebaseio.com",
+                projectId: "onlineshop-849c8",
+                storageBucket: "onlineshop-849c8.appspot.com",
+                messagingSenderId: "883512833370",
+                appId: "1:883512833370:web:a1c8412b158f8744afef63"
             };
             
-            // Add click event to all tabs
-            for (const type in tabs) {
-                tabs[type].btn.addEventListener('click', function() {
-                    // Hide all tab contents
-                    for (const t in tabs) {
-                        tabs[t].content.classList.remove('active');
-                        tabs[t].btn.classList.remove('tab-active');
-                        tabs[t].btn.classList.add('tab-inactive');
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            
+            // Get Firebase services
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const storage = firebase.storage();
+            
+            // DOM Elements - Auth
+            const loginButton = document.getElementById('login-button');
+            const userProfile = document.getElementById('user-profile');
+            const profileImage = document.getElementById('profile-image');
+            const userDropdown = document.getElementById('user-dropdown');
+            const logoutButton = document.getElementById('logout-button');
+            const authModal = document.getElementById('auth-modal');
+            const closeAuthModal = document.getElementById('close-auth-modal');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const showSignup = document.getElementById('show-signup');
+            const showLogin = document.getElementById('show-login');
+            const authElements = document.querySelectorAll('.auth-required');
+            const authContent = document.querySelectorAll('.auth-content');
+            
+            // Variables
+            let currentUser = null;
+            let userPostData = [];
+            let postsPerPage = 5;
+            let lastDoc = null;
+            let selectedThumbnailFile = null;
+            let selectedFiles = [];
+            
+            // Authentication state observer
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    
+                    // Update UI
+                    loginButton.classList.add('hidden');
+                    userProfile.classList.remove('hidden');
+                    
+                    // Allow access to auth required pages
+                    authElements.forEach(element => {
+                        element.classList.remove('hidden');
+                    });
+                    
+                    // Show auth content
+                    authContent.forEach(content => {
+                        content.classList.remove('hidden');
+                    });
+                    
+                    // Get user profile data
+                    getUserProfile(user.uid);
+                    
+                    // Load user posts
+                    loadUserPosts(user.uid);
+                    
+                    // Close auth modal if open
+                    authModal.classList.add('hidden');
+                } else {
+                    // User is signed out
+                    currentUser = null;
+                    
+                    // Update UI
+                    loginButton.classList.remove('hidden');
+                    userProfile.classList.add('hidden');
+                    
+                    // Restrict access to auth required pages
+                    authElements.forEach(element => {
+                        element.classList.add('hidden');
+                    });
+                    
+                    // Hide auth content
+                    authContent.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // If on auth required page, redirect to home
+                    const currentPage = document.querySelector('.page.active');
+                    if (currentPage && !currentPage.id.includes('home')) {
+                        navigateToPage('home');
+                    }
+                }
+                
+                // Load posts regardless of auth state
+                loadPosts();
+            });
+            
+            // Navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetPage = this.getAttribute('data-page');
+                    
+                    // Check if auth required
+                    if (this.classList.contains('auth-required') && !currentUser) {
+                        showAuthModal();
+                        return;
                     }
                     
-                    // Show current tab content
-                    tabs[type].content.classList.add('active');
-                    tabs[type].btn.classList.remove('tab-inactive');
-                    tabs[type].btn.classList.add('tab-active');
+                    navigateToPage(targetPage);
+                });
+            });
+            
+            function navigateToPage(targetPage) {
+                // Update active navigation link
+                navLinks.forEach(l => l.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[data-page="${targetPage}"]`);
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                }
+                
+                // Show the corresponding page
+                pages.forEach(page => {
+                    if (page.id === `${targetPage}-page`) {
+                        page.classList.remove('hidden');
+                        page.classList.add('active', 'fade-in');
+                    } else {
+                        page.classList.add('hidden');
+                        page.classList.remove('active');
+                    }
                 });
             }
             
-            // --- TEXT POST FUNCTIONALITY ---
-            const textUploadBtn = document.getElementById('textUploadBtn');
+            // Tab switching for Upload page
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabs = document.querySelectorAll('.tab');
             
-            textUploadBtn.addEventListener('click', function() {
-                const title = document.getElementById('postTitle').value;
-                const content = quill.root.innerHTML;
-                
-                // Form validation
-                if (!title) {
-                    alert('ကျေးဇူးပြု၍ ခေါင်းစဉ် ရိုက်ထည့်ပါ။');
-                    return;
-                }
-                
-                if (quill.getText().trim().length === 0) {
-                    alert('ကျေးဇူးပြု၍ အကြောင်းအရာ ရေးသားပါ။');
-                    return;
-                }
-                
-                // Show progress UI
-                showProgressUI('စာသား');
-                
-                // Create text post data
-                const textData = {
-                    type: 'text',
-                    title: title,
-                    content: content,
-                    plainText: quill.getText(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    settings: {
-                        disableComments: document.getElementById('textDisableComments').checked,
-                        disableSharing: document.getElementById('textDisableSharing').checked,
-                    }
-                };
-                
-                // Simulate saving to Firestore
-                simulateProgress(function() {
-                    // Add to Firestore collection
-                    firestore.collection('posts').add(textData)
-                    .then(() => {
-                        alert('စာသား အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
-                        hideProgressUI();
-                        resetTextForm();
-                    })
-                    .catch(error => {
-                        alert('ဝမ်းနည်းပါသည်။ သိမ်းဆည်းမှု မအောင်မြင်ပါ။ ' + error.message);
-                        hideProgressUI();
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Update active tab button
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show the corresponding tab
+                    tabs.forEach(tab => {
+                        if (tab.id === targetTab) {
+                            tab.classList.add('active', 'fade-in');
+                        } else {
+                            tab.classList.remove('active');
+                        }
                     });
                 });
             });
             
-            function resetTextForm() {
-                document.getElementById('postTitle').value = '';
-                quill.setContents([]);
-                document.getElementById('textDisableComments').checked = false;
-                document.getElementById('textDisableSharing').checked = false;
+            // Auth functions
+            loginButton.addEventListener('click', showAuthModal);
+            
+            closeAuthModal.addEventListener('click', () => {
+                authModal.classList.add('hidden');
+            });
+            
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                document.getElementById('auth-modal-title').textContent = 'Sign Up';
+            });
+            
+            showLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                document.getElementById('auth-modal-title').textContent = 'Sign In';
+            });
+            
+            function showAuthModal() {
+                authModal.classList.remove('hidden');
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                document.getElementById('auth-modal-title').textContent = 'Sign In';
             }
             
-            // --- IMAGE UPLOAD FUNCTIONALITY ---
-            const imageUpload = document.getElementById('imageUpload');
-            const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
-            const imageUploadBtn = document.getElementById('imageUploadBtn');
-            
-            let selectedImages = [];
-            
-            imageUpload.addEventListener('change', function(e) {
-                const files = e.target.files;
+            // Login form submit
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
                 
-                if (files.length > 0) {
-                    for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        const imageURL = URL.createObjectURL(file);
-                        
-                        selectedImages.push({
-                            file: file,
-                            url: imageURL
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        showSuccessMessage('Successfully logged in!');
+                    })
+                    .catch((error) => {
+                        showErrorMessage(error.message);
+                    });
+            });
+            
+            // Signup form submit
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                const confirmPassword = document.getElementById('signup-confirm-password').value;
+                
+                if (password !== confirmPassword) {
+                    showErrorMessage('Passwords do not match');
+                    return;
+                }
+                
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        // Create user profile
+                        return db.collection('users').doc(userCredential.user.uid).set({
+                            name: name,
+                            email: email,
+                            bio: '',
+                            profileImage: 'https://via.placeholder.com/150',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        
-                        // Create image preview
-                        createImagePreview(imageURL, selectedImages.length - 1);
-                    }
-                }
-            });
-            
-            function createImagePreview(imageURL, index) {
-                const previewDiv = document.createElement('div');
-                previewDiv.className = 'image-preview';
-                previewDiv.style.backgroundImage = `url('${imageURL}')`;
-                previewDiv.dataset.index = index;
-                
-                const removeBtn = document.createElement('div');
-                removeBtn.className = 'remove-btn';
-                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                removeBtn.addEventListener('click', function() {
-                    // Remove image from array
-                    selectedImages.splice(index, 1);
-                    // Re-render all previews
-                    refreshImagePreviews();
-                });
-                
-                previewDiv.appendChild(removeBtn);
-                imagesPreviewContainer.appendChild(previewDiv);
-            }
-            
-            function refreshImagePreviews() {
-                imagesPreviewContainer.innerHTML = '';
-                selectedImages.forEach((image, index) => {
-                    createImagePreview(image.url, index);
-                });
-            }
-            
-            imageUploadBtn.addEventListener('click', function() {
-                const title = document.getElementById('imageTitle').value;
-                const description = document.getElementById('imageDescription').value;
-                
-                // Form validation
-                if (!title) {
-                    alert('ကျေးဇူးပြု၍ ခေါင်းစဉ် ရိုက်ထည့်ပါ။');
-                    return;
-                }
-                
-                if (selectedImages.length === 0) {
-                    alert('ကျေးဇူးပြု၍ အနည်းဆုံး ပုံတစ်ပုံ ရွေးချယ်ပါ။');
-                    return;
-                }
-                
-                // Show progress UI
-                showProgressUI('ပုံများ');
-                
-                // Prepare image metadata
-                const imagePostData = {
-                    type: 'image',
-                    title: title,
-                    description: description,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    imageCount: selectedImages.length,
-                    imageUrls: [],
-                    settings: {
-                        disableComments: document.getElementById('imageDisableComments').checked,
-                        disableSharing: document.getElementById('imageDisableSharing').checked,
-                        disableDownload: document.getElementById('imageDisableDownload').checked
-                    }
-                };
-                
-                // Upload images one by one
-                uploadImagesSequentially(selectedImages, 0, imagePostData);
-            });
-            
-            function uploadImagesSequentially(images, index, postData) {
-                // If all images are uploaded
-                if (index >= images.length) {
-                    // Save post data to Firestore
-                    firestore.collection('posts').add(postData)
-                    .then(() => {
-                        alert('ပုံများ အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
-                        hideProgressUI();
-                        resetImageForm();
                     })
-                    .catch(error => {
-                        alert('ဝမ်းနည်းပါသည်။ သိမ်းဆည်းမှု မအောင်မြင်ပါ။ ' + error.message);
-                        hideProgressUI();
+                    .then(() => {
+                        showSuccessMessage('Account created successfully!');
+                    })
+                    .catch((error) => {
+                        showErrorMessage(error.message);
                     });
-                    return;
+            });
+            
+            // Logout
+            logoutButton.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    showSuccessMessage('You have been signed out');
+                }).catch((error) => {
+                    showErrorMessage(error.message);
+                });
+            });
+            
+            // User profile dropdown
+            profileImage.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', (e) => {
+                if (!profileImage.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
                 }
-                
-                // Update progress
-                const progressPercent = Math.round(((index) / images.length) * 100);
-                updateProgress(progressPercent, `ပုံ ${index+1}/${images.length} တင်နေသည်`);
-                
-                // Upload current image
-                const file = images[index].file;
-                const timestamp = Date.now();
-                const fileName = `images/${timestamp}_${file.name}`;
-                const imageRef = storage.ref(fileName);
-                
-                const uploadTask = imageRef.put(file);
-                
-                uploadTask.on('state_changed', 
-                    // Progress
-                    (snapshot) => {
-                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        updateProgress(progress, `ပုံ ${index+1}/${images.length} တင်နေသည် (${progress}%)`);
-                    },
-                    // Error
-                    (error) => {
-                        alert('ပုံတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
-                        hideProgressUI();
-                    },
-                    // Complete
-                    () => {
-                        // Get download URL
-                        imageRef.getDownloadURL().then((downloadURL) => {
-                            // Add URL to post data
-                            postData.imageUrls.push(downloadURL);
+            });
+            
+            // Get user profile data
+            function getUserProfile(userId) {
+                db.collection('users').doc(userId).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
                             
-                            // Upload next image
-                            uploadImagesSequentially(images, index + 1, postData);
-                        });
-                    }
-                );
+                            // Update UI elements
+                            document.getElementById('profile-user-name').textContent = userData.name || 'User';
+                            document.getElementById('profile-user-bio').textContent = userData.bio || 'No bio yet';
+                            document.getElementById('user-about').textContent = userData.bio || 'No information provided.';
+                            
+                            // Update settings form
+                            document.getElementById('fullname').value = userData.name || '';
+                            document.getElementById('username').value = userData.username || '';
+                            document.getElementById('settings-email').value = userData.email || '';
+                            document.getElementById('phone').value = userData.phone || '';
+                            document.getElementById('bio').value = userData.bio || '';
+                            
+                            // Update profile images
+                            if (userData.profileImage) {
+                                const profileImgElements = document.querySelectorAll('#profile-image, #profile-page-image');
+                                profileImgElements.forEach(img => {
+                                    img.src = userData.profileImage;
+                                });
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error getting user profile: ", error);
+                    });
             }
             
-            function resetImageForm() {
-                document.getElementById('imageTitle').value = '';
-                document.getElementById('imageDescription').value = '';
-                document.getElementById('imageDisableComments').checked = false;
-                document.getElementById('imageDisableSharing').checked = false;
-                document.getElementById('imageDisableDownload').checked = false;
-                selectedImages = [];
-                imagesPreviewContainer.innerHTML = '';
-            }
+            // Image Upload Functionality
+            const imageUpload = document.getElementById('image-upload');
+            const imageDropzone = document.getElementById('image-dropzone');
+            const imagePreviewContainer = document.getElementById('image-preview-container');
             
-            // --- VIDEO UPLOAD FUNCTIONALITY ---
-            const videoUpload = document.getElementById('videoUpload');
-            const videoPreview = document.getElementById('videoPreview');
-            const uploadPrompt = document.getElementById('uploadPrompt');
-            const fileName = document.getElementById('fileName');
-            const fileSize = document.getElementById('fileSize');
-            const fileDuration = document.getElementById('fileDuration');
-            const videoUploadBtn = document.getElementById('videoUploadBtn');
-            const thumbnailContainer = document.getElementById('thumbnailContainer');
-            const customThumbnailBtn = document.getElementById('customThumbnailBtn');
-            const customThumbnail = document.getElementById('customThumbnail');
+            imageUpload.addEventListener('change', handleImageUpload);
             
-            // Handle video file selection
-            videoUpload.addEventListener('change', function(e) {
-                const file = e.target.files[0];
+            imageDropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-indigo-500');
+            });
+            
+            imageDropzone.addEventListener('dragleave', function() {
+                this.classList.remove('border-indigo-500');
+            });
+            
+            imageDropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-indigo-500');
                 
-                if (file) {
-                    // Update file info
-                    fileName.textContent = file.name;
-                    fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-                    
-                    // Show video preview
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    imageUpload.files = files;
+                    handleImageUpload();
+                }
+            });
+            
+            function handleImageUpload() {
+                const files = imageUpload.files;
+                selectedFiles = Array.from(files);
+                
+                // Clear previous previews
+                imagePreviewContainer.innerHTML = '';
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const previewItem = document.createElement('div');
+                            previewItem.className = 'preview-item';
+                            previewItem.dataset.index = i;
+                            
+                            const previewImage = document.createElement('img');
+                            previewImage.className = 'preview-image';
+                            previewImage.src = e.target.result;
+                            previewImage.alt = 'Image preview';
+                            
+                            const removeButton = document.createElement('button');
+                            removeButton.className = 'remove-btn';
+                            removeButton.innerHTML = '<i class="fas fa-times"></i>';
+                            removeButton.addEventListener('click', function() {
+                                const index = parseInt(previewItem.dataset.index);
+                                selectedFiles.splice(index, 1);
+                                previewItem.remove();
+                                // Reindex remaining previews
+                                const remainingPreviews = imagePreviewContainer.querySelectorAll('.preview-item');
+                                remainingPreviews.forEach((preview, idx) => {
+                                    preview.dataset.index = idx;
+                                });
+                            });
+                            
+                            previewItem.appendChild(previewImage);
+                            previewItem.appendChild(removeButton);
+                            imagePreviewContainer.appendChild(previewItem);
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    }
+                }
+            }
+            
+            // Video Upload Functionality
+            const videoUpload = document.getElementById('video-upload');
+            const videoDropzone = document.getElementById('video-dropzone');
+            const videoPreview = document.getElementById('video-preview');
+            const videoPreviewContainer = document.getElementById('video-preview-container');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const customThumbnail = document.getElementById('custom-thumbnail');
+            
+            videoUpload.addEventListener('change', handleVideoUpload);
+            
+            videoDropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-indigo-500');
+            });
+            
+            videoDropzone.addEventListener('dragleave', function() {
+                this.classList.remove('border-indigo-500');
+            });
+            
+            videoDropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-indigo-500');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('video/')) {
+                    videoUpload.files = files;
+                    handleVideoUpload();
+                }
+            });
+            
+            function handleVideoUpload() {
+                const file = videoUpload.files[0];
+                
+                if (file && file.type.startsWith('video/')) {
                     const videoURL = URL.createObjectURL(file);
                     videoPreview.src = videoURL;
-                    videoPreview.classList.remove('hidden');
-                    uploadPrompt.classList.add('hidden');
+                    videoPreviewContainer.classList.remove('hidden');
                     
-                    // Load video metadata to get duration
-                    videoPreview.onloadedmetadata = function() {
-                        const minutes = Math.floor(videoPreview.duration / 60);
-                        const seconds = Math.floor(videoPreview.duration % 60);
-                        fileDuration.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                        
-                        // Generate thumbnails
+                    videoPreview.onloadeddata = function() {
                         generateThumbnails(videoPreview);
                     };
                 }
-            });
+            }
             
-            // Generate video thumbnails
             function generateThumbnails(video) {
                 thumbnailContainer.innerHTML = '';
                 
-                for (let i = 1; i <= 4; i++) {
+                for (let i = 0; i < 3; i++) {
+                    const thumbnailTime = i * (video.duration / 3);
+                    
                     const canvas = document.createElement('canvas');
                     canvas.width = 160;
                     canvas.height = 90;
                     
-                    const thumbnailDiv = document.createElement('div');
-                    thumbnailDiv.className = 'thumbnail-preview bg-gray-200 rounded-md h-16 overflow-hidden';
-                    thumbnailDiv.dataset.time = Math.floor(i * (video.duration / 5));
-                    
-                    thumbnailDiv.addEventListener('click', function() {
-                        // Remove selected class from all thumbnails
-                        document.querySelectorAll('.thumbnail-preview').forEach(t => t.classList.remove('border-2', 'border-blue-500'));
+                    const thumbnailWrapper = document.createElement('div');
+                    thumbnailWrapper.className = 'relative cursor-pointer border-2 border-transparent hover:border-indigo-500 rounded-md overflow-hidden';
+                    thumbnailWrapper.onclick = function() {
+                        document.querySelectorAll('#thumbnail-container > div').forEach(el => {
+                            el.classList.remove('border-indigo-500');
+                            el.classList.add('border-transparent');
+                        });
+                        this.classList.remove('border-transparent');
+                        this.classList.add('border-indigo-500');
                         
-                        // Add selected class to clicked thumbnail
-                        this.classList.add('border-2', 'border-blue-500');
-                    });
+                        // Generate thumbnail file from canvas
+                        canvas.toBlob((blob) => {
+                            selectedThumbnailFile = new File([blob], `thumbnail-${Date.now()}.png`, { type: 'image/png' });
+                        }, 'image/png');
+                    };
                     
-                    thumbnailContainer.appendChild(thumbnailDiv);
+                    const thumbnailCanvas = document.createElement('div');
+                    thumbnailCanvas.className = 'w-full h-16 bg-gray-900';
                     
-                    // Set video to specific time and capture thumbnail
+                    thumbnailWrapper.appendChild(thumbnailCanvas);
+                    thumbnailContainer.appendChild(thumbnailWrapper);
+                    
                     setTimeout(() => {
-                        video.currentTime = Math.floor(i * (video.duration / 5));
-                    }, i * 300);
-                    
-                    video.addEventListener('seeked', function handler() {
-                        const context = canvas.getContext('2d');
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        thumbnailDiv.style.backgroundImage = `url(${canvas.toDataURL()})`;
-                        thumbnailDiv.style.backgroundSize = 'cover';
-                        thumbnailDiv.style.backgroundPosition = 'center';
+                        video.currentTime = thumbnailTime;
                         
-                        // Remove event listener after all thumbnails are generated
-                        if (i === 4) {
+                        video.addEventListener('seeked', function handler() {
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            thumbnailCanvas.style.backgroundImage = `url(${canvas.toDataURL()})`;
+                            thumbnailCanvas.style.backgroundSize = 'cover';
+                            thumbnailCanvas.style.backgroundPosition = 'center';
+                            
                             video.removeEventListener('seeked', handler);
-                        }
-                        
-                        // Select first thumbnail by default
-                        if (i === 1) {
-                            thumbnailDiv.classList.add('border-2', 'border-blue-500');
-                        }
-                    }, { once: i === 4 });
+                        });
+                    }, (i + 1) * 100);
                 }
             }
             
-            // Custom thumbnail upload
-            customThumbnailBtn.addEventListener('click', function() {
-                customThumbnail.click();
-            });
-            
             customThumbnail.addEventListener('change', function(e) {
                 const file = e.target.files[0];
-                if (file) {
+                selectedThumbnailFile = file;
+                
+                if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const thumbnailDiv = document.createElement('div');
-                        thumbnailDiv.className = 'thumbnail-preview bg-gray-200 rounded-md h-16 overflow-hidden';
-                        thumbnailDiv.style.backgroundImage = `url(${event.target.result})`;
-                        thumbnailDiv.style.backgroundSize = 'cover';
-                        thumbnailDiv.style.backgroundPosition = 'center';
-                        thumbnailDiv.dataset.custom = 'true';
+                    
+                    reader.onload = function(e) {
+                        const thumbnailWrapper = document.createElement('div');
+                        thumbnailWrapper.className = 'relative cursor-pointer border-2 border-transparent hover:border-indigo-500 rounded-md overflow-hidden';
+                        thumbnailWrapper.onclick = function() {
+                            document.querySelectorAll('#thumbnail-container > div').forEach(el => {
+                                el.classList.remove('border-indigo-500');
+                                el.classList.add('border-transparent');
+                            });
+                            this.classList.remove('border-transparent');
+                            this.classList.add('border-indigo-500');
+                        };
                         
-                        thumbnailDiv.addEventListener('click', function() {
-                            // Remove selected class from all thumbnails
-                            document.querySelectorAll('.thumbnail-preview').forEach(t => t.classList.remove('border-2', 'border-blue-500'));
-                            
-                            // Add selected class to clicked thumbnail
-                            this.classList.add('border-2', 'border-blue-500');
-                        });
+                        const thumbnailImg = document.createElement('div');
+                        thumbnailImg.className = 'w-full h-16';
+                        thumbnailImg.style.backgroundImage = `url(${e.target.result})`;
+                        thumbnailImg.style.backgroundSize = 'cover';
+                        thumbnailImg.style.backgroundPosition = 'center';
                         
-                        // Insert custom thumbnail at the beginning
+                        thumbnailWrapper.appendChild(thumbnailImg);
+                        
+                        // Add custom thumbnail at the beginning
                         if (thumbnailContainer.firstChild) {
-                            thumbnailContainer.insertBefore(thumbnailDiv, thumbnailContainer.firstChild);
+                            thumbnailContainer.insertBefore(thumbnailWrapper, thumbnailContainer.firstChild);
                         } else {
-                            thumbnailContainer.appendChild(thumbnailDiv);
+                            thumbnailContainer.appendChild(thumbnailWrapper);
                         }
                         
-                        // Automatically select this thumbnail
-                        thumbnailDiv.click();
+                        // Auto-select the custom thumbnail
+                        thumbnailWrapper.click();
                     };
+                    
                     reader.readAsDataURL(file);
                 }
             });
             
-            // Handle video upload button click
-            videoUploadBtn.addEventListener('click', function() {
-                const videoFile = videoUpload.files[0];
-                const videoTitleValue = document.getElementById('videoTitle').value;
+            // Form submissions
+            const textForm = document.getElementById('text-form');
+            const imageForm = document.getElementById('image-form');
+            const videoForm = document.getElementById('video-form');
+            
+            textForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                // Form validation
-                if (!videoFile) {
-                    alert('ကျေးဇူးပြု၍ ဗီဒီယိုဖိုင် ရွေးချယ်ပါ။');
+                if (!currentUser) {
+                    showAuthModal();
                     return;
                 }
                 
-                if (!videoTitleValue) {
-                    alert('ကျေးဇူးပြု၍ ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ။');
+                const title = document.getElementById('text-title').value;
+                const content = document.getElementById('text-content').value;
+                const tags = document.getElementById('text-tags').value;
+                const allowComments = document.getElementById('text-comments').checked;
+                
+                if (!title || !content) {
+                    showErrorMessage('Please fill in all required fields.');
                     return;
                 }
                 
-                // Get selected thumbnail
-                const selectedThumbnail = document.querySelector('.thumbnail-preview.border-2.border-blue-500');
-                if (!selectedThumbnail) {
-                    alert('ကျေးဇူးပြု၍ ဗီဒီယို အနှစ်ချုပ်ပုံ ရွေးချယ်ပါ။');
-                    return;
-                }
-                
-                // Show progress UI
-                showProgressUI('ဗီဒီယို');
-                
-                // Extract thumbnail data
-                let thumbnailDataUrl = null;
-                const backgroundImage = selectedThumbnail.style.backgroundImage;
-                if (backgroundImage) {
-                    thumbnailDataUrl = backgroundImage.slice(backgroundImage.indexOf('(')+1, backgroundImage.lastIndexOf(')'));
-                    thumbnailDataUrl = thumbnailDataUrl.replace(/"/g, '');
-                }
-                
-                // Generate unique file names
-                const timestamp = Date.now();
-                const videoFileName = `videos/${timestamp}_${videoFile.name}`;
-                const thumbnailFileName = `thumbnails/${timestamp}_thumbnail.jpg`;
-                
-                // Create video metadata
-                const videoData = {
-                    type: 'video',
-                    title: document.getElementById('videoTitle').value,
-                    description: document.getElementById('videoDescription').value,
-                    fileName: videoFile.name,
-                    fileSize: videoFile.size,
-                    duration: videoPreview.duration,
-                    thumbnailUrl: '',
-                    videoUrl: '',
-                    uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
-                    settings: {
-                        disableComments: document.getElementById('videoDisableComments').checked,
-                        disableSharing: document.getElementById('videoDisableSharing').checked,
-                        disableDownload: document.getElementById('videoDisableDownload').checked
-                    }
+                // Add post to Firestore
+                const postData = {
+                    userId: currentUser.uid,
+                    type: 'text',
+                    title: title,
+                    content: content,
+                    tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+                    allowComments: allowComments,
+                    likes: 0,
+                    comments: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                // Upload thumbnail first
-                updateProgress(0, 'လုပ်ငန်း 1/3: ပုံတင်နေသည်');
+                db.collection('posts').add(postData)
+                    .then((docRef) => {
+                        showSuccessMessage('Text post published successfully!');
+                        textForm.reset();
+                        navigateToPage('home');
+                        loadPosts(true); // Reload posts
+                    })
+                    .catch((error) => {
+                        showErrorMessage('Error publishing post: ' + error.message);
+                    });
+            });
+            
+            imageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                // Convert data URL to blob
-                fetch(thumbnailDataUrl)
-                .then(res => res.blob())
-                .then(thumbnailBlob => {
-                    const thumbnailRef = storage.ref(thumbnailFileName);
-                    const thumbnailTask = thumbnailRef.put(thumbnailBlob);
+                if (!currentUser) {
+                    showAuthModal();
+                    return;
+                }
+                
+                const title = document.getElementById('image-title').value;
+                const caption = document.getElementById('image-caption').value;
+                const tags = document.getElementById('image-tags').value;
+                const allowComments = document.getElementById('image-comments').checked;
+                const allowDownload = document.getElementById('image-download').checked;
+                
+                if (!title || selectedFiles.length === 0) {
+                    showErrorMessage('Please add a title and at least one image.');
+                    return;
+                }
+                
+                // Show loading
+                showLoading('Publishing post...');
+                
+                // Upload images to Firebase Storage
+                const uploadPromises = [];
+                const imageUrls = [];
+                
+                selectedFiles.forEach((file, index) => {
+                    const storageRef = storage.ref(`posts/${currentUser.uid}/${Date.now()}-${index}-${file.name}`);
+                    const uploadTask = storageRef.put(file);
                     
-                    thumbnailTask.on('state_changed', 
-                        // Progress
-                        (snapshot) => {
-                            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                            updateProgress(progress / 3, 'လုပ်ငန်း 1/3: ပုံတင်နေသည်');
-                        },
-                        // Error
-                        (error) => {
-                            alert('ပုံတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
-                            hideProgressUI();
-                        },
-                        // Complete
-                        () => {
-                            // Get thumbnail URL and start video upload
-                            thumbnailRef.getDownloadURL().then((thumbnailUrl) => {
-                                videoData.thumbnailUrl = thumbnailUrl;
-                                
-                                // Upload video file
-                                updateProgress(33, 'လုပ်ငန်း 2/3: ဗီဒီယိုတင်နေသည်');
-                                
-                                const videoRef = storage.ref(videoFileName);
-                                const videoTask = videoRef.put(videoFile);
-                                
-                                videoTask.on('state_changed', 
-                                    // Progress
-                                    (snapshot) => {
-                                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                                        updateProgress(33 + (progress / 3), 'လုပ်ငန်း 2/3: ဗီဒီယိုတင်နေသည်');
-                                    },
-                                    // Error
-                                    (error) => {
-                                        alert('ဗီဒီယိုတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
-                                        hideProgressUI();
-                                    },
-                                    // Complete
-                                    () => {
-                                        // Get video URL and save metadata
-                                        videoRef.getDownloadURL().then((videoUrl) => {
-                                            videoData.videoUrl = videoUrl;
-                                            
-                                            // Save metadata to Firestore
-                                            updateProgress(66, 'လုပ်ငန်း 3/3: စာရင်းသွင်းနေသည်');
-                                            
-                                            firestore.collection('posts').add(videoData)
-                                            .then(() => {
-                                                updateProgress(100, 'ပြီးပါပြီ');
-                                                setTimeout(() => {
-                                                    alert('ဗီဒီယို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
-                                                    hideProgressUI();
-                                                    resetVideoForm();
-                                                }, 500);
-                                            })
-                                            .catch(error => {
-                                                alert('စာရင်းသွင်းရာတွင် အမှားဖြစ်ပွားသည်: ' + error.message);
-                                                hideProgressUI();
-                                            });
-                                        });
-                                    }
-                                );
-                            });
-                        }
-                    );
+                    const uploadPromise = uploadTask.then(() => {
+                        return storageRef.getDownloadURL();
+                    }).then(url => {
+                        imageUrls.push(url);
+                    });
+                    
+                    uploadPromises.push(uploadPromise);
+                });
+                
+                // Wait for all uploads to complete
+                Promise.all(uploadPromises)
+                    .then(() => {
+                        // Add post to Firestore
+                        return db.collection('posts').add({
+                            userId: currentUser.uid,
+                            type: 'image',
+                            title: title,
+                            caption: caption,
+                            imageUrls: imageUrls,
+                            tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+                            allowComments: allowComments,
+                            allowDownload: allowDownload,
+                            likes: 0,
+                            comments: 0,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        hideLoading();
+                        showSuccessMessage('Image post published successfully!');
+                        imageForm.reset();
+                        imagePreviewContainer.innerHTML = '';
+                        selectedFiles = [];
+                        navigateToPage('home');
+                        loadPosts(true); // Reload posts
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showErrorMessage('Error publishing post: ' + error.message);
+                    });
+            });
+            
+            videoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!currentUser) {
+                    showAuthModal();
+                    return;
+                }
+                
+                const title = document.getElementById('video-title').value;
+                const description = document.getElementById('video-description').value;
+                const tags = document.getElementById('video-tags').value;
+                const allowComments = document.getElementById('video-comments').checked;
+                const allowDownload = document.getElementById('video-download').checked;
+                const videoFile = videoUpload.files[0];
+                
+                if (!title || !videoFile || !selectedThumbnailFile) {
+                    showErrorMessage('Please add a title, video, and select a thumbnail.');
+                    return;
+                }
+                
+                // Show loading
+                showLoading('Publishing video...');
+                
+                // Upload thumbnail
+                const thumbnailRef = storage.ref(`thumbnails/${currentUser.uid}/${Date.now()}-${selectedThumbnailFile.name}`);
+                const thumbnailUpload = thumbnailRef.put(selectedThumbnailFile);
+                
+                thumbnailUpload.then(() => {
+                    return thumbnailRef.getDownloadURL();
+                })
+                .then(thumbnailUrl => {
+                    // Upload video
+                    const videoRef = storage.ref(`videos/${currentUser.uid}/${Date.now()}-${videoFile.name}`);
+                    const videoUploadTask = videoRef.put(videoFile);
+                    
+                    return videoUploadTask.then(() => {
+                        return videoRef.getDownloadURL().then(videoUrl => {
+                            return { thumbnailUrl, videoUrl };
+                        });
+                    });
+                })
+                .then(({ thumbnailUrl, videoUrl }) => {
+                    // Add post to Firestore
+                    return db.collection('posts').add({
+                        userId: currentUser.uid,
+                        type: 'video',
+                        title: title,
+                        description: description,
+                        videoUrl: videoUrl,
+                        thumbnailUrl: thumbnailUrl,
+                        tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
+                        allowComments: allowComments,
+                        allowDownload: allowDownload,
+                        likes: 0,
+                        comments: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    hideLoading();
+                    showSuccessMessage('Video post published successfully!');
+                    videoForm.reset();
+                    videoPreviewContainer.classList.add('hidden');
+                    thumbnailContainer.innerHTML = '';
+                    videoPreview.src = '';
+                    selectedThumbnailFile = null;
+                    navigateToPage('home');
+                    loadPosts(true); // Reload posts
                 })
                 .catch(error => {
-                    alert('ပုံကို ပြင်ဆင်ရာတွင် အမှားဖြစ်ပွားသည်: ' + error.message);
-                    hideProgressUI();
+                    hideLoading();
+                    showErrorMessage('Error publishing post: ' + error.message);
                 });
             });
             
-            function resetVideoForm() {
-                document.getElementById('videoTitle').value = '';
-                document.getElementById('videoDescription').value = '';
-                document.getElementById('videoDisableComments').checked = false;
-                document.getElementById('videoDisableSharing').checked = false;
-                document.getElementById('videoDisableDownload').checked = false;
+            // Load posts from Firestore
+            function loadPosts(refresh = false) {
+                const postsContainer = document.getElementById('posts-container');
+                const loadingElement = document.getElementById('posts-loading');
                 
-                videoPreview.classList.add('hidden');
-                uploadPrompt.classList.remove('hidden');
-                videoPreview.src = '';
-                fileName.textContent = 'ဗီဒီယိုဖိုင် မရွေးရသေးပါ';
-                fileSize.textContent = '0 MB';
-                fileDuration.textContent = '00:00';
-                
-                // Reset thumbnails
-                thumbnailContainer.innerHTML = '';
-                for (let i = 1; i <= 4; i++) {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'bg-gray-200 rounded-md h-16 flex items-center justify-center';
-                    placeholder.innerHTML = '<span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>';
-                    thumbnailContainer.appendChild(placeholder);
-                }
-            }
-            
-            // --- COMMON FUNCTIONS ---
-            // Progress UI handling
-            const progressSection = document.getElementById('progressSection');
-            const progressBar = document.getElementById('progressBar');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressTask = document.getElementById('progressTask');
-            const progressMessage = document.getElementById('progressMessage');
-            
-            function showProgressUI(contentType) {
-                // Hide all tab contents
-                for (const type in tabs) {
-                    tabs[type].content.classList.remove('active');
+                if (refresh) {
+                    postsContainer.innerHTML = '';
+                    postsContainer.appendChild(loadingElement);
+                    lastDoc = null;
                 }
                 
-                progressSection.classList.remove('hidden');
-                progressMessage.textContent = `${contentType} တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...`;
-                progressBar.style.width = '0%';
-                progressPercent.textContent = '0% တင်သွင်းပြီးပါပြီ';
-                progressTask.textContent = 'လုပ်ငန်း စတင်နေသည်';
-            }
-            
-            function hideProgressUI() {
-                progressSection.classList.add('hidden');
+                if (loadingElement) {
+                    loadingElement.classList.remove('hidden');
+                }
                 
-                // Show active tab content
-                for (const type in tabs) {
-                    if (tabs[type].btn.classList.contains('tab-active')) {
-                        tabs[type].content.classList.add('active');
-                        break;
-                    }
+                let query = db.collection('posts')
+                    .orderBy('createdAt', 'desc')
+                    .limit(postsPerPage);
+                
+                if (lastDoc && !refresh) {
+                    query = query.startAfter(lastDoc);
                 }
+                
+                query.get()
+                    .then(querySnapshot => {
+                        if (loadingElement) {
+                            loadingElement.classList.add('hidden');
+                        }
+                        
+                        if (querySnapshot.empty) {
+                            if (refresh) {
+                                postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
+                            } else {
+                                document.getElementById('load-more-container').classList.add('hidden');
+                                if (!document.querySelector('.post-card')) {
+                                    postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
+                                }
+                            }
+                            return;
+                        }
+                        
+                        // Get the last document for pagination
+                        lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                        
+                        // Show load more button
+                        document.getElementById('load-more-container').classList.remove('hidden');
+                        
+                        // Process posts
+                        querySnapshot.forEach(doc => {
+                            const postData = doc.data();
+                            const postId = doc.id;
+                            const postElement = createPostElement(postData, postId);
+                            
+                            // Get user information
+                            getUserInfo(postData.userId).then(userInfo => {
+                                const userNameElem = postElement.querySelector('.post-user-name');
+                                const userAvatarElem = postElement.querySelector('.post-user-avatar');
+                                
+                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
+                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
+                            });
+                            
+                            if (refresh && postsContainer.contains(loadingElement)) {
+                                postsContainer.insertBefore(postElement, loadingElement);
+                            } else {
+                                postsContainer.appendChild(postElement);
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error loading posts: ", error);
+                        if (loadingElement) {
+                            loadingElement.classList.add('hidden');
+                        }
+                        postsContainer.innerHTML += '<p class="text-center py-10 text-red-500">Error loading posts.</p>';
+                    });
             }
             
-            function updateProgress(percent, taskMessage) {
-                progressBar.style.width = percent + '%';
-                progressPercent.textContent = Math.round(percent) + '% တင်သွင်းပြီးပါပြီ';
-                if (taskMessage) {
-                    progressTask.textContent = taskMessage;
+            // Load more posts when button is clicked
+            document.getElementById('load-more').addEventListener('click', function() {
+                loadPosts();
+            });
+            
+            // Load user posts for profile page
+            function loadUserPosts(userId) {
+                const userPostsGrid = document.getElementById('user-posts-grid');
+                const userPostsList = document.getElementById('user-posts-list');
+                const loadingElement = document.getElementById('user-posts-loading');
+                
+                if (loadingElement) {
+                    loadingElement.classList.remove('hidden');
                 }
+                
+                db.collection('posts')
+                    .where('userId', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .get()
+                    .then(querySnapshot => {
+                        if (loadingElement) {
+                            loadingElement.classList.add('hidden');
+                        }
+                        
+                        if (querySnapshot.empty) {
+                            userPostsGrid.innerHTML = '<p class="text-center py-10 text-gray-500 col-span-3">You haven\'t created any posts yet.</p>';
+                            userPostsList.innerHTML = '<p class="text-center py-10 text-gray-500">You haven\'t created any posts yet.</p>';
+                            return;
+                        }
+                        
+                        // Update post count
+                        document.getElementById('user-post-count').textContent = querySnapshot.size;
+                        
+                        // Clear containers
+                        userPostsGrid.innerHTML = '';
+                        userPostsList.innerHTML = '';
+                        
+                        // Store post data
+                        userPostData = [];
+                        
+                        // Process posts
+                        querySnapshot.forEach(doc => {
+                            const postData = doc.data();
+                            const postId = doc.id;
+                            userPostData.push({...postData, id: postId});
+                            
+                            // Grid view (just thumbnails)
+                            const gridItem = createPostGridItem(postData, postId);
+                            userPostsGrid.appendChild(gridItem);
+                            
+                            // List view (full post)
+                            const listItem = createPostElement(postData, postId);
+                            userPostsList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error loading user posts: ", error);
+                        if (loadingElement) {
+                            loadingElement.classList.add('hidden');
+                        }
+                        userPostsGrid.innerHTML = '<p class="text-center py-10 text-red-500 col-span-3">Error loading posts.</p>';
+                        userPostsList.innerHTML = '<p class="text-center py-10 text-red-500">Error loading posts.</p>';
+                    });
             }
             
-            function simulateProgress(callback) {
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 2;
-                    updateProgress(progress);
+            // Create post grid item for profile page
+            function createPostGridItem(postData, postId) {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'aspect-square bg-gray-200 rounded-md overflow-hidden';
+                gridItem.dataset.postId = postId;
+                
+                let thumbnail;
+                
+                if (postData.type === 'image' && postData.imageUrls && postData.imageUrls.length > 0) {
+                    thumbnail = postData.imageUrls[0];
+                } else if (postData.type === 'video' && postData.thumbnailUrl) {
+                    thumbnail = postData.thumbnailUrl;
+                } else {
+                    // Text post or missing thumbnail
+                    gridItem.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-800">
+                            <div class="p-4 text-center">
+                                <i class="fas fa-font text-2xl mb-2"></i>
+                                <p class="text-sm font-medium line-clamp-2">${postData.title || 'Post'}</p>
+                            </div>
+                        </div>
+                    `;
+                    return gridItem;
+                }
+                
+                const img = document.createElement('img');
+                img.src = thumbnail;
+                img.className = 'w-full h-full object-cover';
+                img.alt = postData.title || 'Post thumbnail';
+                
+                gridItem.appendChild(img);
+                
+                return gridItem;
+            }
+            
+            // Toggle between grid and list view on profile page
+            const gridViewBtn = document.getElementById('grid-view-btn');
+            const listViewBtn = document.getElementById('list-view-btn');
+            const userPostsGridView = document.getElementById('user-posts-grid');
+            const userPostsListView = document.getElementById('user-posts-list');
+            
+            gridViewBtn.addEventListener('click', function() {
+                gridViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+                userPostsGridView.classList.remove('hidden');
+                userPostsListView.classList.add('hidden');
+            });
+            
+            listViewBtn.addEventListener('click', function() {
+                listViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                userPostsListView.classList.remove('hidden');
+                userPostsGridView.classList.add('hidden');
+            });
+            
+            // Create post element
+            function createPostElement(postData, postId) {
+                const postCard = document.createElement('div');
+                postCard.className = 'card post-card';
+                postCard.dataset.postId = postId;
+                
+                const postHeader = `
+                    <div class="p-4">
+                        <div class="flex items-center mb-4">
+                            <img src="https://via.placeholder.com/40" alt="User profile" class="user-avatar mr-3 post-user-avatar">
+                            <div>
+                                <h3 class="font-semibold post-user-name">User</h3>
+                                <p class="text-gray-500 text-sm">${formatDate(postData.createdAt)}</p>
+                            </div>
+                            <button class="ml-auto text-gray-500 hover:text-gray-700 post-menu-btn">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                `;
+                
+                let postContent;
+                
+                // Different content based on post type
+                if (postData.type === 'text') {
+                    postContent = `
+                        <div class="post-content">
+                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
+                            <p>${postData.content || ''}</p>
+                            ${postData.tags && postData.tags.length > 0 ? 
+                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                ''}
+                        </div>
+                    `;
+                } else if (postData.type === 'image') {
+                    const imagesHtml = postData.imageUrls && postData.imageUrls.length > 0 ? 
+                        `<div class="${postData.imageUrls.length > 1 ? 'grid grid-cols-2 gap-2' : ''} mb-4">
+                            ${postData.imageUrls.map(url => `
+                                <img src="${url}" alt="Post image" class="rounded-lg w-full ${postData.imageUrls.length === 1 ? 'post-image' : 'aspect-square object-cover'}">
+                            `).join('')}
+                        </div>` : '';
                     
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        if (callback) callback();
+                    postContent = `
+                        <div class="post-content">
+                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
+                            ${imagesHtml}
+                            <p>${postData.caption || ''}</p>
+                            ${postData.tags && postData.tags.length > 0 ? 
+                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                ''}
+                        </div>
+                    `;
+                } else if (postData.type === 'video') {
+                    postContent = `
+                        <div class="post-content mb-4">
+                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
+                            <p class="mb-4">${postData.description || ''}</p>
+                            <div class="relative rounded-lg overflow-hidden">
+                                <video controls playsinline webkit-playsinline class="w-full post-video">
+                                    <source src="${postData.videoUrl}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            ${postData.tags && postData.tags.length > 0 ? 
+                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                ''}
+                        </div>
+                    `;
+                }
+                
+                const postActions = `
+                    <div class="post-actions">
+                        <button class="flex items-center text-gray-600 hover:text-indigo-600 like-btn" data-post-id="${postId}">
+                            <i class="far fa-heart mr-1"></i> <span class="like-count">${postData.likes || 0}</span> Likes
+                        </button>
+                        <button class="flex items-center text-gray-600 hover:text-indigo-600 comment-btn" data-post-id="${postId}">
+                            <i class="far fa-comment mr-1"></i> <span class="comment-count">${postData.comments || 0}</span> Comments
+                        </button>
+                        <button class="flex items-center text-gray-600 hover:text-indigo-600 share-btn" data-post-id="${postId}">
+                            <i class="far fa-share-square mr-1"></i> Share
+                        </button>
+                    </div>
+                `;
+                
+                const commentSection = postData.allowComments !== false ? `
+                    <div class="comments-section p-4 border-t border-gray-100 hidden">
+                        <h4 class="font-medium mb-2">Comments</h4>
+                        <div class="comments-container" data-post-id="${postId}">
+                            <div class="text-center py-3">
+                                <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
+                                <p class="mt-1 text-xs text-gray-500">Loading comments...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="flex">
+                                <img src="${currentUser ? (currentUser.photoURL || 'https://via.placeholder.com/40') : 'https://via.placeholder.com/40'}" alt="Your profile" class="w-8 h-8 rounded-full mr-3">
+                                <div class="flex-1">
+                                    <input type="text" placeholder="${currentUser ? 'Write a comment...' : 'Sign in to comment'}" class="comment-input w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" data-post-id="${postId}" ${currentUser ? '' : 'disabled'}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : '';
+                
+                postCard.innerHTML = `
+                    ${postHeader}
+                    ${postContent}
+                    </div>
+                    ${postActions}
+                    ${commentSection}
+                `;
+                
+                // Add event listeners
+                const likeBtn = postCard.querySelector('.like-btn');
+                const commentBtn = postCard.querySelector('.comment-btn');
+                const shareBtn = postCard.querySelector('.share-btn');
+                const commentSection = postCard.querySelector('.comments-section');
+                const commentInput = postCard.querySelector('.comment-input');
+                
+                // Like button functionality
+                likeBtn.addEventListener('click', function() {
+                    if (!currentUser) {
+                        showAuthModal();
+                        return;
                     }
-                }, 50);
+                    
+                    const icon = this.querySelector('i');
+                    const likeCountElem = this.querySelector('.like-count');
+                    const isLiked = icon.classList.contains('fas');
+                    
+                    // Reference to the likes collection
+                    const likeRef = db.collection('posts').doc(postId)
+                        .collection('likes').doc(currentUser.uid);
+                    
+                    // Reference to the post document
+                    const postRef = db.collection('posts').doc(postId);
+                    
+                    if (isLiked) {
+                        // Unlike
+                        icon.classList.remove('fas', 'text-red-500');
+                        icon.classList.add('far');
+                        
+                        let likeCount = parseInt(likeCountElem.textContent);
+                        likeCount = Math.max(0, likeCount - 1);
+                        likeCountElem.textContent = likeCount;
+                        
+                        // Update in Firestore
+                        db.runTransaction(transaction => {
+                            return transaction.get(postRef).then(postDoc => {
+                                // Remove the like document
+                                transaction.delete(likeRef);
+                                
+                                // Update post likes count
+                                const newLikes = Math.max(0, (postDoc.data().likes || 0) - 1);
+                                transaction.update(postRef, { likes: newLikes });
+                            });
+                        });
+                    } else {
+                        // Like
+                        icon.classList.remove('far');
+                        icon.classList.add('fas', 'text-red-500');
+                        
+                        let likeCount = parseInt(likeCountElem.textContent);
+                        likeCount++;
+                        likeCountElem.textContent = likeCount;
+                        
+                        // Update in Firestore
+                        db.runTransaction(transaction => {
+                            return transaction.get(postRef).then(postDoc => {
+                                // Add the like document
+                                transaction.set(likeRef, { 
+                                    userId: currentUser.uid,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                                
+                                // Update post likes count
+                                const newLikes = (postDoc.data().likes || 0) + 1;
+                                transaction.update(postRef, { likes: newLikes });
+                            });
+                        });
+                    }
+                });
+                
+                // Comment button functionality
+                if (commentBtn && commentSection) {
+                    commentBtn.addEventListener('click', function() {
+                        commentSection.classList.toggle('hidden');
+                        if (!commentSection.classList.contains('hidden')) {
+                            loadComments(postId);
+                        }
+                    });
+                }
+                
+                // Comment input functionality
+                if (commentInput) {
+                    commentInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            if (!currentUser) {
+                                showAuthModal();
+                                return;
+                            }
+                            
+                            const commentText = this.value.trim();
+                            if (!commentText) return;
+                            
+                            // Add comment to Firestore
+                            const commentData = {
+                                userId: currentUser.uid,
+                                text: commentText,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+                            
+                            const commentRef = db.collection('posts').doc(postId).collection('comments');
+                            const postRef = db.collection('posts').doc(postId);
+                            
+                            // Update in a transaction
+                            db.runTransaction(transaction => {
+                                return transaction.get(postRef).then(postDoc => {
+                                    // Add comment
+                                    const newCommentRef = commentRef.doc();
+                                    transaction.set(newCommentRef, commentData);
+                                    
+                                    // Update post comments count
+                                    const newComments = (postDoc.data().comments || 0) + 1;
+                                    transaction.update(postRef, { comments: newComments });
+                                    
+                                    // Clear input
+                                    this.value = '';
+                                    
+                                    // Update UI
+                                    const commentCountElem = postCard.querySelector('.comment-count');
+                                    commentCountElem.textContent = newComments;
+                                    
+                                    // Reload comments
+                                    loadComments(postId);
+                                });
+                            });
+                        }
+                    });
+                }
+                
+                // Share button functionality
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', function() {
+                        // Create a temporary input element
+                        const input = document.createElement('input');
+                        input.value = window.location.href.split('#')[0] + `#post/${postId}`;
+                        document.body.appendChild(input);
+                        input.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(input);
+                        
+                        showSuccessMessage('Link copied to clipboard!');
+                    });
+                }
+                
+                return postCard;
             }
             
-            // Demo user authentication (for a complete app)
-            function checkAuth() {
-                // For demo purposes, you'd typically check if user is signed in
-                // auth.onAuthStateChanged(user => {
-                //     if (user) {
-                //         // User is signed in
-                //     } else {
-                //         // Redirect to login page
-                //         window.location.href = 'login.html';
-                //     }
-                // });
+            // Load comments for a post
+            function loadComments(postId) {
+                const commentsContainer = document.querySelector(`.comments-container[data-post-id="${postId}"]`);
+                if (!commentsContainer) return;
+                
+                commentsContainer.innerHTML = `
+                    <div class="text-center py-3">
+                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
+                        <p class="mt-1 text-xs text-gray-500">Loading comments...</p>
+                    </div>
+                `;
+                
+                db.collection('posts').doc(postId)
+                    .collection('comments')
+                    .orderBy('createdAt', 'desc')
+                    .limit(5)
+                    .get()
+                    .then(querySnapshot => {
+                        if (querySnapshot.empty) {
+                            commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-gray-500">No comments yet.</p>';
+                            return;
+                        }
+                        
+                        commentsContainer.innerHTML = '';
+                        
+                        querySnapshot.forEach(doc => {
+                            const commentData = doc.data();
+                            const commentElement = document.createElement('div');
+                            commentElement.className = 'comment mt-3';
+                            commentElement.dataset.commentId = doc.id;
+                            
+                            commentElement.innerHTML = `
+                                <div class="flex">
+                                    <img src="https://via.placeholder.com/40" alt="User" class="w-8 h-8 rounded-full mr-3 comment-user-avatar">
+                                    <div>
+                                        <div class="bg-gray-100 rounded-lg p-3">
+                                            <h5 class="font-medium text-sm comment-user-name">User</h5>
+                                            <p class="text-sm">${commentData.text}</p>
+                                        </div>
+                                        <div class="flex items-center mt-1 text-xs text-gray-500">
+                                            <span>${formatDate(commentData.createdAt)}</span>
+                                            <button class="ml-3 hover:text-indigo-600">Reply</button>
+                                            <button class="ml-3 hover:text-indigo-600">Like</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            commentsContainer.appendChild(commentElement);
+                            
+                            // Get user information for comment
+                            getUserInfo(commentData.userId).then(userInfo => {
+                                const userNameElem = commentElement.querySelector('.comment-user-name');
+                                const userAvatarElem = commentElement.querySelector('.comment-user-avatar');
+                                
+                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
+                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error loading comments: ", error);
+                        commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-red-500">Error loading comments.</p>';
+                    });
             }
             
-            // Run authentication check
-            checkAuth();
+            // Get user information from Firestore
+            function getUserInfo(userId) {
+                return db.collection('users').doc(userId).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            return doc.data();
+                        } else {
+                            return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error getting user info: ", error);
+                        return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
+                    });
+            }
+            
+            // Save profile settings
+            const settingsSaveBtn = document.getElementById('settings-save');
+            if (settingsSaveBtn) {
+                settingsSaveBtn.addEventListener('click', function() {
+                    if (!currentUser) return;
+                    
+                    const fullname = document.getElementById('fullname').value;
+                    const username = document.getElementById('username').value;
+                    const phone = document.getElementById('phone').value;
+                    const bio = document.getElementById('bio').value;
+                    const profileVisibility = document.getElementById('profile-visibility').value;
+                    const allowComments = document.getElementById('allow-comments').checked;
+                    const tagNotifications = document.getElementById('tag-notifications').checked;
+                    const downloadPermission = document.getElementById('download-permission').checked;
+                    const emailNotifications = document.getElementById('email-notifications').checked;
+                    const pushNotifications = document.getElementById('push-notifications').checked;
+                    const marketingEmails = document.getElementById('marketing-emails').checked;
+                    
+                    // Update user profile in Firestore
+                    db.collection('users').doc(currentUser.uid).update({
+                        name: fullname,
+                        username: username,
+                        phone: phone,
+                        bio: bio,
+                        profileVisibility: profileVisibility,
+                        settings: {
+                            allowComments: allowComments,
+                            tagNotifications: tagNotifications,
+                            downloadPermission: downloadPermission,
+                            emailNotifications: emailNotifications,
+                            pushNotifications: pushNotifications,
+                            marketingEmails: marketingEmails
+                        },
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        showSuccessMessage('Profile settings updated successfully!');
+                        getUserProfile(currentUser.uid);
+                    })
+                    .catch(error => {
+                        showErrorMessage('Error updating profile: ' + error.message);
+                    });
+                });
+            }
+            
+            // Theme toggle
+            const themeToggle = document.getElementById('themeToggle');
+            let darkMode = localStorage.getItem('darkMode') === 'true';
+            
+            // Initialize theme
+            if (darkMode) {
+                document.body.classList.add('dark-theme');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                darkMode = !darkMode;
+                localStorage.setItem('darkMode', darkMode);
+                
+                if (darkMode) {
+                    document.body.classList.add('dark-theme');
+                    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                }
+            });
+            
+            // Helper functions
+            function formatDate(timestamp) {
+                if (!timestamp) return 'Just now';
+                
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const now = new Date();
+                const diff = (now - date) / 1000; // seconds
+                
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+                if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+                
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString(undefined, options);
+            }
+            
+            function showSuccessMessage(message) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed right-4 bottom-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+            
+            function showErrorMessage(message) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed right-4 bottom-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+            
+            function showLoading(message = 'Loading...') {
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                loadingOverlay.id = 'loading-overlay';
+                
+                loadingOverlay.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow-lg text-center">
+                        <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600 mb-2"></div>
+                        <p>${message}</p>
+                    </div>
+                `;
+                
+                document.body.appendChild(loadingOverlay);
+            }
+            
+            function hideLoading() {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+            }
         });
     </script>
 </body>
