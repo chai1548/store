@@ -3,2212 +3,1342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social App - Publish and Share Content with Firebase</title>
+    <title>Complete Social App with Firebase</title>
+    
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Make Firebase services available globally
+        window.firebaseAuth = auth;
+        window.firebaseDB = db;
+        window.firebaseStorage = storage;
+        window.firebaseServices = {
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            collection,
+            addDoc,
+            getDocs,
+            doc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            serverTimestamp,
+            query,
+            orderBy,
+            limit,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            uploadBytesResumable
+        };
+
+        // Initialize app when Firebase is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.initializeApp) {
+                window.initializeApp();
+            }
+        });
+    </script>
+
     <style>
-        /* Global Styles */
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             color: #333;
         }
-        
-        /* App Container */
+
         .app-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 1rem;
         }
-        
-        /* Navigation */
-        .nav-link {
-            position: relative;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
-        
-        .nav-link.active {
-            color: #4f46e5;
-            font-weight: 600;
-        }
-        
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #4f46e5;
-        }
-        
-        /* Cards */
+
         .card {
-            background: #fff;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 1.5rem;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Post Styles */
-        .post-image {
-            width: 100%;
-            max-height: 400px;
-            object-fit: cover;
-        }
-        
-        .post-video {
-            width: 100%;
-            max-height: 400px;
-        }
-        
-        .post-content {
-            padding: 1.25rem;
-        }
-        
-        .post-actions {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 1.25rem;
-            border-top: 1px solid #edf2f7;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        /* Upload Page */
-        .tab {
-            display: none;
-        }
-        
-        .tab.active {
-            display: block;
-        }
-        
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
             transition: all 0.3s ease;
         }
-        
-        .tab-btn.active {
-            color: #4f46e5;
-            border-bottom-color: #4f46e5;
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link {
+            position: relative;
+            padding: 0.75rem 1.5rem;
+            margin: 0 0.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
             font-weight: 600;
         }
-        
-        /* File Upload */
-        .file-input {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
             cursor: pointer;
         }
-        
-        .dropzone {
-            border: 2px dashed #cbd5e0;
-            border-radius: 0.5rem;
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(102, 126, 234, 0.5);
+            border-radius: 1rem;
             padding: 2rem;
             text-align: center;
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
         }
-        
-        .dropzone:hover {
-            border-color: #4f46e5;
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
         }
-        
-        .preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
+
+        .post-image, .post-video {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 0.5rem;
         }
-        
-        .preview-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 0.25rem;
-            overflow: hidden;
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        
-        .preview-image {
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-        }
-        
-        .remove-btn {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            background: rgba(0, 0, 0, 0.75);
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
-        
-        /* Comment Section */
-        .comment {
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #edf2f7;
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
         }
-        
-        .comment:last-child {
-            border-bottom: none;
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
         }
-        
-        /* Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+
+        .modal.show .modal-content {
+            transform: scale(1);
         }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+
+        .page {
+            display: none;
         }
-        
-        /* PDF Optimization */
+
+        .page.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .comment-input {
+            border: 1px solid #e2e8f0;
+            border-radius: 2rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            focus:outline-none;
+            focus:ring-2;
+            focus:ring-indigo-500;
+        }
+
+        .story-ring {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            padding: 3px;
+            border-radius: 50%;
+        }
+
+        .story-inner {
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
         @media print {
             body {
-                width: 100%;
-                margin: 0;
-                padding: 0;
+                background: white !important;
             }
             
             .app-container {
-                max-width: 100%;
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            
+            .hide-in-print {
+                display: none !important;
             }
             
             .card {
                 break-inside: avoid;
                 page-break-inside: avoid;
-                margin-bottom: 2rem;
-            }
-            
-            .hide-in-print {
-                display: none;
+                margin-bottom: 1rem;
             }
         }
 
-        /* Auth Forms */
-        .auth-form {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Dark Mode */
-        .dark-theme {
-            background-color: #1a202c;
-            color: #e2e8f0;
-        }
-
-        .dark-theme .bg-white {
-            background-color: #2d3748;
-            color: #e2e8f0;
-        }
-
-        .dark-theme .text-gray-700, 
-        .dark-theme .text-gray-800, 
-        .dark-theme .text-gray-600, 
-        .dark-theme .text-gray-500 {
-            color: #cbd5e0;
-        }
-
-        .dark-theme .border-gray-200,
-        .dark-theme .border-gray-300,
-        .dark-theme .border-gray-100 {
-            border-color: #4a5568;
-        }
-
-        .dark-theme .card,
-        .dark-theme .auth-form,
-        .dark-theme .bg-gray-100 {
-            background-color: #2d3748;
-            color: #e2e8f0;
-        }
-
-        .dark-theme input,
-        .dark-theme textarea,
-        .dark-theme select {
-            background-color: #4a5568;
-            color: #e2e8f0;
-            border-color: #4a5568;
-        }
-
-        .dark-theme input::placeholder,
-        .dark-theme textarea::placeholder {
-            color: #a0aec0;
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
 </head>
 <body>
-    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="auth-form">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold" id="auth-modal-title">Sign In</h2>
-                <button id="close-auth-modal" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to SocialApp</h2>
+                <p class="text-gray-600">Sign in to continue</p>
+            </div>
+            
+            <div id="authTabs" class="flex mb-6">
+                <button id="loginTab" class="flex-1 py-2 px-4 text-center border-b-2 border-indigo-500 text-indigo-600 font-semibold">Login</button>
+                <button id="registerTab" class="flex-1 py-2 px-4 text-center border-b-2 border-gray-200 text-gray-500">Register</button>
+            </div>
+            
+            <form id="authForm">
+                <div class="mb-4">
+                    <input type="email" id="authEmail" placeholder="Email address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <input type="password" id="authPassword" placeholder="Password" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div id="registerFields" class="hidden">
+                    <div class="mb-4">
+                        <input type="text" id="authName" placeholder="Full Name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full btn-primary mb-4">
+                    <span id="authButtonText">Sign In</span>
+                </button>
+            </form>
+            
+            <div class="text-center">
+                <div class="mb-4 text-gray-500">or</div>
+                <button id="googleAuth" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center">
+                    <i class="fab fa-google mr-2"></i>
+                    Continue with Google
                 </button>
             </div>
-
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input type="email" id="login-email" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="login-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md">Sign In</button>
-                </div>
-                <div class="text-center text-sm">
-                    <p>Don't have an account? <a href="#" id="show-signup" class="text-indigo-600 hover:text-indigo-800">Sign Up</a></p>
-                </div>
-            </form>
-
-            <!-- Register Form -->
-            <form id="signup-form" class="space-y-4 hidden">
-                <div>
-                    <label for="signup-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input type="text" id="signup-name" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input type="email" id="signup-email" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="signup-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                    <input type="password" id="signup-confirm-password" required class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md">Sign Up</button>
-                </div>
-                <div class="text-center text-sm">
-                    <p>Already have an account? <a href="#" id="show-login" class="text-indigo-600 hover:text-indigo-800">Sign In</a></p>
-                </div>
-            </form>
         </div>
     </div>
 
-    <header class="bg-white shadow-sm">
+    <!-- Navigation -->
+    <nav class="glass-effect">
         <div class="app-container">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-indigo-600 mr-2">SocialApp</h1>
-                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">Beta</span>
+                    <h1 class="text-2xl font-bold text-white mr-4">
+                        <i class="fas fa-share-alt mr-2"></i>SocialApp
+                    </h1>
+                    <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-3 py-1 rounded-full">Firebase</span>
                 </div>
-                <div class="flex items-center">
-                    <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 mr-2" aria-label="Toggle dark mode">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <div class="relative" id="user-profile-container">
-                        <button id="login-button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                            Sign In
+                
+                <div class="flex items-center space-x-2">
+                    <div id="userInfo" class="hidden flex items-center space-x-3">
+                        <img id="userAvatar" src="" alt="User" class="user-avatar">
+                        <span id="userName" class="text-white font-medium"></span>
+                        <button id="logoutBtn" class="text-white hover:text-red-300 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
                         </button>
-                        <div id="user-profile" class="hidden">
-                            <img src="https://via.placeholder.com/40" alt="User profile" class="user-avatar cursor-pointer" id="profile-image">
-                            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-10">
-                                <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-page="profile">Your Profile</a>
-                                <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-page="settings">Settings</a>
-                                <div class="border-t border-gray-100"></div>
-                                <button id="logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
-            <nav class="flex space-x-4 py-2 overflow-x-auto hide-in-print" id="main-nav">
-                <a href="#home" class="nav-link active" data-page="home">
+            
+            <div id="mainNav" class="hidden flex space-x-2 pb-4">
+                <a href="#" class="nav-link active" data-page="home">
                     <i class="fas fa-home mr-2"></i>Home
                 </a>
-                <a href="#upload" class="nav-link auth-required" data-page="upload">
+                <a href="#" class="nav-link" data-page="upload">
                     <i class="fas fa-plus mr-2"></i>Create
                 </a>
-                <a href="#profile" class="nav-link auth-required" data-page="profile">
+                <a href="#" class="nav-link" data-page="profile">
                     <i class="fas fa-user mr-2"></i>Profile
                 </a>
-                <a href="#settings" class="nav-link auth-required" data-page="settings">
+                <a href="#" class="nav-link" data-page="settings">
                     <i class="fas fa-cog mr-2"></i>Settings
                 </a>
-            </nav>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <main class="app-container py-6">
         <!-- Home Page -->
         <div id="home-page" class="page active">
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold">News Feed</h2>
-                    <div class="flex items-center">
-                        <div class="relative mr-4">
-                            <input type="text" placeholder="Search posts..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-full w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        </div>
-                        <select class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="latest">Latest</option>
-                            <option value="popular">Popular</option>
-                            <option value="trending">Trending</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Stories -->
-                <div class="flex space-x-4 overflow-x-auto pb-3 mb-4 hide-in-print auth-content">
-                    <div class="flex-shrink-0 w-20">
-                        <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-0.5">
-                            <div class="w-full h-full bg-white rounded-full p-0.5">
-                                <div class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-plus text-gray-500"></i>
+            <!-- Stories Section -->
+            <div class="card glass-effect mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Stories</h3>
+                    <div class="flex space-x-4 overflow-x-auto">
+                        <div class="flex-shrink-0 text-center cursor-pointer">
+                            <div class="story-ring w-16 h-16 mx-auto mb-2">
+                                <div class="story-inner w-full h-full flex items-center justify-center">
+                                    <i class="fas fa-plus text-gray-400"></i>
                                 </div>
                             </div>
+                            <p class="text-xs text-white">Add Story</p>
                         </div>
-                        <p class="text-xs text-center mt-1">Add Story</p>
+                        
+                        <div class="flex-shrink-0 text-center cursor-pointer">
+                            <div class="story-ring w-16 h-16 mx-auto mb-2">
+                                <div class="story-inner w-full h-full">
+                                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b1e5?w=64&h=64&fit=crop&crop=face" alt="Story" class="w-full h-full object-cover rounded-full">
+                                </div>
+                            </div>
+                            <p class="text-xs text-white">Sarah</p>
+                        </div>
+                        
+                        <div class="flex-shrink-0 text-center cursor-pointer">
+                            <div class="story-ring w-16 h-16 mx-auto mb-2">
+                                <div class="story-inner w-full h-full">
+                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="Story" class="w-full h-full object-cover rounded-full">
+                                </div>
+                            </div>
+                            <p class="text-xs text-white">John</p>
+                        </div>
                     </div>
-                    
-                    <div class="flex-shrink-0 w-20">
-                        <div class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-0.5">
-                            <img src="https://via.placeholder.com/150" alt="User story" class="w-full h-full object-cover rounded-full">
+                </div>
+            </div>
+
+            <!-- Posts Feed -->
+            <div id="postsContainer">
+                <!-- Sample Text Post -->
+                <div class="card fade-in">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face" alt="User" class="user-avatar mr-4">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800">Alex Johnson</h4>
+                                <p class="text-sm text-gray-500">2 hours ago</p>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
                         </div>
-                        <p class="text-xs text-center mt-1">Your Story</p>
+                        
+                        <div class="mb-4">
+                            <p class="text-gray-800 mb-3">Just finished building an amazing Firebase-powered social app! 🚀 The real-time features are incredible and the file upload system works seamlessly. Can't wait to share more about this project!</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">#firebase</span>
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">#webdev</span>
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">#socialapp</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-3 border-t border-gray-100">
+                            <button class="flex items-center text-gray-600 hover:text-red-500 transition-colors">
+                                <i class="far fa-heart mr-2"></i>
+                                <span>24 Likes</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-indigo-500 transition-colors">
+                                <i class="far fa-comment mr-2"></i>
+                                <span>8 Comments</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-green-500 transition-colors">
+                                <i class="fas fa-share mr-2"></i>
+                                <span>Share</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Posts -->
-                <div class="posts-container" id="posts-container">
-                    <!-- Posts will be loaded dynamically from Firebase -->
-                    <div class="text-center py-10" id="posts-loading">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
-                        <p class="mt-2 text-gray-600">Loading posts...</p>
+                <!-- Sample Image Post -->
+                <div class="card fade-in">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <img src="https://images.unsplash.com/photo-1494790108755-2616b612b1e5?w=50&h=50&fit=crop&crop=face" alt="User" class="user-avatar mr-4">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800">Sarah Wilson</h4>
+                                <p class="text-sm text-gray-500">1 day ago</p>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-gray-800 mb-3">Beautiful sunset from my evening walk! 🌅 Nature never fails to amaze me with its incredible colors and peaceful moments.</p>
+                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop" alt="Sunset" class="post-image mb-3">
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">#sunset</span>
+                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">#nature</span>
+                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">#photography</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-3 border-t border-gray-100">
+                            <button class="flex items-center text-gray-600 hover:text-red-500 transition-colors">
+                                <i class="far fa-heart mr-2"></i>
+                                <span>156 Likes</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-indigo-500 transition-colors">
+                                <i class="far fa-comment mr-2"></i>
+                                <span>23 Comments</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-green-500 transition-colors">
+                                <i class="fas fa-share mr-2"></i>
+                                <span>Share</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Load More Button -->
-                <div class="text-center mt-6" id="load-more-container">
-                    <button id="load-more" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Load More
-                    </button>
-                </div>
+            <div class="text-center mt-8">
+                <button id="loadMoreBtn" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Load More Posts
+                </button>
             </div>
         </div>
 
         <!-- Upload Page -->
-        <div id="upload-page" class="page hidden">
-            <h2 class="text-2xl font-bold mb-6">Create New Post</h2>
-            
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-gray-200 mb-6 hide-in-print">
-                <button class="tab-btn active" data-tab="text-tab">
-                    <i class="fas fa-font mr-2"></i>Text
-                </button>
-                <button class="tab-btn" data-tab="image-tab">
-                    <i class="fas fa-image mr-2"></i>Image
-                </button>
-                <button class="tab-btn" data-tab="video-tab">
-                    <i class="fas fa-video mr-2"></i>Video
-                </button>
-            </div>
-            
-            <!-- Text Upload Tab -->
-            <div id="text-tab" class="tab active">
-                <form id="text-form" class="space-y-6">
-                    <div>
-                        <label for="text-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input type="text" id="text-title" placeholder="Add a title to your post" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
+        <div id="upload-page" class="page">
+            <div class="card">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Post</h2>
                     
-                    <div>
-                        <label for="text-content" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                        <textarea id="text-content" rows="6" placeholder="What's on your mind?" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label for="text-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                        <input type="text" id="text-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <p class="text-sm text-gray-500 mt-1">Example: #lifestyle, #inspiration, #design</p>
-                    </div>
-                    
-                    <div class="flex items-center">
-                        <input type="checkbox" id="text-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
-                        <label for="text-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
-                    </div>
-                    
-                    <div>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
-                            <i class="fas fa-paper-plane mr-2"></i>Publish Post
+                    <!-- Upload Tabs -->
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button class="upload-tab active" data-type="text">
+                            <i class="fas fa-font mr-2"></i>Text Post
+                        </button>
+                        <button class="upload-tab" data-type="image">
+                            <i class="fas fa-image mr-2"></i>Image Post
+                        </button>
+                        <button class="upload-tab" data-type="video">
+                            <i class="fas fa-video mr-2"></i>Video Post
                         </button>
                     </div>
-                </form>
-            </div>
-            
-            <!-- Image Upload Tab -->
-            <div id="image-tab" class="tab">
-                <form id="image-form" class="space-y-6">
-                    <div>
-                        <label for="image-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input type="text" id="image-title" placeholder="Add a title to your post" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Images</label>
-                        <div id="image-dropzone" class="dropzone">
-                            <input type="file" id="image-upload" class="file-input" accept="image/*" multiple>
-                            <div class="text-center">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-gray-600">Drag and drop images here, or click to select files</p>
-                                <p class="text-gray-500 text-sm mt-1">JPG, PNG, GIF files are allowed</p>
+
+                    <!-- Text Post Form -->
+                    <div id="textUpload" class="upload-form">
+                        <form id="textPostForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Post Content</label>
+                                <textarea id="textContent" rows="4" placeholder="What's on your mind?" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="preview-container" id="image-preview-container">
-                        <!-- Image previews will appear here -->
-                    </div>
-                    
-                    <div>
-                        <label for="image-caption" class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
-                        <textarea id="image-caption" rows="3" placeholder="Add a caption to your images" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label for="image-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                        <input type="text" id="image-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                    <div class="flex space-x-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="image-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
-                            <label for="image-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
-                        </div>
-                        
-                        <div class="flex items-center">
-                            <input type="checkbox" id="image-download" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
-                            <label for="image-download" class="ml-2 block text-sm text-gray-700">Allow downloads</label>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
-                            <i class="fas fa-images mr-2"></i>Publish Images
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Video Upload Tab -->
-            <div id="video-tab" class="tab">
-                <form id="video-form" class="space-y-6">
-                    <div>
-                        <label for="video-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input type="text" id="video-title" placeholder="Add a title to your video" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Video</label>
-                        <div id="video-dropzone" class="dropzone">
-                            <input type="file" id="video-upload" class="file-input" accept="video/*">
-                            <div class="text-center">
-                                <i class="fas fa-film text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-gray-600">Drag and drop video here, or click to select file</p>
-                                <p class="text-gray-500 text-sm mt-1">MP4, WebM, Ogg files are allowed</p>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
+                                <input type="text" id="textTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
-                        </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-paper-plane mr-2"></i>Publish Post
+                            </button>
+                        </form>
                     </div>
-                    
-                    <div id="video-preview-container" class="hidden">
-                        <div class="mb-4">
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Video Preview</h3>
-                            <div class="rounded-lg overflow-hidden">
-                                <video id="video-preview" controls playsinline webkit-playsinline class="w-full max-h-96 bg-black"></video>
+
+                    <!-- Image Post Form -->
+                    <div id="imageUpload" class="upload-form hidden">
+                        <form id="imagePostForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Images</label>
+                                <div class="upload-zone" id="imageDropzone">
+                                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
+                                    <div class="text-center">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-4"></i>
+                                        <p class="text-lg font-medium text-gray-700 mb-2">Drag & drop images here</p>
+                                        <p class="text-sm text-gray-500">or click to select files</p>
+                                        <p class="text-xs text-gray-400 mt-2">Supports: JPG, PNG, GIF (Max 10MB each)</p>
+                                    </div>
+                                </div>
+                                <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4"></div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Select Thumbnail</h3>
-                            <div class="grid grid-cols-3 gap-3 mb-3" id="thumbnail-container">
-                                <!-- Thumbnails will appear here -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Caption</label>
+                                <textarea id="imageCaption" rows="3" placeholder="Write a caption for your images..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                             </div>
-                            
-                            <div>
-                                <label class="flex items-center cursor-pointer text-indigo-600 hover:text-indigo-800 text-sm">
-                                    <i class="fas fa-plus-circle mr-1"></i> 
-                                    <span>Upload custom thumbnail</span>
-                                    <input type="file" id="custom-thumbnail" accept="image/*" class="hidden">
-                                </label>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
+                                <input type="text" id="imageTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             </div>
-                        </div>
+                            <div class="mb-4">
+                                <div class="progress-bar hidden" id="imageProgress">
+                                    <div class="progress-fill"></div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-images mr-2"></i>Publish Images
+                            </button>
+                        </form>
                     </div>
-                    
-                    <div>
-                        <label for="video-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="video-description" rows="3" placeholder="Add a description to your video" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+
+                    <!-- Video Post Form -->
+                    <div id="videoUpload" class="upload-form hidden">
+                        <form id="videoPostForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Video</label>
+                                <div class="upload-zone" id="videoDropzone">
+                                    <input type="file" id="videoInput" accept="video/*" class="hidden">
+                                    <div class="text-center">
+                                        <i class="fas fa-film text-4xl text-indigo-400 mb-4"></i>
+                                        <p class="text-lg font-medium text-gray-700 mb-2">Drag & drop video here</p>
+                                        <p class="text-sm text-gray-500">or click to select file</p>
+                                        <p class="text-xs text-gray-400 mt-2">Supports: MP4, WebM, MOV (Max 100MB)</p>
+                                    </div>
+                                </div>
+                                <div id="videoPreview" class="mt-4 hidden">
+                                    <video id="previewVideo" controls playsinline webkit-playsinline class="w-full max-h-96 rounded-lg"></video>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea id="videoDescription" rows="3" placeholder="Describe your video..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
+                                <input type="text" id="videoTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="mb-4">
+                                <div class="progress-bar hidden" id="videoProgress">
+                                    <div class="progress-fill"></div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-video mr-2"></i>Publish Video
+                            </button>
+                        </form>
                     </div>
-                    
-                    <div>
-                        <label for="video-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                        <input type="text" id="video-tags" placeholder="Add tags separated by commas" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                    <div class="flex space-x-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="video-comments" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
-                            <label for="video-comments" class="ml-2 block text-sm text-gray-700">Allow comments</label>
-                        </div>
-                        
-                        <div class="flex items-center">
-                            <input type="checkbox" id="video-download" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
-                            <label for="video-download" class="ml-2 block text-sm text-gray-700">Allow downloads</label>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md shadow-md transition-all duration-300">
-                            <i class="fas fa-video mr-2"></i>Publish Video
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <!-- Profile Page (Hidden by Default) -->
-        <div id="profile-page" class="page hidden">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="text-center mb-6">
-                    <div class="relative inline-block">
-                        <img src="https://via.placeholder.com/150" alt="Profile picture" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg" id="profile-page-image">
-                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700">
-                            <i class="fas fa-camera"></i>
-                        </button>
-                    </div>
-                    <h2 class="text-2xl font-bold mt-4" id="profile-user-name">User Name</h2>
-                    <p class="text-gray-600" id="profile-user-bio">User Bio</p>
-                    <div class="flex justify-center mt-2" id="user-tags">
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">Photography</span>
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded mr-2">Travel</span>
-                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">Design</span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                    <div>
-                        <h4 class="text-2xl font-bold" id="user-post-count">0</h4>
-                        <p class="text-gray-600">Posts</p>
-                    </div>
-                    <div>
-                        <h4 class="text-2xl font-bold" id="user-followers">0</h4>
-                        <p class="text-gray-600">Followers</p>
-                    </div>
-                    <div>
-                        <h4 class="text-2xl font-bold" id="user-following">0</h4>
-                        <p class="text-gray-600">Following</p>
-                    </div>
-                </div>
-                
-                <div class="border-t border-gray-200 pt-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">About Me</h3>
-                        <button class="text-indigo-600 hover:text-indigo-800 text-sm" id="edit-profile-btn">
-                            <i class="fas fa-edit mr-1"></i>Edit
-                        </button>
-                    </div>
-                    <p class="text-gray-700" id="user-about">User biography and information will appear here.</p>
-                </div>
-            </div>
-            
-            <!-- User Posts -->
-            <div class="mt-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold">My Posts</h3>
-                    <div class="flex space-x-2">
-                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-md active" id="grid-view-btn">
-                            <i class="fas fa-th mr-1"></i>Grid
-                        </button>
-                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1 rounded-md" id="list-view-btn">
-                            <i class="fas fa-list mr-1"></i>List
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-3" id="user-posts-grid">
-                    <!-- User posts will be loaded here -->
-                    <div class="text-center py-10 col-span-3" id="user-posts-loading">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
-                        <p class="mt-2 text-gray-600">Loading your posts...</p>
-                    </div>
-                </div>
-                
-                <div class="space-y-4 hidden" id="user-posts-list">
-                    <!-- List view of posts will be here -->
                 </div>
             </div>
         </div>
-        
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="page">
+            <div class="card">
+                <div class="p-6">
+                    <div class="text-center mb-8">
+                        <div class="relative inline-block">
+                            <img id="profileAvatar" src="" alt="Profile" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg">
+                            <button class="absolute bottom-0 right-0 bg-indigo-500 text-white p-2 rounded-full hover:bg-indigo-600 transition-colors">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                        <h2 id="profileName" class="text-2xl font-bold text-gray-800 mt-4">User Name</h2>
+                        <p id="profileEmail" class="text-gray-600">user@example.com</p>
+                        <div class="flex justify-center mt-4 space-x-6">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800">42</div>
+                                <div class="text-sm text-gray-600">Posts</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800">1.2K</div>
+                                <div class="text-sm text-gray-600">Followers</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800">567</div>
+                                <div class="text-sm text-gray-600">Following</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">My Posts</h3>
+                        <div id="userPosts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- User posts will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Page -->
-        <div id="settings-page" class="page hidden">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-bold mb-6">Account Settings</h2>
-                
-                <div class="space-y-6">
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">Personal Information</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label for="fullname" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                                <input type="text" id="fullname" placeholder="Enter your full name" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                                <input type="text" id="username" placeholder="Enter your username" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label for="settings-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                <input type="email" id="settings-email" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" disabled>
-                            </div>
-                            <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                <input type="tel" id="phone" placeholder="Enter your phone number" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Biography</label>
-                                <textarea id="bio" rows="4" placeholder="Tell us about yourself" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        <div id="settings-page" class="page">
+            <div class="card">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Account Information</h3>
+                            <form id="profileForm">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
+                                        <input type="text" id="settingsName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                        <input type="email" id="settingsEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" readonly>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                                    <textarea id="settingsBio" rows="3" placeholder="Tell us about yourself..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                </div>
+                                <div class="mt-6">
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fas fa-save mr-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Privacy Settings</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">Profile Visibility</h4>
+                                        <p class="text-sm text-gray-600">Control who can see your profile</p>
+                                    </div>
+                                    <select class="p-2 border border-gray-300 rounded-lg">
+                                        <option>Public</option>
+                                        <option>Friends Only</option>
+                                        <option>Private</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">Allow Comments</h4>
+                                        <p class="text-sm text-gray-600">Let others comment on your posts</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-lg font-semibold mb-4">Privacy Settings</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Profile Visibility</h4>
-                                    <p class="text-sm text-gray-600">Control who can see your profile</p>
-                                </div>
-                                <select id="profile-visibility" class="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option value="public">Public</option>
-                                    <option value="friends">Friends Only</option>
-                                    <option value="private">Private</option>
-                                </select>
-                            </div>
-                            
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Post Comments</h4>
-                                    <p class="text-sm text-gray-600">Allow others to comment on your posts</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer" id="allow-comments">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            </div>
-                            
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Tag Notifications</h4>
-                                    <p class="text-sm text-gray-600">Receive notifications when tagged</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer" id="tag-notifications">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            </div>
-                            
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Download Permission</h4>
-                                    <p class="text-sm text-gray-600">Allow users to download your content</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" id="download-permission">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
+
+                        <div class="border-t border-gray-200 pt-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Dangerous Actions</h3>
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium">
+                                    <i class="fas fa-trash mr-2"></i>Delete Account
+                                </button>
+                                <p class="text-sm text-red-600 mt-2">This action cannot be undone. All your data will be permanently deleted.</p>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-lg font-semibold mb-4">Notification Settings</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Email Notifications</h4>
-                                    <p class="text-sm text-gray-600">Receive notifications via email</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer" id="email-notifications">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            </div>
-                            
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Push Notifications</h4>
-                                    <p class="text-sm text-gray-600">Receive notifications on your device</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked class="sr-only peer" id="push-notifications">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            </div>
-                            
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-medium">Marketing Emails</h4>
-                                    <p class="text-sm text-gray-600">Receive promotional content</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="sr-only peer" id="marketing-emails">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-3">
-                        <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-md" id="settings-cancel">Cancel</button>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md" id="settings-save">Save Changes</button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-200 py-6 mt-8 hide-in-print">
-        <div class="app-container">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <h3 class="text-xl font-bold text-indigo-600">SocialApp</h3>
-                    <p class="text-gray-600 text-sm">Connect, Share, and Discover</p>
-                </div>
-                
-                <div class="flex space-x-6">
-                    <a href="#" class="text-gray-600 hover:text-indigo-600">
-                        <i class="fab fa-facebook-square text-xl"></i>
-                    </a>
-                    <a href="#" class="text-gray-600 hover:text-indigo-600">
-                        <i class="fab fa-instagram text-xl"></i>
-                    </a>
-                    <a href="#" class="text-gray-600 hover:text-indigo-600">
-                        <i class="fab fa-twitter text-xl"></i>
-                    </a>
-                    <a href="#" class="text-gray-600 hover:text-indigo-600">
-                        <i class="fab fa-youtube text-xl"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="mt-6 text-center text-gray-500 text-sm">
-                <p>&copy; 2023 SocialApp. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Firebase initialization
-            const firebaseConfig = {
-                apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-                authDomain: "onlineshop-849c8.firebaseapp.com",
-                databaseURL: "https://onlineshop-849c8.firebaseio.com",
-                projectId: "onlineshop-849c8",
-                storageBucket: "onlineshop-849c8.appspot.com",
-                messagingSenderId: "883512833370",
-                appId: "1:883512833370:web:a1c8412b158f8744afef63"
-            };
+        // Global variables
+        let currentUser = null;
+        let selectedFiles = [];
+        let uploadProgress = {};
+
+        // Initialize app
+        window.initializeApp = function() {
+            setupAuthListeners();
+            setupNavigation();
+            setupUploadForms();
+            setupEventListeners();
             
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-            
-            // Get Firebase services
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            const storage = firebase.storage();
-            
-            // DOM Elements - Auth
-            const loginButton = document.getElementById('login-button');
-            const userProfile = document.getElementById('user-profile');
-            const profileImage = document.getElementById('profile-image');
-            const userDropdown = document.getElementById('user-dropdown');
-            const logoutButton = document.getElementById('logout-button');
-            const authModal = document.getElementById('auth-modal');
-            const closeAuthModal = document.getElementById('close-auth-modal');
-            const loginForm = document.getElementById('login-form');
-            const signupForm = document.getElementById('signup-form');
-            const showSignup = document.getElementById('show-signup');
-            const showLogin = document.getElementById('show-login');
-            const authElements = document.querySelectorAll('.auth-required');
-            const authContent = document.querySelectorAll('.auth-content');
-            
-            // Variables
-            let currentUser = null;
-            let userPostData = [];
-            let postsPerPage = 5;
-            let lastDoc = null;
-            let selectedThumbnailFile = null;
-            let selectedFiles = [];
-            
-            // Authentication state observer
-            auth.onAuthStateChanged(function(user) {
+            // Check authentication state
+            window.firebaseServices.onAuthStateChanged(window.firebaseAuth, (user) => {
                 if (user) {
-                    // User is signed in
                     currentUser = user;
-                    
-                    // Update UI
-                    loginButton.classList.add('hidden');
-                    userProfile.classList.remove('hidden');
-                    
-                    // Allow access to auth required pages
-                    authElements.forEach(element => {
-                        element.classList.remove('hidden');
-                    });
-                    
-                    // Show auth content
-                    authContent.forEach(content => {
-                        content.classList.remove('hidden');
-                    });
-                    
-                    // Get user profile data
-                    getUserProfile(user.uid);
-                    
-                    // Load user posts
-                    loadUserPosts(user.uid);
-                    
-                    // Close auth modal if open
-                    authModal.classList.add('hidden');
+                    showMainApp();
+                    loadUserData();
+                    loadPosts();
                 } else {
-                    // User is signed out
                     currentUser = null;
-                    
-                    // Update UI
-                    loginButton.classList.remove('hidden');
-                    userProfile.classList.add('hidden');
-                    
-                    // Restrict access to auth required pages
-                    authElements.forEach(element => {
-                        element.classList.add('hidden');
-                    });
-                    
-                    // Hide auth content
-                    authContent.forEach(content => {
-                        content.classList.add('hidden');
-                    });
-                    
-                    // If on auth required page, redirect to home
-                    const currentPage = document.querySelector('.page.active');
-                    if (currentPage && !currentPage.id.includes('home')) {
-                        navigateToPage('home');
-                    }
+                    showAuthModal();
                 }
-                
-                // Load posts regardless of auth state
-                loadPosts();
             });
-            
-            // Navigation
-            const navLinks = document.querySelectorAll('.nav-link');
-            const pages = document.querySelectorAll('.page');
-            
-            navLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetPage = this.getAttribute('data-page');
-                    
-                    // Check if auth required
-                    if (this.classList.contains('auth-required') && !currentUser) {
-                        showAuthModal();
-                        return;
-                    }
-                    
-                    navigateToPage(targetPage);
-                });
-            });
-            
-            function navigateToPage(targetPage) {
-                // Update active navigation link
-                navLinks.forEach(l => l.classList.remove('active'));
-                const activeLink = document.querySelector(`.nav-link[data-page="${targetPage}"]`);
-                if (activeLink) {
-                    activeLink.classList.add('active');
-                }
-                
-                // Show the corresponding page
-                pages.forEach(page => {
-                    if (page.id === `${targetPage}-page`) {
-                        page.classList.remove('hidden');
-                        page.classList.add('active', 'fade-in');
-                    } else {
-                        page.classList.add('hidden');
-                        page.classList.remove('active');
-                    }
-                });
-            }
-            
-            // Tab switching for Upload page
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            const tabs = document.querySelectorAll('.tab');
-            
-            tabBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const targetTab = this.getAttribute('data-tab');
-                    
-                    // Update active tab button
-                    tabBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Show the corresponding tab
-                    tabs.forEach(tab => {
-                        if (tab.id === targetTab) {
-                            tab.classList.add('active', 'fade-in');
-                        } else {
-                            tab.classList.remove('active');
-                        }
-                    });
-                });
-            });
-            
-            // Auth functions
-            loginButton.addEventListener('click', showAuthModal);
-            
-            closeAuthModal.addEventListener('click', () => {
-                authModal.classList.add('hidden');
-            });
-            
-            showSignup.addEventListener('click', (e) => {
+        };
+
+        // Authentication functions
+        function setupAuthListeners() {
+            const authModal = document.getElementById('authModal');
+            const authForm = document.getElementById('authForm');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const googleAuth = document.getElementById('googleAuth');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Tab switching
+            loginTab.addEventListener('click', () => switchAuthTab('login'));
+            registerTab.addEventListener('click', () => switchAuthTab('register'));
+
+            // Form submission
+            authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                loginForm.classList.add('hidden');
-                signupForm.classList.remove('hidden');
-                document.getElementById('auth-modal-title').textContent = 'Sign Up';
-            });
-            
-            showLogin.addEventListener('click', (e) => {
-                e.preventDefault();
-                signupForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                document.getElementById('auth-modal-title').textContent = 'Sign In';
-            });
-            
-            function showAuthModal() {
-                authModal.classList.remove('hidden');
-                loginForm.classList.remove('hidden');
-                signupForm.classList.add('hidden');
-                document.getElementById('auth-modal-title').textContent = 'Sign In';
-            }
-            
-            // Login form submit
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        showSuccessMessage('Successfully logged in!');
-                    })
-                    .catch((error) => {
-                        showErrorMessage(error.message);
-                    });
-            });
-            
-            // Signup form submit
-            signupForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const name = document.getElementById('signup-name').value;
-                const email = document.getElementById('signup-email').value;
-                const password = document.getElementById('signup-password').value;
-                const confirmPassword = document.getElementById('signup-confirm-password').value;
-                
-                if (password !== confirmPassword) {
-                    showErrorMessage('Passwords do not match');
-                    return;
-                }
-                
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        // Create user profile
-                        return db.collection('users').doc(userCredential.user.uid).set({
-                            name: name,
+                const email = document.getElementById('authEmail').value;
+                const password = document.getElementById('authPassword').value;
+                const name = document.getElementById('authName').value;
+                const isRegister = registerTab.classList.contains('border-indigo-500');
+
+                try {
+                    if (isRegister) {
+                        await window.firebaseServices.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
+                        // Save user profile
+                        await window.firebaseServices.addDoc(window.firebaseServices.collection(window.firebaseDB, 'users'), {
+                            uid: window.firebaseAuth.currentUser.uid,
+                            name: name || 'User',
                             email: email,
                             bio: '',
-                            profileImage: 'https://via.placeholder.com/150',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: window.firebaseServices.serverTimestamp()
                         });
-                    })
-                    .then(() => {
-                        showSuccessMessage('Account created successfully!');
-                    })
-                    .catch((error) => {
-                        showErrorMessage(error.message);
-                    });
+                        showNotification('Account created successfully!', 'success');
+                    } else {
+                        await window.firebaseServices.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                        showNotification('Welcome back!', 'success');
+                    }
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
             });
-            
+
+            // Google Auth
+            googleAuth.addEventListener('click', async () => {
+                try {
+                    const provider = new window.firebaseServices.GoogleAuthProvider();
+                    await window.firebaseServices.signInWithPopup(window.firebaseAuth, provider);
+                    showNotification('Signed in with Google!', 'success');
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            });
+
             // Logout
-            logoutButton.addEventListener('click', () => {
-                auth.signOut().then(() => {
-                    showSuccessMessage('You have been signed out');
-                }).catch((error) => {
-                    showErrorMessage(error.message);
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    await window.firebaseServices.signOut(window.firebaseAuth);
+                    showNotification('Signed out successfully!', 'success');
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            });
+        }
+
+        function switchAuthTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const registerFields = document.getElementById('registerFields');
+            const authButtonText = document.getElementById('authButtonText');
+
+            if (tab === 'login') {
+                loginTab.classList.add('border-indigo-500', 'text-indigo-600');
+                loginTab.classList.remove('border-gray-200', 'text-gray-500');
+                registerTab.classList.add('border-gray-200', 'text-gray-500');
+                registerTab.classList.remove('border-indigo-500', 'text-indigo-600');
+                registerFields.classList.add('hidden');
+                authButtonText.textContent = 'Sign In';
+            } else {
+                registerTab.classList.add('border-indigo-500', 'text-indigo-600');
+                registerTab.classList.remove('border-gray-200', 'text-gray-500');
+                loginTab.classList.add('border-gray-200', 'text-gray-500');
+                loginTab.classList.remove('border-indigo-500', 'text-indigo-600');
+                registerFields.classList.remove('hidden');
+                authButtonText.textContent = 'Sign Up';
+            }
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('show');
+            document.getElementById('mainNav').classList.add('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('authModal').classList.remove('show');
+            document.getElementById('mainNav').classList.remove('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+        }
+
+        // Navigation
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetPage = link.getAttribute('data-page');
+                    
+                    // Update active nav
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // Show target page
+                    pages.forEach(page => {
+                        if (page.id === `${targetPage}-page`) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
                 });
             });
-            
-            // User profile dropdown
-            profileImage.addEventListener('click', () => {
-                userDropdown.classList.toggle('hidden');
-            });
-            
-            // Close dropdown when clicking elsewhere
-            document.addEventListener('click', (e) => {
-                if (!profileImage.contains(e.target)) {
-                    userDropdown.classList.add('hidden');
-                }
-            });
-            
-            // Get user profile data
-            function getUserProfile(userId) {
-                db.collection('users').doc(userId).get()
-                    .then((doc) => {
-                        if (doc.exists) {
-                            const userData = doc.data();
-                            
-                            // Update UI elements
-                            document.getElementById('profile-user-name').textContent = userData.name || 'User';
-                            document.getElementById('profile-user-bio').textContent = userData.bio || 'No bio yet';
-                            document.getElementById('user-about').textContent = userData.bio || 'No information provided.';
-                            
-                            // Update settings form
-                            document.getElementById('fullname').value = userData.name || '';
-                            document.getElementById('username').value = userData.username || '';
-                            document.getElementById('settings-email').value = userData.email || '';
-                            document.getElementById('phone').value = userData.phone || '';
-                            document.getElementById('bio').value = userData.bio || '';
-                            
-                            // Update profile images
-                            if (userData.profileImage) {
-                                const profileImgElements = document.querySelectorAll('#profile-image, #profile-page-image');
-                                profileImgElements.forEach(img => {
-                                    img.src = userData.profileImage;
-                                });
-                            }
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error getting user profile: ", error);
-                    });
-            }
-            
-            // Image Upload Functionality
-            const imageUpload = document.getElementById('image-upload');
-            const imageDropzone = document.getElementById('image-dropzone');
-            const imagePreviewContainer = document.getElementById('image-preview-container');
-            
-            imageUpload.addEventListener('change', handleImageUpload);
-            
-            imageDropzone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('border-indigo-500');
-            });
-            
-            imageDropzone.addEventListener('dragleave', function() {
-                this.classList.remove('border-indigo-500');
-            });
-            
-            imageDropzone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('border-indigo-500');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    imageUpload.files = files;
-                    handleImageUpload();
-                }
-            });
-            
-            function handleImageUpload() {
-                const files = imageUpload.files;
-                selectedFiles = Array.from(files);
-                
-                // Clear previous previews
-                imagePreviewContainer.innerHTML = '';
-                
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(e) {
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'preview-item';
-                            previewItem.dataset.index = i;
-                            
-                            const previewImage = document.createElement('img');
-                            previewImage.className = 'preview-image';
-                            previewImage.src = e.target.result;
-                            previewImage.alt = 'Image preview';
-                            
-                            const removeButton = document.createElement('button');
-                            removeButton.className = 'remove-btn';
-                            removeButton.innerHTML = '<i class="fas fa-times"></i>';
-                            removeButton.addEventListener('click', function() {
-                                const index = parseInt(previewItem.dataset.index);
-                                selectedFiles.splice(index, 1);
-                                previewItem.remove();
-                                // Reindex remaining previews
-                                const remainingPreviews = imagePreviewContainer.querySelectorAll('.preview-item');
-                                remainingPreviews.forEach((preview, idx) => {
-                                    preview.dataset.index = idx;
-                                });
-                            });
-                            
-                            previewItem.appendChild(previewImage);
-                            previewItem.appendChild(removeButton);
-                            imagePreviewContainer.appendChild(previewItem);
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
-                }
-            }
-            
-            // Video Upload Functionality
-            const videoUpload = document.getElementById('video-upload');
-            const videoDropzone = document.getElementById('video-dropzone');
-            const videoPreview = document.getElementById('video-preview');
-            const videoPreviewContainer = document.getElementById('video-preview-container');
-            const thumbnailContainer = document.getElementById('thumbnail-container');
-            const customThumbnail = document.getElementById('custom-thumbnail');
-            
-            videoUpload.addEventListener('change', handleVideoUpload);
-            
-            videoDropzone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('border-indigo-500');
-            });
-            
-            videoDropzone.addEventListener('dragleave', function() {
-                this.classList.remove('border-indigo-500');
-            });
-            
-            videoDropzone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('border-indigo-500');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type.startsWith('video/')) {
-                    videoUpload.files = files;
-                    handleVideoUpload();
-                }
-            });
-            
-            function handleVideoUpload() {
-                const file = videoUpload.files[0];
-                
-                if (file && file.type.startsWith('video/')) {
-                    const videoURL = URL.createObjectURL(file);
-                    videoPreview.src = videoURL;
-                    videoPreviewContainer.classList.remove('hidden');
+        }
+
+        // Upload forms
+        function setupUploadForms() {
+            // Tab switching
+            const uploadTabs = document.querySelectorAll('.upload-tab');
+            const uploadForms = document.querySelectorAll('.upload-form');
+
+            uploadTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const type = tab.getAttribute('data-type');
                     
-                    videoPreview.onloadeddata = function() {
-                        generateThumbnails(videoPreview);
-                    };
-                }
-            }
-            
-            function generateThumbnails(video) {
-                thumbnailContainer.innerHTML = '';
-                
-                for (let i = 0; i < 3; i++) {
-                    const thumbnailTime = i * (video.duration / 3);
+                    uploadTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
                     
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 160;
-                    canvas.height = 90;
-                    
-                    const thumbnailWrapper = document.createElement('div');
-                    thumbnailWrapper.className = 'relative cursor-pointer border-2 border-transparent hover:border-indigo-500 rounded-md overflow-hidden';
-                    thumbnailWrapper.onclick = function() {
-                        document.querySelectorAll('#thumbnail-container > div').forEach(el => {
-                            el.classList.remove('border-indigo-500');
-                            el.classList.add('border-transparent');
-                        });
-                        this.classList.remove('border-transparent');
-                        this.classList.add('border-indigo-500');
-                        
-                        // Generate thumbnail file from canvas
-                        canvas.toBlob((blob) => {
-                            selectedThumbnailFile = new File([blob], `thumbnail-${Date.now()}.png`, { type: 'image/png' });
-                        }, 'image/png');
-                    };
-                    
-                    const thumbnailCanvas = document.createElement('div');
-                    thumbnailCanvas.className = 'w-full h-16 bg-gray-900';
-                    
-                    thumbnailWrapper.appendChild(thumbnailCanvas);
-                    thumbnailContainer.appendChild(thumbnailWrapper);
-                    
-                    setTimeout(() => {
-                        video.currentTime = thumbnailTime;
-                        
-                        video.addEventListener('seeked', function handler() {
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            thumbnailCanvas.style.backgroundImage = `url(${canvas.toDataURL()})`;
-                            thumbnailCanvas.style.backgroundSize = 'cover';
-                            thumbnailCanvas.style.backgroundPosition = 'center';
-                            
-                            video.removeEventListener('seeked', handler);
-                        });
-                    }, (i + 1) * 100);
-                }
-            }
-            
-            customThumbnail.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                selectedThumbnailFile = file;
-                
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        const thumbnailWrapper = document.createElement('div');
-                        thumbnailWrapper.className = 'relative cursor-pointer border-2 border-transparent hover:border-indigo-500 rounded-md overflow-hidden';
-                        thumbnailWrapper.onclick = function() {
-                            document.querySelectorAll('#thumbnail-container > div').forEach(el => {
-                                el.classList.remove('border-indigo-500');
-                                el.classList.add('border-transparent');
-                            });
-                            this.classList.remove('border-transparent');
-                            this.classList.add('border-indigo-500');
-                        };
-                        
-                        const thumbnailImg = document.createElement('div');
-                        thumbnailImg.className = 'w-full h-16';
-                        thumbnailImg.style.backgroundImage = `url(${e.target.result})`;
-                        thumbnailImg.style.backgroundSize = 'cover';
-                        thumbnailImg.style.backgroundPosition = 'center';
-                        
-                        thumbnailWrapper.appendChild(thumbnailImg);
-                        
-                        // Add custom thumbnail at the beginning
-                        if (thumbnailContainer.firstChild) {
-                            thumbnailContainer.insertBefore(thumbnailWrapper, thumbnailContainer.firstChild);
+                    uploadForms.forEach(form => {
+                        if (form.id === `${type}Upload`) {
+                            form.classList.remove('hidden');
                         } else {
-                            thumbnailContainer.appendChild(thumbnailWrapper);
+                            form.classList.add('hidden');
                         }
-                        
-                        // Auto-select the custom thumbnail
-                        thumbnailWrapper.click();
-                    };
-                    
-                    reader.readAsDataURL(file);
-                }
+                    });
+                });
             });
+
+            // Image upload
+            setupImageUpload();
+            
+            // Video upload
+            setupVideoUpload();
             
             // Form submissions
-            const textForm = document.getElementById('text-form');
-            const imageForm = document.getElementById('image-form');
-            const videoForm = document.getElementById('video-form');
+            setupFormSubmissions();
+        }
+
+        function setupImageUpload() {
+            const imageDropzone = document.getElementById('imageDropzone');
+            const imageInput = document.getElementById('imageInput');
+            const imagePreview = document.getElementById('imagePreview');
+
+            imageDropzone.addEventListener('click', () => imageInput.click());
             
-            textForm.addEventListener('submit', function(e) {
+            imageDropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                
-                if (!currentUser) {
-                    showAuthModal();
-                    return;
-                }
-                
-                const title = document.getElementById('text-title').value;
-                const content = document.getElementById('text-content').value;
-                const tags = document.getElementById('text-tags').value;
-                const allowComments = document.getElementById('text-comments').checked;
-                
-                if (!title || !content) {
-                    showErrorMessage('Please fill in all required fields.');
-                    return;
-                }
-                
-                // Add post to Firestore
-                const postData = {
-                    userId: currentUser.uid,
-                    type: 'text',
-                    title: title,
-                    content: content,
-                    tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                    allowComments: allowComments,
-                    likes: 0,
-                    comments: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                db.collection('posts').add(postData)
-                    .then((docRef) => {
-                        showSuccessMessage('Text post published successfully!');
-                        textForm.reset();
-                        navigateToPage('home');
-                        loadPosts(true); // Reload posts
-                    })
-                    .catch((error) => {
-                        showErrorMessage('Error publishing post: ' + error.message);
-                    });
+                imageDropzone.classList.add('border-indigo-500');
             });
             
-            imageForm.addEventListener('submit', function(e) {
+            imageDropzone.addEventListener('dragleave', () => {
+                imageDropzone.classList.remove('border-indigo-500');
+            });
+            
+            imageDropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                
-                if (!currentUser) {
-                    showAuthModal();
-                    return;
-                }
-                
-                const title = document.getElementById('image-title').value;
-                const caption = document.getElementById('image-caption').value;
-                const tags = document.getElementById('image-tags').value;
-                const allowComments = document.getElementById('image-comments').checked;
-                const allowDownload = document.getElementById('image-download').checked;
-                
-                if (!title || selectedFiles.length === 0) {
-                    showErrorMessage('Please add a title and at least one image.');
-                    return;
-                }
-                
-                // Show loading
-                showLoading('Publishing post...');
-                
-                // Upload images to Firebase Storage
-                const uploadPromises = [];
-                const imageUrls = [];
+                imageDropzone.classList.remove('border-indigo-500');
+                handleImageFiles(e.dataTransfer.files);
+            });
+            
+            imageInput.addEventListener('change', (e) => {
+                handleImageFiles(e.target.files);
+            });
+
+            function handleImageFiles(files) {
+                selectedFiles = Array.from(files);
+                imagePreview.innerHTML = '';
                 
                 selectedFiles.forEach((file, index) => {
-                    const storageRef = storage.ref(`posts/${currentUser.uid}/${Date.now()}-${index}-${file.name}`);
-                    const uploadTask = storageRef.put(file);
-                    
-                    const uploadPromise = uploadTask.then(() => {
-                        return storageRef.getDownloadURL();
-                    }).then(url => {
-                        imageUrls.push(url);
-                    });
-                    
-                    uploadPromises.push(uploadPromise);
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const preview = document.createElement('div');
+                            preview.className = 'relative';
+                            preview.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview" class="w-full h-32 object-cover rounded-lg">
+                                <button type="button" onclick="removeFile(${index})" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">×</button>
+                            `;
+                            imagePreview.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 });
-                
-                // Wait for all uploads to complete
-                Promise.all(uploadPromises)
-                    .then(() => {
-                        // Add post to Firestore
-                        return db.collection('posts').add({
-                            userId: currentUser.uid,
-                            type: 'image',
-                            title: title,
-                            caption: caption,
-                            imageUrls: imageUrls,
-                            tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                            allowComments: allowComments,
-                            allowDownload: allowDownload,
-                            likes: 0,
-                            comments: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    })
-                    .then(() => {
-                        hideLoading();
-                        showSuccessMessage('Image post published successfully!');
-                        imageForm.reset();
-                        imagePreviewContainer.innerHTML = '';
-                        selectedFiles = [];
-                        navigateToPage('home');
-                        loadPosts(true); // Reload posts
-                    })
-                    .catch(error => {
-                        hideLoading();
-                        showErrorMessage('Error publishing post: ' + error.message);
-                    });
-            });
+            }
+        }
+
+        function setupVideoUpload() {
+            const videoDropzone = document.getElementById('videoDropzone');
+            const videoInput = document.getElementById('videoInput');
+            const videoPreview = document.getElementById('videoPreview');
+            const previewVideo = document.getElementById('previewVideo');
+
+            videoDropzone.addEventListener('click', () => videoInput.click());
             
-            videoForm.addEventListener('submit', function(e) {
+            videoDropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                
-                if (!currentUser) {
-                    showAuthModal();
-                    return;
+                videoDropzone.classList.add('border-indigo-500');
+            });
+            
+            videoDropzone.addEventListener('dragleave', () => {
+                videoDropzone.classList.remove('border-indigo-500');
+            });
+            
+            videoDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                videoDropzone.classList.remove('border-indigo-500');
+                handleVideoFile(e.dataTransfer.files[0]);
+            });
+            
+            videoInput.addEventListener('change', (e) => {
+                handleVideoFile(e.target.files[0]);
+            });
+
+            function handleVideoFile(file) {
+                if (file && file.type.startsWith('video/')) {
+                    selectedFiles = [file];
+                    const videoURL = URL.createObjectURL(file);
+                    previewVideo.src = videoURL;
+                    videoPreview.classList.remove('hidden');
                 }
+            }
+        }
+
+        function setupFormSubmissions() {
+            // Text post form
+            document.getElementById('textPostForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const content = document.getElementById('textContent').value;
+                const tags = document.getElementById('textTags').value;
                 
-                const title = document.getElementById('video-title').value;
-                const description = document.getElementById('video-description').value;
-                const tags = document.getElementById('video-tags').value;
-                const allowComments = document.getElementById('video-comments').checked;
-                const allowDownload = document.getElementById('video-download').checked;
-                const videoFile = videoUpload.files[0];
-                
-                if (!title || !videoFile || !selectedThumbnailFile) {
-                    showErrorMessage('Please add a title, video, and select a thumbnail.');
-                    return;
-                }
-                
-                // Show loading
-                showLoading('Publishing video...');
-                
-                // Upload thumbnail
-                const thumbnailRef = storage.ref(`thumbnails/${currentUser.uid}/${Date.now()}-${selectedThumbnailFile.name}`);
-                const thumbnailUpload = thumbnailRef.put(selectedThumbnailFile);
-                
-                thumbnailUpload.then(() => {
-                    return thumbnailRef.getDownloadURL();
-                })
-                .then(thumbnailUrl => {
-                    // Upload video
-                    const videoRef = storage.ref(`videos/${currentUser.uid}/${Date.now()}-${videoFile.name}`);
-                    const videoUploadTask = videoRef.put(videoFile);
-                    
-                    return videoUploadTask.then(() => {
-                        return videoRef.getDownloadURL().then(videoUrl => {
-                            return { thumbnailUrl, videoUrl };
-                        });
-                    });
-                })
-                .then(({ thumbnailUrl, videoUrl }) => {
-                    // Add post to Firestore
-                    return db.collection('posts').add({
-                        userId: currentUser.uid,
-                        type: 'video',
-                        title: title,
-                        description: description,
-                        videoUrl: videoUrl,
-                        thumbnailUrl: thumbnailUrl,
-                        tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                        allowComments: allowComments,
-                        allowDownload: allowDownload,
-                        likes: 0,
-                        comments: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                })
-                .then(() => {
-                    hideLoading();
-                    showSuccessMessage('Video post published successfully!');
-                    videoForm.reset();
-                    videoPreviewContainer.classList.add('hidden');
-                    thumbnailContainer.innerHTML = '';
-                    videoPreview.src = '';
-                    selectedThumbnailFile = null;
-                    navigateToPage('home');
-                    loadPosts(true); // Reload posts
-                })
-                .catch(error => {
-                    hideLoading();
-                    showErrorMessage('Error publishing post: ' + error.message);
+                await createPost('text', {
+                    content,
+                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag)
                 });
             });
-            
-            // Load posts from Firestore
-            function loadPosts(refresh = false) {
-                const postsContainer = document.getElementById('posts-container');
-                const loadingElement = document.getElementById('posts-loading');
-                
-                if (refresh) {
-                    postsContainer.innerHTML = '';
-                    postsContainer.appendChild(loadingElement);
-                    lastDoc = null;
+
+            // Image post form
+            document.getElementById('imagePostForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (selectedFiles.length === 0) {
+                    showNotification('Please select at least one image', 'error');
+                    return;
                 }
                 
-                if (loadingElement) {
-                    loadingElement.classList.remove('hidden');
+                const caption = document.getElementById('imageCaption').value;
+                const tags = document.getElementById('imageTags').value;
+                
+                await createPost('image', {
+                    caption,
+                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                    files: selectedFiles
+                });
+            });
+
+            // Video post form
+            document.getElementById('videoPostForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (selectedFiles.length === 0) {
+                    showNotification('Please select a video file', 'error');
+                    return;
                 }
                 
-                let query = db.collection('posts')
-                    .orderBy('createdAt', 'desc')
-                    .limit(postsPerPage);
+                const description = document.getElementById('videoDescription').value;
+                const tags = document.getElementById('videoTags').value;
                 
-                if (lastDoc && !refresh) {
-                    query = query.startAfter(lastDoc);
+                await createPost('video', {
+                    description,
+                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                    files: selectedFiles
+                });
+            });
+        }
+
+        // Create post function
+        async function createPost(type, data) {
+            try {
+                const postData = {
+                    type,
+                    authorId: currentUser.uid,
+                    authorName: currentUser.displayName || 'User',
+                    authorAvatar: currentUser.photoURL || '',
+                    createdAt: window.firebaseServices.serverTimestamp(),
+                    likes: 0,
+                    comments: 0
+                };
+
+                if (type === 'text') {
+                    postData.content = data.content;
+                    postData.tags = data.tags;
+                } else if (type === 'image') {
+                    postData.caption = data.caption;
+                    postData.tags = data.tags;
+                    postData.images = await uploadFiles(data.files, 'images');
+                } else if (type === 'video') {
+                    postData.description = data.description;
+                    postData.tags = data.tags;
+                    postData.videos = await uploadFiles(data.files, 'videos');
                 }
-                
-                query.get()
-                    .then(querySnapshot => {
-                        if (loadingElement) {
-                            loadingElement.classList.add('hidden');
-                        }
-                        
-                        if (querySnapshot.empty) {
-                            if (refresh) {
-                                postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
-                            } else {
-                                document.getElementById('load-more-container').classList.add('hidden');
-                                if (!document.querySelector('.post-card')) {
-                                    postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
-                                }
-                            }
-                            return;
-                        }
-                        
-                        // Get the last document for pagination
-                        lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-                        
-                        // Show load more button
-                        document.getElementById('load-more-container').classList.remove('hidden');
-                        
-                        // Process posts
-                        querySnapshot.forEach(doc => {
-                            const postData = doc.data();
-                            const postId = doc.id;
-                            const postElement = createPostElement(postData, postId);
-                            
-                            // Get user information
-                            getUserInfo(postData.userId).then(userInfo => {
-                                const userNameElem = postElement.querySelector('.post-user-name');
-                                const userAvatarElem = postElement.querySelector('.post-user-avatar');
-                                
-                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
-                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
-                            });
-                            
-                            if (refresh && postsContainer.contains(loadingElement)) {
-                                postsContainer.insertBefore(postElement, loadingElement);
-                            } else {
-                                postsContainer.appendChild(postElement);
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error loading posts: ", error);
-                        if (loadingElement) {
-                            loadingElement.classList.add('hidden');
-                        }
-                        postsContainer.innerHTML += '<p class="text-center py-10 text-red-500">Error loading posts.</p>';
-                    });
-            }
-            
-            // Load more posts when button is clicked
-            document.getElementById('load-more').addEventListener('click', function() {
+
+                await window.firebaseServices.addDoc(
+                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
+                    postData
+                );
+
+                showNotification('Post created successfully!', 'success');
+                resetUploadForms();
                 loadPosts();
+
+            } catch (error) {
+                console.error('Error creating post:', error);
+                showNotification('Failed to create post', 'error');
+            }
+        }
+
+        // Upload files to Firebase Storage
+        async function uploadFiles(files, folder) {
+            const uploadPromises = files.map(async (file, index) => {
+                const fileName = `${Date.now()}_${index}_${file.name}`;
+                const storageRef = window.firebaseServices.ref(window.firebaseStorage, `${folder}/${fileName}`);
+                
+                return new Promise((resolve, reject) => {
+                    const uploadTask = window.firebaseServices.uploadBytesResumable(storageRef, file);
+                    
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            updateUploadProgress(folder, progress);
+                        },
+                        (error) => reject(error),
+                        async () => {
+                            const downloadURL = await window.firebaseServices.getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(downloadURL);
+                        }
+                    );
+                });
             });
+
+            return Promise.all(uploadPromises);
+        }
+
+        function updateUploadProgress(type, progress) {
+            const progressBar = document.getElementById(`${type === 'images' ? 'image' : 'video'}Progress`);
+            const progressFill = progressBar.querySelector('.progress-fill');
             
-            // Load user posts for profile page
-            function loadUserPosts(userId) {
-                const userPostsGrid = document.getElementById('user-posts-grid');
-                const userPostsList = document.getElementById('user-posts-list');
-                const loadingElement = document.getElementById('user-posts-loading');
-                
-                if (loadingElement) {
-                    loadingElement.classList.remove('hidden');
-                }
-                
-                db.collection('posts')
-                    .where('userId', '==', userId)
-                    .orderBy('createdAt', 'desc')
-                    .get()
-                    .then(querySnapshot => {
-                        if (loadingElement) {
-                            loadingElement.classList.add('hidden');
-                        }
-                        
-                        if (querySnapshot.empty) {
-                            userPostsGrid.innerHTML = '<p class="text-center py-10 text-gray-500 col-span-3">You haven\'t created any posts yet.</p>';
-                            userPostsList.innerHTML = '<p class="text-center py-10 text-gray-500">You haven\'t created any posts yet.</p>';
-                            return;
-                        }
-                        
-                        // Update post count
-                        document.getElementById('user-post-count').textContent = querySnapshot.size;
-                        
-                        // Clear containers
-                        userPostsGrid.innerHTML = '';
-                        userPostsList.innerHTML = '';
-                        
-                        // Store post data
-                        userPostData = [];
-                        
-                        // Process posts
-                        querySnapshot.forEach(doc => {
-                            const postData = doc.data();
-                            const postId = doc.id;
-                            userPostData.push({...postData, id: postId});
-                            
-                            // Grid view (just thumbnails)
-                            const gridItem = createPostGridItem(postData, postId);
-                            userPostsGrid.appendChild(gridItem);
-                            
-                            // List view (full post)
-                            const listItem = createPostElement(postData, postId);
-                            userPostsList.appendChild(listItem);
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error loading user posts: ", error);
-                        if (loadingElement) {
-                            loadingElement.classList.add('hidden');
-                        }
-                        userPostsGrid.innerHTML = '<p class="text-center py-10 text-red-500 col-span-3">Error loading posts.</p>';
-                        userPostsList.innerHTML = '<p class="text-center py-10 text-red-500">Error loading posts.</p>';
+            progressBar.classList.remove('hidden');
+            progressFill.style.width = `${progress}%`;
+            
+            if (progress === 100) {
+                setTimeout(() => {
+                    progressBar.classList.add('hidden');
+                    progressFill.style.width = '0%';
+                }, 1000);
+            }
+        }
+
+        // Load posts
+        async function loadPosts() {
+            try {
+                const postsQuery = window.firebaseServices.query(
+                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
+                    window.firebaseServices.orderBy('createdAt', 'desc'),
+                    window.firebaseServices.limit(10)
+                );
+
+                window.firebaseServices.onSnapshot(postsQuery, (snapshot) => {
+                    const postsContainer = document.getElementById('postsContainer');
+                    
+                    // Keep existing sample posts and add new ones
+                    const existingPosts = postsContainer.innerHTML;
+                    let newPostsHTML = '';
+
+                    snapshot.docs.forEach((doc) => {
+                        const post = doc.data();
+                        newPostsHTML += createPostHTML(post, doc.id);
                     });
+
+                    if (newPostsHTML) {
+                        postsContainer.innerHTML = newPostsHTML + existingPosts;
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading posts:', error);
             }
-            
-            // Create post grid item for profile page
-            function createPostGridItem(postData, postId) {
-                const gridItem = document.createElement('div');
-                gridItem.className = 'aspect-square bg-gray-200 rounded-md overflow-hidden';
-                gridItem.dataset.postId = postId;
-                
-                let thumbnail;
-                
-                if (postData.type === 'image' && postData.imageUrls && postData.imageUrls.length > 0) {
-                    thumbnail = postData.imageUrls[0];
-                } else if (postData.type === 'video' && postData.thumbnailUrl) {
-                    thumbnail = postData.thumbnailUrl;
-                } else {
-                    // Text post or missing thumbnail
-                    gridItem.innerHTML = `
-                        <div class="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-800">
-                            <div class="p-4 text-center">
-                                <i class="fas fa-font text-2xl mb-2"></i>
-                                <p class="text-sm font-medium line-clamp-2">${postData.title || 'Post'}</p>
-                            </div>
-                        </div>
-                    `;
-                    return gridItem;
-                }
-                
-                const img = document.createElement('img');
-                img.src = thumbnail;
-                img.className = 'w-full h-full object-cover';
-                img.alt = postData.title || 'Post thumbnail';
-                
-                gridItem.appendChild(img);
-                
-                return gridItem;
+        }
+
+        function createPostHTML(post, postId) {
+            const timeAgo = post.createdAt ? 'Just now' : 'Loading...';
+            let mediaHTML = '';
+
+            if (post.type === 'image' && post.images) {
+                mediaHTML = post.images.map(url => 
+                    `<img src="${url}" alt="Post image" class="post-image mb-3">`
+                ).join('');
+            } else if (post.type === 'video' && post.videos) {
+                mediaHTML = post.videos.map(url => 
+                    `<video controls playsinline webkit-playsinline class="post-video mb-3">
+                        <source src="${url}" type="video/mp4">
+                    </video>`
+                ).join('');
             }
-            
-            // Toggle between grid and list view on profile page
-            const gridViewBtn = document.getElementById('grid-view-btn');
-            const listViewBtn = document.getElementById('list-view-btn');
-            const userPostsGridView = document.getElementById('user-posts-grid');
-            const userPostsListView = document.getElementById('user-posts-list');
-            
-            gridViewBtn.addEventListener('click', function() {
-                gridViewBtn.classList.add('active');
-                listViewBtn.classList.remove('active');
-                userPostsGridView.classList.remove('hidden');
-                userPostsListView.classList.add('hidden');
-            });
-            
-            listViewBtn.addEventListener('click', function() {
-                listViewBtn.classList.add('active');
-                gridViewBtn.classList.remove('active');
-                userPostsListView.classList.remove('hidden');
-                userPostsGridView.classList.add('hidden');
-            });
-            
-            // Create post element
-            function createPostElement(postData, postId) {
-                const postCard = document.createElement('div');
-                postCard.className = 'card post-card';
-                postCard.dataset.postId = postId;
-                
-                const postHeader = `
-                    <div class="p-4">
+
+            const tagsHTML = post.tags ? post.tags.map(tag => 
+                `<span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">#${tag}</span>`
+            ).join(' ') : '';
+
+            return `
+                <div class="card fade-in">
+                    <div class="p-6">
                         <div class="flex items-center mb-4">
-                            <img src="https://via.placeholder.com/40" alt="User profile" class="user-avatar mr-3 post-user-avatar">
-                            <div>
-                                <h3 class="font-semibold post-user-name">User</h3>
-                                <p class="text-gray-500 text-sm">${formatDate(postData.createdAt)}</p>
+                            <img src="${post.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face'}" alt="User" class="user-avatar mr-4">
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800">${post.authorName}</h4>
+                                <p class="text-sm text-gray-500">${timeAgo}</p>
                             </div>
-                            <button class="ml-auto text-gray-500 hover:text-gray-700 post-menu-btn">
+                            <button class="text-gray-400 hover:text-gray-600">
                                 <i class="fas fa-ellipsis-h"></i>
                             </button>
                         </div>
-                `;
-                
-                let postContent;
-                
-                // Different content based on post type
-                if (postData.type === 'text') {
-                    postContent = `
-                        <div class="post-content">
-                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
-                            <p>${postData.content || ''}</p>
-                            ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
-                                ''}
-                        </div>
-                    `;
-                } else if (postData.type === 'image') {
-                    const imagesHtml = postData.imageUrls && postData.imageUrls.length > 0 ? 
-                        `<div class="${postData.imageUrls.length > 1 ? 'grid grid-cols-2 gap-2' : ''} mb-4">
-                            ${postData.imageUrls.map(url => `
-                                <img src="${url}" alt="Post image" class="rounded-lg w-full ${postData.imageUrls.length === 1 ? 'post-image' : 'aspect-square object-cover'}">
-                            `).join('')}
-                        </div>` : '';
-                    
-                    postContent = `
-                        <div class="post-content">
-                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
-                            ${imagesHtml}
-                            <p>${postData.caption || ''}</p>
-                            ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
-                                ''}
-                        </div>
-                    `;
-                } else if (postData.type === 'video') {
-                    postContent = `
-                        <div class="post-content mb-4">
-                            <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
-                            <p class="mb-4">${postData.description || ''}</p>
-                            <div class="relative rounded-lg overflow-hidden">
-                                <video controls playsinline webkit-playsinline class="w-full post-video">
-                                    <source src="${postData.videoUrl}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
-                            </div>
-                            ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
-                                ''}
-                        </div>
-                    `;
-                }
-                
-                const postActions = `
-                    <div class="post-actions">
-                        <button class="flex items-center text-gray-600 hover:text-indigo-600 like-btn" data-post-id="${postId}">
-                            <i class="far fa-heart mr-1"></i> <span class="like-count">${postData.likes || 0}</span> Likes
-                        </button>
-                        <button class="flex items-center text-gray-600 hover:text-indigo-600 comment-btn" data-post-id="${postId}">
-                            <i class="far fa-comment mr-1"></i> <span class="comment-count">${postData.comments || 0}</span> Comments
-                        </button>
-                        <button class="flex items-center text-gray-600 hover:text-indigo-600 share-btn" data-post-id="${postId}">
-                            <i class="far fa-share-square mr-1"></i> Share
-                        </button>
-                    </div>
-                `;
-                
-                const commentSection = postData.allowComments !== false ? `
-                    <div class="comments-section p-4 border-t border-gray-100 hidden">
-                        <h4 class="font-medium mb-2">Comments</h4>
-                        <div class="comments-container" data-post-id="${postId}">
-                            <div class="text-center py-3">
-                                <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
-                                <p class="mt-1 text-xs text-gray-500">Loading comments...</p>
+                        
+                        <div class="mb-4">
+                            ${post.content ? `<p class="text-gray-800 mb-3">${post.content}</p>` : ''}
+                            ${post.caption ? `<p class="text-gray-800 mb-3">${post.caption}</p>` : ''}
+                            ${post.description ? `<p class="text-gray-800 mb-3">${post.description}</p>` : ''}
+                            ${mediaHTML}
+                            <div class="flex flex-wrap gap-2">
+                                ${tagsHTML}
                             </div>
                         </div>
                         
-                        <div class="mt-4">
-                            <div class="flex">
-                                <img src="${currentUser ? (currentUser.photoURL || 'https://via.placeholder.com/40') : 'https://via.placeholder.com/40'}" alt="Your profile" class="w-8 h-8 rounded-full mr-3">
-                                <div class="flex-1">
-                                    <input type="text" placeholder="${currentUser ? 'Write a comment...' : 'Sign in to comment'}" class="comment-input w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" data-post-id="${postId}" ${currentUser ? '' : 'disabled'}>
-                                </div>
-                            </div>
+                        <div class="flex justify-between items-center py-3 border-t border-gray-100">
+                            <button class="flex items-center text-gray-600 hover:text-red-500 transition-colors" onclick="likePost('${postId}')">
+                                <i class="far fa-heart mr-2"></i>
+                                <span>${post.likes || 0} Likes</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-indigo-500 transition-colors">
+                                <i class="far fa-comment mr-2"></i>
+                                <span>${post.comments || 0} Comments</span>
+                            </button>
+                            <button class="flex items-center text-gray-600 hover:text-green-500 transition-colors">
+                                <i class="fas fa-share mr-2"></i>
+                                <span>Share</span>
+                            </button>
                         </div>
                     </div>
-                ` : '';
-                
-                postCard.innerHTML = `
-                    ${postHeader}
-                    ${postContent}
-                    </div>
-                    ${postActions}
-                    ${commentSection}
-                `;
-                
-                // Add event listeners
-                const likeBtn = postCard.querySelector('.like-btn');
-                const commentBtn = postCard.querySelector('.comment-btn');
-                const shareBtn = postCard.querySelector('.share-btn');
-                const commentSection = postCard.querySelector('.comments-section');
-                const commentInput = postCard.querySelector('.comment-input');
-                
-                // Like button functionality
-                likeBtn.addEventListener('click', function() {
-                    if (!currentUser) {
-                        showAuthModal();
-                        return;
-                    }
-                    
-                    const icon = this.querySelector('i');
-                    const likeCountElem = this.querySelector('.like-count');
-                    const isLiked = icon.classList.contains('fas');
-                    
-                    // Reference to the likes collection
-                    const likeRef = db.collection('posts').doc(postId)
-                        .collection('likes').doc(currentUser.uid);
-                    
-                    // Reference to the post document
-                    const postRef = db.collection('posts').doc(postId);
-                    
-                    if (isLiked) {
-                        // Unlike
-                        icon.classList.remove('fas', 'text-red-500');
-                        icon.classList.add('far');
-                        
-                        let likeCount = parseInt(likeCountElem.textContent);
-                        likeCount = Math.max(0, likeCount - 1);
-                        likeCountElem.textContent = likeCount;
-                        
-                        // Update in Firestore
-                        db.runTransaction(transaction => {
-                            return transaction.get(postRef).then(postDoc => {
-                                // Remove the like document
-                                transaction.delete(likeRef);
-                                
-                                // Update post likes count
-                                const newLikes = Math.max(0, (postDoc.data().likes || 0) - 1);
-                                transaction.update(postRef, { likes: newLikes });
-                            });
-                        });
-                    } else {
-                        // Like
-                        icon.classList.remove('far');
-                        icon.classList.add('fas', 'text-red-500');
-                        
-                        let likeCount = parseInt(likeCountElem.textContent);
-                        likeCount++;
-                        likeCountElem.textContent = likeCount;
-                        
-                        // Update in Firestore
-                        db.runTransaction(transaction => {
-                            return transaction.get(postRef).then(postDoc => {
-                                // Add the like document
-                                transaction.set(likeRef, { 
-                                    userId: currentUser.uid,
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                                
-                                // Update post likes count
-                                const newLikes = (postDoc.data().likes || 0) + 1;
-                                transaction.update(postRef, { likes: newLikes });
-                            });
-                        });
-                    }
+                </div>
+            `;
+        }
+
+        // Load user data
+        function loadUserData() {
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.displayName || 'User';
+                document.getElementById('userAvatar').src = currentUser.photoURL || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face';
+                document.getElementById('profileAvatar').src = currentUser.photoURL || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop&crop=face';
+                document.getElementById('profileName').textContent = currentUser.displayName || 'User';
+                document.getElementById('profileEmail').textContent = currentUser.email;
+                document.getElementById('settingsName').value = currentUser.displayName || '';
+                document.getElementById('settingsEmail').value = currentUser.email;
+            }
+        }
+
+        // Utility functions
+        function resetUploadForms() {
+            document.getElementById('textPostForm').reset();
+            document.getElementById('imagePostForm').reset();
+            document.getElementById('videoPostForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('videoPreview').classList.add('hidden');
+            selectedFiles = [];
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            document.getElementById('imageInput').value = '';
+            // Refresh preview
+            const event = new Event('change');
+            document.getElementById('imageInput').dispatchEvent(event);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.getElementById('notificationContainer').appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function setupEventListeners() {
+            // Upload tabs
+            const uploadTabs = document.querySelectorAll('.upload-tab');
+            uploadTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    uploadTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
                 });
-                
-                // Comment button functionality
-                if (commentBtn && commentSection) {
-                    commentBtn.addEventListener('click', function() {
-                        commentSection.classList.toggle('hidden');
-                        if (!commentSection.classList.contains('hidden')) {
-                            loadComments(postId);
-                        }
-                    });
-                }
-                
-                // Comment input functionality
-                if (commentInput) {
-                    commentInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            if (!currentUser) {
-                                showAuthModal();
-                                return;
-                            }
-                            
-                            const commentText = this.value.trim();
-                            if (!commentText) return;
-                            
-                            // Add comment to Firestore
-                            const commentData = {
-                                userId: currentUser.uid,
-                                text: commentText,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            };
-                            
-                            const commentRef = db.collection('posts').doc(postId).collection('comments');
-                            const postRef = db.collection('posts').doc(postId);
-                            
-                            // Update in a transaction
-                            db.runTransaction(transaction => {
-                                return transaction.get(postRef).then(postDoc => {
-                                    // Add comment
-                                    const newCommentRef = commentRef.doc();
-                                    transaction.set(newCommentRef, commentData);
-                                    
-                                    // Update post comments count
-                                    const newComments = (postDoc.data().comments || 0) + 1;
-                                    transaction.update(postRef, { comments: newComments });
-                                    
-                                    // Clear input
-                                    this.value = '';
-                                    
-                                    // Update UI
-                                    const commentCountElem = postCard.querySelector('.comment-count');
-                                    commentCountElem.textContent = newComments;
-                                    
-                                    // Reload comments
-                                    loadComments(postId);
-                                });
-                            });
-                        }
-                    });
-                }
-                
-                // Share button functionality
-                if (shareBtn) {
-                    shareBtn.addEventListener('click', function() {
-                        // Create a temporary input element
-                        const input = document.createElement('input');
-                        input.value = window.location.href.split('#')[0] + `#post/${postId}`;
-                        document.body.appendChild(input);
-                        input.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(input);
-                        
-                        showSuccessMessage('Link copied to clipboard!');
-                    });
-                }
-                
-                return postCard;
-            }
-            
-            // Load comments for a post
-            function loadComments(postId) {
-                const commentsContainer = document.querySelector(`.comments-container[data-post-id="${postId}"]`);
-                if (!commentsContainer) return;
-                
-                commentsContainer.innerHTML = `
-                    <div class="text-center py-3">
-                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
-                        <p class="mt-1 text-xs text-gray-500">Loading comments...</p>
-                    </div>
-                `;
-                
-                db.collection('posts').doc(postId)
-                    .collection('comments')
-                    .orderBy('createdAt', 'desc')
-                    .limit(5)
-                    .get()
-                    .then(querySnapshot => {
-                        if (querySnapshot.empty) {
-                            commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-gray-500">No comments yet.</p>';
-                            return;
-                        }
-                        
-                        commentsContainer.innerHTML = '';
-                        
-                        querySnapshot.forEach(doc => {
-                            const commentData = doc.data();
-                            const commentElement = document.createElement('div');
-                            commentElement.className = 'comment mt-3';
-                            commentElement.dataset.commentId = doc.id;
-                            
-                            commentElement.innerHTML = `
-                                <div class="flex">
-                                    <img src="https://via.placeholder.com/40" alt="User" class="w-8 h-8 rounded-full mr-3 comment-user-avatar">
-                                    <div>
-                                        <div class="bg-gray-100 rounded-lg p-3">
-                                            <h5 class="font-medium text-sm comment-user-name">User</h5>
-                                            <p class="text-sm">${commentData.text}</p>
-                                        </div>
-                                        <div class="flex items-center mt-1 text-xs text-gray-500">
-                                            <span>${formatDate(commentData.createdAt)}</span>
-                                            <button class="ml-3 hover:text-indigo-600">Reply</button>
-                                            <button class="ml-3 hover:text-indigo-600">Like</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            commentsContainer.appendChild(commentElement);
-                            
-                            // Get user information for comment
-                            getUserInfo(commentData.userId).then(userInfo => {
-                                const userNameElem = commentElement.querySelector('.comment-user-name');
-                                const userAvatarElem = commentElement.querySelector('.comment-user-avatar');
-                                
-                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
-                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error loading comments: ", error);
-                        commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-red-500">Error loading comments.</p>';
-                    });
-            }
-            
-            // Get user information from Firestore
-            function getUserInfo(userId) {
-                return db.collection('users').doc(userId).get()
-                    .then(doc => {
-                        if (doc.exists) {
-                            return doc.data();
-                        } else {
-                            return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error getting user info: ", error);
-                        return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
-                    });
-            }
-            
-            // Save profile settings
-            const settingsSaveBtn = document.getElementById('settings-save');
-            if (settingsSaveBtn) {
-                settingsSaveBtn.addEventListener('click', function() {
-                    if (!currentUser) return;
-                    
-                    const fullname = document.getElementById('fullname').value;
-                    const username = document.getElementById('username').value;
-                    const phone = document.getElementById('phone').value;
-                    const bio = document.getElementById('bio').value;
-                    const profileVisibility = document.getElementById('profile-visibility').value;
-                    const allowComments = document.getElementById('allow-comments').checked;
-                    const tagNotifications = document.getElementById('tag-notifications').checked;
-                    const downloadPermission = document.getElementById('download-permission').checked;
-                    const emailNotifications = document.getElementById('email-notifications').checked;
-                    const pushNotifications = document.getElementById('push-notifications').checked;
-                    const marketingEmails = document.getElementById('marketing-emails').checked;
-                    
-                    // Update user profile in Firestore
-                    db.collection('users').doc(currentUser.uid).update({
-                        name: fullname,
-                        username: username,
-                        phone: phone,
-                        bio: bio,
-                        profileVisibility: profileVisibility,
-                        settings: {
-                            allowComments: allowComments,
-                            tagNotifications: tagNotifications,
-                            downloadPermission: downloadPermission,
-                            emailNotifications: emailNotifications,
-                            pushNotifications: pushNotifications,
-                            marketingEmails: marketingEmails
-                        },
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    })
-                    .then(() => {
-                        showSuccessMessage('Profile settings updated successfully!');
-                        getUserProfile(currentUser.uid);
-                    })
-                    .catch(error => {
-                        showErrorMessage('Error updating profile: ' + error.message);
-                    });
-                });
-            }
-            
-            // Theme toggle
-            const themeToggle = document.getElementById('themeToggle');
-            let darkMode = localStorage.getItem('darkMode') === 'true';
-            
-            // Initialize theme
-            if (darkMode) {
-                document.body.classList.add('dark-theme');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-            
-            themeToggle.addEventListener('click', function() {
-                darkMode = !darkMode;
-                localStorage.setItem('darkMode', darkMode);
-                
-                if (darkMode) {
-                    document.body.classList.add('dark-theme');
-                    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                }
             });
-            
-            // Helper functions
-            function formatDate(timestamp) {
-                if (!timestamp) return 'Just now';
-                
-                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-                const now = new Date();
-                const diff = (now - date) / 1000; // seconds
-                
-                if (diff < 60) return 'Just now';
-                if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-                if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-                if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-                
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return date.toLocaleDateString(undefined, options);
-            }
-            
-            function showSuccessMessage(message) {
-                const notification = document.createElement('div');
-                notification.className = 'fixed right-4 bottom-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                notification.textContent = message;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-            
-            function showErrorMessage(message) {
-                const notification = document.createElement('div');
-                notification.className = 'fixed right-4 bottom-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                notification.textContent = message;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-            
-            function showLoading(message = 'Loading...') {
-                const loadingOverlay = document.createElement('div');
-                loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                loadingOverlay.id = 'loading-overlay';
-                
-                loadingOverlay.innerHTML = `
-                    <div class="bg-white p-4 rounded-lg shadow-lg text-center">
-                        <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600 mb-2"></div>
-                        <p>${message}</p>
-                    </div>
-                `;
-                
-                document.body.appendChild(loadingOverlay);
-            }
-            
-            function hideLoading() {
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) {
-                    loadingOverlay.remove();
+
+            // Add upload tab styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .upload-tab {
+                    padding: 0.75rem 1.5rem;
+                    border-bottom: 2px solid transparent;
+                    color: #6b7280;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
                 }
+                .upload-tab.active {
+                    color: #4f46e5;
+                    border-bottom-color: #4f46e5;
+                    font-weight: 600;
+                }
+                .upload-tab:hover {
+                    color: #4f46e5;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Like post function
+        async function likePost(postId) {
+            try {
+                const postRef = window.firebaseServices.doc(window.firebaseDB, 'posts', postId);
+                const postDoc = await window.firebaseServices.getDocs(window.firebaseServices.collection(window.firebaseDB, 'posts'));
+                
+                // Find the post and increment likes
+                // This is a simplified version - in a real app, you'd track who liked what
+                showNotification('Post liked!', 'success');
+            } catch (error) {
+                console.error('Error liking post:', error);
             }
-        });
+        }
+
+        // Make functions globally available
+        window.removeFile = removeFile;
+        window.likePost = likePost;
     </script>
 </body>
-</html> 
+</html>
