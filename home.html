@@ -131,6 +131,7 @@
             padding: 2rem;
             text-align: center;
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .dropzone:hover {
@@ -268,6 +269,48 @@
         .dark-theme input::placeholder,
         .dark-theme textarea::placeholder {
             color: #a0aec0;
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: toast-in-out 3s ease forwards;
+        }
+        
+        .toast.success {
+            background-color: #10b981;
+        }
+        
+        .toast.error {
+            background-color: #ef4444;
+        }
+        
+        @keyframes toast-in-out {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
         }
     </style>
 </head>
@@ -613,8 +656,9 @@
                 <div class="text-center mb-6">
                     <div class="relative inline-block">
                         <img src="https://via.placeholder.com/150" alt="Profile picture" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg" id="profile-page-image">
-                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700">
+                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700" id="change-profile-image">
                             <i class="fas fa-camera"></i>
+                            <input type="file" id="profile-image-upload" accept="image/*" class="hidden">
                         </button>
                     </div>
                     <h2 class="text-2xl font-bold mt-4" id="profile-user-name">User Name</h2>
@@ -806,6 +850,33 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 text-red-600">Danger Zone</h3>
+                <p class="text-gray-600 mb-4">These actions are irreversible. Please proceed with caution.</p>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 border border-gray-200 rounded-md">
+                        <div>
+                            <h4 class="font-medium">Reset Password</h4>
+                            <p class="text-sm text-gray-600">Send a password reset email to your registered email address</p>
+                        </div>
+                        <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md" id="reset-password-btn">
+                            Reset Password
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-between items-center p-4 border border-gray-200 rounded-md">
+                        <div>
+                            <h4 class="font-medium">Delete Account</h4>
+                            <p class="text-sm text-gray-600">Permanently delete your account and all associated data</p>
+                        </div>
+                        <button class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md" id="delete-account-btn">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -839,27 +910,81 @@
         </div>
     </footer>
 
+    <!-- Delete Account Confirmation Modal -->
+    <div id="delete-account-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md p-6">
+            <h3 class="text-xl font-bold text-red-600 mb-4">Delete Account</h3>
+            <p class="text-gray-700 mb-6">Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.</p>
+            
+            <div class="mb-4">
+                <label for="delete-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm your password</label>
+                <input type="password" id="delete-password" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-delete" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md">Cancel</button>
+                <button id="confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">Delete My Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Edit Profile</h3>
+                <button id="close-edit-profile" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="edit-profile-form" class="space-y-4">
+                <div>
+                    <label for="edit-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="edit-name" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="edit-bio" class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea id="edit-bio" rows="3" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                
+                <div>
+                    <label for="edit-interests" class="block text-sm font-medium text-gray-700 mb-1">Interests</label>
+                    <input type="text" id="edit-interests" placeholder="Travel, Photography, Design..." class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">Separate interests with commas</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-edit-profile" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Firebase initialization
+            // Firebase configuration
             const firebaseConfig = {
-                apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-                authDomain: "onlineshop-849c8.firebaseapp.com",
-                databaseURL: "https://onlineshop-849c8.firebaseio.com",
-                projectId: "onlineshop-849c8",
-                storageBucket: "onlineshop-849c8.appspot.com",
-                messagingSenderId: "883512833370",
-                appId: "1:883512833370:web:a1c8412b158f8744afef63"
+                apiKey: "AIzaSyBGm3aMGnDYrl7HJ-QvNfmMhIpdMBmfXtM",
+                authDomain: "socialapp-demo-123.firebaseapp.com",
+                projectId: "socialapp-demo-123",
+                storageBucket: "socialapp-demo-123.appspot.com",
+                messagingSenderId: "123456789012",
+                appId: "1:123456789012:web:abc123def456ghi789jkl"
             };
             
             // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
             
             // Get Firebase services
             const auth = firebase.auth();
@@ -880,6 +1005,24 @@
             const showLogin = document.getElementById('show-login');
             const authElements = document.querySelectorAll('.auth-required');
             const authContent = document.querySelectorAll('.auth-content');
+            
+            // Profile elements
+            const changeProfileImageBtn = document.getElementById('change-profile-image');
+            const profileImageUpload = document.getElementById('profile-image-upload');
+            const editProfileBtn = document.getElementById('edit-profile-btn');
+            const editProfileModal = document.getElementById('edit-profile-modal');
+            const closeEditProfileBtn = document.getElementById('close-edit-profile');
+            const cancelEditProfileBtn = document.getElementById('cancel-edit-profile');
+            const editProfileForm = document.getElementById('edit-profile-form');
+            
+            // Settings elements
+            const resetPasswordBtn = document.getElementById('reset-password-btn');
+            const deleteAccountBtn = document.getElementById('delete-account-btn');
+            const deleteAccountModal = document.getElementById('delete-account-modal');
+            const cancelDeleteBtn = document.getElementById('cancel-delete');
+            const confirmDeleteBtn = document.getElementById('confirm-delete');
+            const settingsSaveBtn = document.getElementById('settings-save');
+            const settingsCancelBtn = document.getElementById('settings-cancel');
             
             // Variables
             let currentUser = null;
@@ -917,6 +1060,12 @@
                     
                     // Close auth modal if open
                     authModal.classList.add('hidden');
+                    
+                    // Update profile image
+                    if (user.photoURL) {
+                        profileImage.src = user.photoURL;
+                    }
+                    
                 } else {
                     // User is signed out
                     currentUser = null;
@@ -943,7 +1092,7 @@
                 }
                 
                 // Load posts regardless of auth state
-                loadPosts();
+                loadPosts(true);
             });
             
             // Navigation
@@ -965,7 +1114,39 @@
                 });
             });
             
+            // Check hash for direct navigation
+            function checkHash() {
+                const hash = window.location.hash.substr(1);
+                if (hash) {
+                    const parts = hash.split('/');
+                    const page = parts[0];
+                    
+                    if (page && document.querySelector(`.nav-link[data-page="${page}"]`)) {
+                        const link = document.querySelector(`.nav-link[data-page="${page}"]`);
+                        
+                        if (link.classList.contains('auth-required') && !currentUser) {
+                            showAuthModal();
+                            return;
+                        }
+                        
+                        navigateToPage(page);
+                        
+                        // Handle post viewing if in format #post/123
+                        if (parts[0] === 'post' && parts[1]) {
+                            // Implement post view logic
+                        }
+                    }
+                }
+            }
+            
+            // Check hash on load and when it changes
+            window.addEventListener('hashchange', checkHash);
+            setTimeout(checkHash, 500); // Slight delay to ensure auth state is checked first
+            
             function navigateToPage(targetPage) {
+                // Update hash
+                window.location.hash = targetPage;
+                
                 // Update active navigation link
                 navLinks.forEach(l => l.classList.remove('active'));
                 const activeLink = document.querySelector(`.nav-link[data-page="${targetPage}"]`);
@@ -1039,57 +1220,133 @@
             // Login form submit
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const email = document.getElementById('login-email').value;
+                
+                const email = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value;
                 
+                // Validate input
+                if (!email || !password) {
+                    showToast('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                // Show loading
+                showLoading('Signing in...');
+                
                 auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        showSuccessMessage('Successfully logged in!');
+                    .then(() => {
+                        hideLoading();
+                        showToast('Successfully logged in!', 'success');
+                        document.getElementById('login-email').value = '';
+                        document.getElementById('login-password').value = '';
                     })
                     .catch((error) => {
-                        showErrorMessage(error.message);
+                        hideLoading();
+                        let errorMessage = 'Authentication failed';
+                        
+                        // Provide specific error messages
+                        if (error.code === 'auth/user-not-found') {
+                            errorMessage = 'No account found with this email';
+                        } else if (error.code === 'auth/wrong-password') {
+                            errorMessage = 'Incorrect password';
+                        } else if (error.code === 'auth/invalid-email') {
+                            errorMessage = 'Invalid email format';
+                        } else if (error.code === 'auth/too-many-requests') {
+                            errorMessage = 'Too many failed attempts. Try again later';
+                        }
+                        
+                        showToast(errorMessage, 'error');
                     });
             });
             
             // Signup form submit
             signupForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const name = document.getElementById('signup-name').value;
-                const email = document.getElementById('signup-email').value;
+                
+                const name = document.getElementById('signup-name').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
                 const password = document.getElementById('signup-password').value;
                 const confirmPassword = document.getElementById('signup-confirm-password').value;
                 
-                if (password !== confirmPassword) {
-                    showErrorMessage('Passwords do not match');
+                // Validate input
+                if (!name || !email || !password || !confirmPassword) {
+                    showToast('Please fill in all fields', 'error');
                     return;
                 }
                 
+                if (password !== confirmPassword) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showToast('Password must be at least 6 characters', 'error');
+                    return;
+                }
+                
+                // Show loading
+                showLoading('Creating account...');
+                
                 auth.createUserWithEmailAndPassword(email, password)
                     .then((userCredential) => {
+                        const user = userCredential.user;
+                        
                         // Create user profile
-                        return db.collection('users').doc(userCredential.user.uid).set({
+                        return db.collection('users').doc(user.uid).set({
                             name: name,
                             email: email,
                             bio: '',
+                            interests: [],
                             profileImage: 'https://via.placeholder.com/150',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            username: email.split('@')[0],
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            settings: {
+                                allowComments: true,
+                                tagNotifications: true,
+                                downloadPermission: false,
+                                emailNotifications: true,
+                                pushNotifications: true,
+                                marketingEmails: false,
+                                profileVisibility: 'public'
+                            }
                         });
                     })
                     .then(() => {
-                        showSuccessMessage('Account created successfully!');
+                        hideLoading();
+                        showToast('Account created successfully!', 'success');
+                        
+                        // Clear form
+                        document.getElementById('signup-name').value = '';
+                        document.getElementById('signup-email').value = '';
+                        document.getElementById('signup-password').value = '';
+                        document.getElementById('signup-confirm-password').value = '';
                     })
                     .catch((error) => {
-                        showErrorMessage(error.message);
+                        hideLoading();
+                        let errorMessage = 'Account creation failed';
+                        
+                        // Provide specific error messages
+                        if (error.code === 'auth/email-already-in-use') {
+                            errorMessage = 'Email is already in use';
+                        } else if (error.code === 'auth/invalid-email') {
+                            errorMessage = 'Invalid email format';
+                        } else if (error.code === 'auth/weak-password') {
+                            errorMessage = 'Password is too weak';
+                        }
+                        
+                        showToast(errorMessage, 'error');
                     });
             });
             
             // Logout
             logoutButton.addEventListener('click', () => {
-                auth.signOut().then(() => {
-                    showSuccessMessage('You have been signed out');
-                }).catch((error) => {
-                    showErrorMessage(error.message);
-                });
+                auth.signOut()
+                    .then(() => {
+                        showToast('You have been signed out', 'success');
+                    })
+                    .catch((error) => {
+                        showToast('Error signing out: ' + error.message, 'error');
+                    });
             });
             
             // User profile dropdown
@@ -1103,6 +1360,172 @@
                     userDropdown.classList.add('hidden');
                 }
             });
+            
+            // Change profile image
+            changeProfileImageBtn.addEventListener('click', () => {
+                profileImageUpload.click();
+            });
+            
+            profileImageUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.match('image.*')) {
+                        showToast('Please select an image file', 'error');
+                        return;
+                    }
+                    
+                    showLoading('Uploading image...');
+                    
+                    // Upload to Firebase Storage
+                    const storageRef = storage.ref(`profile_images/${currentUser.uid}/${Date.now()}-${file.name}`);
+                    const uploadTask = storageRef.put(file);
+                    
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            // Progress function
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('Upload is ' + progress + '% done');
+                        }, 
+                        (error) => {
+                            // Error function
+                            hideLoading();
+                            showToast('Error uploading image: ' + error.message, 'error');
+                        }, 
+                        () => {
+                            // Complete function
+                            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                                // Update user profile
+                                updateProfileImage(downloadURL);
+                            });
+                        }
+                    );
+                }
+            });
+            
+            function updateProfileImage(imageUrl) {
+                // Update auth profile
+                currentUser.updateProfile({
+                    photoURL: imageUrl
+                }).then(() => {
+                    // Update Firestore profile
+                    return db.collection('users').doc(currentUser.uid).update({
+                        profileImage: imageUrl
+                    });
+                }).then(() => {
+                    // Update UI
+                    const profileImgElements = document.querySelectorAll('#profile-image, #profile-page-image');
+                    profileImgElements.forEach(img => {
+                        img.src = imageUrl;
+                    });
+                    
+                    hideLoading();
+                    showToast('Profile image updated successfully', 'success');
+                }).catch(error => {
+                    hideLoading();
+                    showToast('Error updating profile image: ' + error.message, 'error');
+                });
+            }
+            
+            // Edit profile
+            editProfileBtn.addEventListener('click', () => {
+                if (!currentUser) return;
+                
+                // Get user data
+                db.collection('users').doc(currentUser.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        // Populate form
+                        document.getElementById('edit-name').value = userData.name || '';
+                        document.getElementById('edit-bio').value = userData.bio || '';
+                        document.getElementById('edit-interests').value = 
+                            Array.isArray(userData.interests) ? userData.interests.join(', ') : '';
+                        
+                        // Show modal
+                        editProfileModal.classList.remove('hidden');
+                    }
+                }).catch(error => {
+                    showToast('Error loading profile data: ' + error.message, 'error');
+                });
+            });
+            
+            closeEditProfileBtn.addEventListener('click', () => {
+                editProfileModal.classList.add('hidden');
+            });
+            
+            cancelEditProfileBtn.addEventListener('click', () => {
+                editProfileModal.classList.add('hidden');
+            });
+            
+            editProfileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('edit-name').value.trim();
+                const bio = document.getElementById('edit-bio').value.trim();
+                const interestsInput = document.getElementById('edit-interests').value.trim();
+                
+                // Process interests into array
+                const interests = interestsInput 
+                    ? interestsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) 
+                    : [];
+                
+                showLoading('Saving profile...');
+                
+                // Update profile in Firestore
+                db.collection('users').doc(currentUser.uid).update({
+                    name: name,
+                    bio: bio,
+                    interests: interests,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    // Update display name in Auth
+                    return currentUser.updateProfile({
+                        displayName: name
+                    });
+                }).then(() => {
+                    // Update UI
+                    document.getElementById('profile-user-name').textContent = name;
+                    document.getElementById('profile-user-bio').textContent = bio || 'No bio yet';
+                    document.getElementById('user-about').textContent = bio || 'No information provided.';
+                    
+                    // Update interests/tags
+                    updateUserTagsDisplay(interests);
+                    
+                    hideLoading();
+                    showToast('Profile updated successfully', 'success');
+                    editProfileModal.classList.add('hidden');
+                    
+                }).catch(error => {
+                    hideLoading();
+                    showToast('Error updating profile: ' + error.message, 'error');
+                });
+            });
+            
+            function updateUserTagsDisplay(interests) {
+                const userTags = document.getElementById('user-tags');
+                userTags.innerHTML = '';
+                
+                if (interests && interests.length) {
+                    // Define a set of tag colors
+                    const tagColors = [
+                        {bg: 'bg-blue-100', text: 'text-blue-800'},
+                        {bg: 'bg-green-100', text: 'text-green-800'},
+                        {bg: 'bg-purple-100', text: 'text-purple-800'},
+                        {bg: 'bg-red-100', text: 'text-red-800'},
+                        {bg: 'bg-yellow-100', text: 'text-yellow-800'}
+                    ];
+                    
+                    interests.forEach((interest, index) => {
+                        // Cycle through colors
+                        const colorSet = tagColors[index % tagColors.length];
+                        
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = `${colorSet.bg} ${colorSet.text} text-xs font-semibold px-2.5 py-0.5 rounded mr-2 mb-2`;
+                        tagSpan.textContent = interest;
+                        userTags.appendChild(tagSpan);
+                    });
+                }
+            }
             
             // Get user profile data
             function getUserProfile(userId) {
@@ -1130,10 +1553,62 @@
                                     img.src = userData.profileImage;
                                 });
                             }
+                            
+                            // Update user tags/interests
+                            if (userData.interests && Array.isArray(userData.interests)) {
+                                updateUserTagsDisplay(userData.interests);
+                            }
+                            
+                            // Update settings toggles
+                            if (userData.settings) {
+                                const settings = userData.settings;
+                                
+                                // Profile visibility
+                                if (settings.profileVisibility) {
+                                    document.getElementById('profile-visibility').value = settings.profileVisibility;
+                                }
+                                
+                                // Toggle switches
+                                document.getElementById('allow-comments').checked = 
+                                    settings.allowComments !== false;
+                                document.getElementById('tag-notifications').checked = 
+                                    settings.tagNotifications !== false;
+                                document.getElementById('download-permission').checked = 
+                                    settings.downloadPermission === true;
+                                document.getElementById('email-notifications').checked = 
+                                    settings.emailNotifications !== false;
+                                document.getElementById('push-notifications').checked = 
+                                    settings.pushNotifications !== false;
+                                document.getElementById('marketing-emails').checked = 
+                                    settings.marketingEmails === true;
+                            }
+                            
+                            // Update follower counts
+                            updateFollowerCounts(userId);
                         }
                     })
                     .catch((error) => {
                         console.error("Error getting user profile: ", error);
+                        showToast('Error loading profile', 'error');
+                    });
+            }
+            
+            // Update follower counts
+            function updateFollowerCounts(userId) {
+                // Get followers
+                db.collection('followers')
+                    .where('followingId', '==', userId)
+                    .get()
+                    .then(snapshot => {
+                        document.getElementById('user-followers').textContent = snapshot.size;
+                    });
+                
+                // Get following
+                db.collection('followers')
+                    .where('followerId', '==', userId)
+                    .get()
+                    .then(snapshot => {
+                        document.getElementById('user-following').textContent = snapshot.size;
                     });
             }
             
@@ -1159,55 +1634,67 @@
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    imageUpload.files = files;
+                    // Create a new DataTransfer object
+                    const dataTransfer = new DataTransfer();
+                    
+                    // Add files to DataTransfer object
+                    Array.from(files).forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            dataTransfer.items.add(file);
+                        }
+                    });
+                    
+                    // Assign files to file input
+                    imageUpload.files = dataTransfer.files;
                     handleImageUpload();
                 }
             });
             
             function handleImageUpload() {
                 const files = imageUpload.files;
-                selectedFiles = Array.from(files);
+                selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
                 
                 // Clear previous previews
                 imagePreviewContainer.innerHTML = '';
                 
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(e) {
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'preview-item';
-                            previewItem.dataset.index = i;
-                            
-                            const previewImage = document.createElement('img');
-                            previewImage.className = 'preview-image';
-                            previewImage.src = e.target.result;
-                            previewImage.alt = 'Image preview';
-                            
-                            const removeButton = document.createElement('button');
-                            removeButton.className = 'remove-btn';
-                            removeButton.innerHTML = '<i class="fas fa-times"></i>';
-                            removeButton.addEventListener('click', function() {
-                                const index = parseInt(previewItem.dataset.index);
-                                selectedFiles.splice(index, 1);
-                                previewItem.remove();
-                                // Reindex remaining previews
-                                const remainingPreviews = imagePreviewContainer.querySelectorAll('.preview-item');
-                                remainingPreviews.forEach((preview, idx) => {
-                                    preview.dataset.index = idx;
-                                });
-                            });
-                            
-                            previewItem.appendChild(previewImage);
-                            previewItem.appendChild(removeButton);
-                            imagePreviewContainer.appendChild(previewItem);
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
+                if (selectedFiles.length === 0) {
+                    return;
                 }
+                
+                selectedFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        previewItem.dataset.index = index;
+                        
+                        const previewImage = document.createElement('img');
+                        previewImage.className = 'preview-image';
+                        previewImage.src = e.target.result;
+                        previewImage.alt = 'Image preview';
+                        
+                        const removeButton = document.createElement('button');
+                        removeButton.className = 'remove-btn';
+                        removeButton.innerHTML = '<i class="fas fa-times"></i>';
+                        removeButton.addEventListener('click', function() {
+                            const index = parseInt(previewItem.dataset.index);
+                            selectedFiles.splice(index, 1);
+                            previewItem.remove();
+                            // Reindex remaining previews
+                            const remainingPreviews = imagePreviewContainer.querySelectorAll('.preview-item');
+                            remainingPreviews.forEach((preview, idx) => {
+                                preview.dataset.index = idx;
+                            });
+                        });
+                        
+                        previewItem.appendChild(previewImage);
+                        previewItem.appendChild(removeButton);
+                        imagePreviewContainer.appendChild(previewItem);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
             }
             
             // Video Upload Functionality
@@ -1235,7 +1722,12 @@
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0 && files[0].type.startsWith('video/')) {
-                    videoUpload.files = files;
+                    // Create a new DataTransfer object
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(files[0]);
+                    
+                    // Assign file to video upload input
+                    videoUpload.files = dataTransfer.files;
                     handleVideoUpload();
                 }
             });
@@ -1296,6 +1788,11 @@
                             thumbnailCanvas.style.backgroundSize = 'cover';
                             thumbnailCanvas.style.backgroundPosition = 'center';
                             
+                            // Select the first thumbnail by default
+                            if (i === 0) {
+                                thumbnailWrapper.click();
+                            }
+                            
                             video.removeEventListener('seeked', handler);
                         });
                     }, (i + 1) * 100);
@@ -1304,22 +1801,15 @@
             
             customThumbnail.addEventListener('change', function(e) {
                 const file = e.target.files[0];
-                selectedThumbnailFile = file;
                 
                 if (file && file.type.startsWith('image/')) {
+                    selectedThumbnailFile = file;
+                    
                     const reader = new FileReader();
                     
                     reader.onload = function(e) {
                         const thumbnailWrapper = document.createElement('div');
-                        thumbnailWrapper.className = 'relative cursor-pointer border-2 border-transparent hover:border-indigo-500 rounded-md overflow-hidden';
-                        thumbnailWrapper.onclick = function() {
-                            document.querySelectorAll('#thumbnail-container > div').forEach(el => {
-                                el.classList.remove('border-indigo-500');
-                                el.classList.add('border-transparent');
-                            });
-                            this.classList.remove('border-transparent');
-                            this.classList.add('border-indigo-500');
-                        };
+                        thumbnailWrapper.className = 'relative cursor-pointer border-2 border-indigo-500 rounded-md overflow-hidden';
                         
                         const thumbnailImg = document.createElement('div');
                         thumbnailImg.className = 'w-full h-16';
@@ -1329,6 +1819,12 @@
                         
                         thumbnailWrapper.appendChild(thumbnailImg);
                         
+                        // Deselect all other thumbnails
+                        document.querySelectorAll('#thumbnail-container > div').forEach(el => {
+                            el.classList.remove('border-indigo-500');
+                            el.classList.add('border-transparent');
+                        });
+                        
                         // Add custom thumbnail at the beginning
                         if (thumbnailContainer.firstChild) {
                             thumbnailContainer.insertBefore(thumbnailWrapper, thumbnailContainer.firstChild);
@@ -1336,8 +1832,15 @@
                             thumbnailContainer.appendChild(thumbnailWrapper);
                         }
                         
-                        // Auto-select the custom thumbnail
-                        thumbnailWrapper.click();
+                        // Add click handler to select/deselect
+                        thumbnailWrapper.addEventListener('click', function() {
+                            document.querySelectorAll('#thumbnail-container > div').forEach(el => {
+                                el.classList.remove('border-indigo-500');
+                                el.classList.add('border-transparent');
+                            });
+                            this.classList.remove('border-transparent');
+                            this.classList.add('border-indigo-500');
+                        });
                     };
                     
                     reader.readAsDataURL(file);
@@ -1357,39 +1860,53 @@
                     return;
                 }
                 
-                const title = document.getElementById('text-title').value;
-                const content = document.getElementById('text-content').value;
-                const tags = document.getElementById('text-tags').value;
+                const title = document.getElementById('text-title').value.trim();
+                const content = document.getElementById('text-content').value.trim();
+                const tagsInput = document.getElementById('text-tags').value.trim();
                 const allowComments = document.getElementById('text-comments').checked;
                 
+                // Process tags
+                const tags = tagsInput 
+                    ? tagsInput.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(tag => tag.length > 0) 
+                    : [];
+                
                 if (!title || !content) {
-                    showErrorMessage('Please fill in all required fields.');
+                    showToast('Please fill in title and content fields', 'error');
                     return;
                 }
                 
-                // Add post to Firestore
-                const postData = {
-                    userId: currentUser.uid,
-                    type: 'text',
-                    title: title,
-                    content: content,
-                    tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                    allowComments: allowComments,
-                    likes: 0,
-                    comments: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
+                showLoading('Publishing post...');
                 
-                db.collection('posts').add(postData)
-                    .then((docRef) => {
-                        showSuccessMessage('Text post published successfully!');
-                        textForm.reset();
-                        navigateToPage('home');
-                        loadPosts(true); // Reload posts
-                    })
-                    .catch((error) => {
-                        showErrorMessage('Error publishing post: ' + error.message);
-                    });
+                // Get user info first
+                getUserInfo(currentUser.uid).then(userInfo => {
+                    // Add post to Firestore
+                    const postData = {
+                        userId: currentUser.uid,
+                        userName: userInfo.name || 'User',
+                        userImage: userInfo.profileImage || 'https://via.placeholder.com/40',
+                        type: 'text',
+                        title: title,
+                        content: content,
+                        tags: tags,
+                        allowComments: allowComments,
+                        likes: 0,
+                        comments: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    return db.collection('posts').add(postData);
+                })
+                .then(() => {
+                    hideLoading();
+                    showToast('Post published successfully!', 'success');
+                    textForm.reset();
+                    navigateToPage('home');
+                    loadPosts(true); // Reload posts
+                })
+                .catch((error) => {
+                    hideLoading();
+                    showToast('Error publishing post: ' + error.message, 'error');
+                });
             });
             
             imageForm.addEventListener('submit', function(e) {
@@ -1400,14 +1917,25 @@
                     return;
                 }
                 
-                const title = document.getElementById('image-title').value;
-                const caption = document.getElementById('image-caption').value;
-                const tags = document.getElementById('image-tags').value;
+                const title = document.getElementById('image-title').value.trim();
+                const caption = document.getElementById('image-caption').value.trim();
+                const tagsInput = document.getElementById('image-tags').value.trim();
                 const allowComments = document.getElementById('image-comments').checked;
                 const allowDownload = document.getElementById('image-download').checked;
                 
+                // Process tags
+                const tags = tagsInput 
+                    ? tagsInput.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(tag => tag.length > 0) 
+                    : [];
+                
                 if (!title || selectedFiles.length === 0) {
-                    showErrorMessage('Please add a title and at least one image.');
+                    showToast('Please add a title and at least one image', 'error');
+                    return;
+                }
+                
+                // Limit file uploads
+                if (selectedFiles.length > 10) {
+                    showToast('Maximum 10 images allowed', 'error');
                     return;
                 }
                 
@@ -1422,46 +1950,51 @@
                     const storageRef = storage.ref(`posts/${currentUser.uid}/${Date.now()}-${index}-${file.name}`);
                     const uploadTask = storageRef.put(file);
                     
-                    const uploadPromise = uploadTask.then(() => {
-                        return storageRef.getDownloadURL();
-                    }).then(url => {
-                        imageUrls.push(url);
-                    });
+                    const uploadPromise = uploadTask
+                        .then(() => storageRef.getDownloadURL())
+                        .then(url => {
+                            imageUrls.push(url);
+                        });
                     
                     uploadPromises.push(uploadPromise);
                 });
                 
-                // Wait for all uploads to complete
-                Promise.all(uploadPromises)
-                    .then(() => {
-                        // Add post to Firestore
-                        return db.collection('posts').add({
-                            userId: currentUser.uid,
-                            type: 'image',
-                            title: title,
-                            caption: caption,
-                            imageUrls: imageUrls,
-                            tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                            allowComments: allowComments,
-                            allowDownload: allowDownload,
-                            likes: 0,
-                            comments: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    })
-                    .then(() => {
-                        hideLoading();
-                        showSuccessMessage('Image post published successfully!');
-                        imageForm.reset();
-                        imagePreviewContainer.innerHTML = '';
-                        selectedFiles = [];
-                        navigateToPage('home');
-                        loadPosts(true); // Reload posts
-                    })
-                    .catch(error => {
-                        hideLoading();
-                        showErrorMessage('Error publishing post: ' + error.message);
+                // Get user info and wait for all uploads to complete
+                Promise.all([
+                    getUserInfo(currentUser.uid),
+                    ...uploadPromises
+                ])
+                .then(([userInfo]) => {
+                    // Add post to Firestore
+                    return db.collection('posts').add({
+                        userId: currentUser.uid,
+                        userName: userInfo.name || 'User',
+                        userImage: userInfo.profileImage || 'https://via.placeholder.com/40',
+                        type: 'image',
+                        title: title,
+                        caption: caption,
+                        imageUrls: imageUrls,
+                        tags: tags,
+                        allowComments: allowComments,
+                        allowDownload: allowDownload,
+                        likes: 0,
+                        comments: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                })
+                .then(() => {
+                    hideLoading();
+                    showToast('Image post published successfully!', 'success');
+                    imageForm.reset();
+                    imagePreviewContainer.innerHTML = '';
+                    selectedFiles = [];
+                    navigateToPage('home');
+                    loadPosts(true); // Reload posts
+                })
+                .catch(error => {
+                    hideLoading();
+                    showToast('Error publishing post: ' + error.message, 'error');
+                });
             });
             
             videoForm.addEventListener('submit', function(e) {
@@ -1472,59 +2005,77 @@
                     return;
                 }
                 
-                const title = document.getElementById('video-title').value;
-                const description = document.getElementById('video-description').value;
-                const tags = document.getElementById('video-tags').value;
+                const title = document.getElementById('video-title').value.trim();
+                const description = document.getElementById('video-description').value.trim();
+                const tagsInput = document.getElementById('video-tags').value.trim();
                 const allowComments = document.getElementById('video-comments').checked;
                 const allowDownload = document.getElementById('video-download').checked;
                 const videoFile = videoUpload.files[0];
                 
-                if (!title || !videoFile || !selectedThumbnailFile) {
-                    showErrorMessage('Please add a title, video, and select a thumbnail.');
+                // Process tags
+                const tags = tagsInput 
+                    ? tagsInput.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(tag => tag.length > 0) 
+                    : [];
+                
+                if (!title || !videoFile) {
+                    showToast('Please add a title and video', 'error');
+                    return;
+                }
+                
+                if (!selectedThumbnailFile) {
+                    showToast('Please select a thumbnail', 'error');
+                    return;
+                }
+                
+                // Limit video size (100MB)
+                const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+                if (videoFile.size > maxSize) {
+                    showToast('Video size exceeds 100MB limit', 'error');
                     return;
                 }
                 
                 // Show loading
                 showLoading('Publishing video...');
                 
-                // Upload thumbnail
-                const thumbnailRef = storage.ref(`thumbnails/${currentUser.uid}/${Date.now()}-${selectedThumbnailFile.name}`);
-                const thumbnailUpload = thumbnailRef.put(selectedThumbnailFile);
-                
-                thumbnailUpload.then(() => {
-                    return thumbnailRef.getDownloadURL();
-                })
-                .then(thumbnailUrl => {
-                    // Upload video
-                    const videoRef = storage.ref(`videos/${currentUser.uid}/${Date.now()}-${videoFile.name}`);
-                    const videoUploadTask = videoRef.put(videoFile);
+                // Get user info first
+                getUserInfo(currentUser.uid).then(userInfo => {
+                    // Upload thumbnail
+                    const thumbnailRef = storage.ref(`thumbnails/${currentUser.uid}/${Date.now()}-${selectedThumbnailFile.name}`);
+                    const thumbnailUpload = thumbnailRef.put(selectedThumbnailFile);
                     
-                    return videoUploadTask.then(() => {
-                        return videoRef.getDownloadURL().then(videoUrl => {
-                            return { thumbnailUrl, videoUrl };
+                    return thumbnailUpload.then(() => {
+                        return thumbnailRef.getDownloadURL().then(thumbnailUrl => {
+                            // Upload video
+                            const videoRef = storage.ref(`videos/${currentUser.uid}/${Date.now()}-${videoFile.name}`);
+                            const videoUploadTask = videoRef.put(videoFile);
+                            
+                            return videoUploadTask.then(() => {
+                                return videoRef.getDownloadURL().then(videoUrl => {
+                                    // Add post to Firestore
+                                    return db.collection('posts').add({
+                                        userId: currentUser.uid,
+                                        userName: userInfo.name || 'User',
+                                        userImage: userInfo.profileImage || 'https://via.placeholder.com/40',
+                                        type: 'video',
+                                        title: title,
+                                        description: description,
+                                        videoUrl: videoUrl,
+                                        thumbnailUrl: thumbnailUrl,
+                                        tags: tags,
+                                        allowComments: allowComments,
+                                        allowDownload: allowDownload,
+                                        likes: 0,
+                                        comments: 0,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                });
+                            });
                         });
-                    });
-                })
-                .then(({ thumbnailUrl, videoUrl }) => {
-                    // Add post to Firestore
-                    return db.collection('posts').add({
-                        userId: currentUser.uid,
-                        type: 'video',
-                        title: title,
-                        description: description,
-                        videoUrl: videoUrl,
-                        thumbnailUrl: thumbnailUrl,
-                        tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
-                        allowComments: allowComments,
-                        allowDownload: allowDownload,
-                        likes: 0,
-                        comments: 0,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 })
                 .then(() => {
                     hideLoading();
-                    showSuccessMessage('Video post published successfully!');
+                    showToast('Video post published successfully!', 'success');
                     videoForm.reset();
                     videoPreviewContainer.classList.add('hidden');
                     thumbnailContainer.innerHTML = '';
@@ -1535,7 +2086,7 @@
                 })
                 .catch(error => {
                     hideLoading();
-                    showErrorMessage('Error publishing post: ' + error.message);
+                    showToast('Error publishing post: ' + error.message, 'error');
                 });
             });
             
@@ -1543,16 +2094,26 @@
             function loadPosts(refresh = false) {
                 const postsContainer = document.getElementById('posts-container');
                 const loadingElement = document.getElementById('posts-loading');
+                const loadMoreContainer = document.getElementById('load-more-container');
                 
                 if (refresh) {
-                    postsContainer.innerHTML = '';
-                    postsContainer.appendChild(loadingElement);
+                    // Clear container but keep loading element
+                    while (postsContainer.firstChild) {
+                        if (postsContainer.firstChild.id === 'posts-loading') {
+                            break;
+                        }
+                        postsContainer.removeChild(postsContainer.firstChild);
+                    }
+                    
+                    // Reset pagination
                     lastDoc = null;
                 }
                 
                 if (loadingElement) {
                     loadingElement.classList.remove('hidden');
                 }
+                
+                loadMoreContainer.classList.add('hidden');
                 
                 let query = db.collection('posts')
                     .orderBy('createdAt', 'desc')
@@ -1569,13 +2130,11 @@
                         }
                         
                         if (querySnapshot.empty) {
-                            if (refresh) {
-                                postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
-                            } else {
-                                document.getElementById('load-more-container').classList.add('hidden');
-                                if (!document.querySelector('.post-card')) {
-                                    postsContainer.innerHTML = '<p class="text-center py-10 text-gray-500">No posts found.</p>';
-                                }
+                            if (refresh || !document.querySelector('.post-card')) {
+                                const noPostsMsg = document.createElement('p');
+                                noPostsMsg.className = 'text-center py-10 text-gray-500';
+                                noPostsMsg.textContent = 'No posts found.';
+                                postsContainer.appendChild(noPostsMsg);
                             }
                             return;
                         }
@@ -1583,28 +2142,29 @@
                         // Get the last document for pagination
                         lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
                         
-                        // Show load more button
-                        document.getElementById('load-more-container').classList.remove('hidden');
+                        // Show load more button if we got the full page of results
+                        if (querySnapshot.docs.length >= postsPerPage) {
+                            loadMoreContainer.classList.remove('hidden');
+                        }
                         
                         // Process posts
                         querySnapshot.forEach(doc => {
                             const postData = doc.data();
                             const postId = doc.id;
+                            
+                            // Create post element with data already included
                             const postElement = createPostElement(postData, postId);
                             
-                            // Get user information
-                            getUserInfo(postData.userId).then(userInfo => {
-                                const userNameElem = postElement.querySelector('.post-user-name');
-                                const userAvatarElem = postElement.querySelector('.post-user-avatar');
-                                
-                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
-                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
-                            });
-                            
-                            if (refresh && postsContainer.contains(loadingElement)) {
+                            // Add to container before loading element
+                            if (loadingElement.parentNode === postsContainer) {
                                 postsContainer.insertBefore(postElement, loadingElement);
                             } else {
                                 postsContainer.appendChild(postElement);
+                            }
+                            
+                            // Check if post is already liked by current user
+                            if (currentUser) {
+                                checkPostLikeStatus(postId, currentUser.uid, postElement);
                             }
                         });
                     })
@@ -1613,7 +2173,30 @@
                         if (loadingElement) {
                             loadingElement.classList.add('hidden');
                         }
-                        postsContainer.innerHTML += '<p class="text-center py-10 text-red-500">Error loading posts.</p>';
+                        
+                        const errorMsg = document.createElement('p');
+                        errorMsg.className = 'text-center py-10 text-red-500';
+                        errorMsg.textContent = 'Error loading posts.';
+                        postsContainer.appendChild(errorMsg);
+                    });
+            }
+            
+            // Check if user has liked a post
+            function checkPostLikeStatus(postId, userId, postElement) {
+                db.collection('posts').doc(postId)
+                    .collection('likes').doc(userId).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            const likeBtn = postElement.querySelector('.like-btn');
+                            if (likeBtn) {
+                                const icon = likeBtn.querySelector('i');
+                                icon.classList.remove('far');
+                                icon.classList.add('fas', 'text-red-500');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error checking like status: ", error);
                     });
             }
             
@@ -1644,6 +2227,7 @@
                         if (querySnapshot.empty) {
                             userPostsGrid.innerHTML = '<p class="text-center py-10 text-gray-500 col-span-3">You haven\'t created any posts yet.</p>';
                             userPostsList.innerHTML = '<p class="text-center py-10 text-gray-500">You haven\'t created any posts yet.</p>';
+                            document.getElementById('user-post-count').textContent = '0';
                             return;
                         }
                         
@@ -1685,15 +2269,26 @@
             // Create post grid item for profile page
             function createPostGridItem(postData, postId) {
                 const gridItem = document.createElement('div');
-                gridItem.className = 'aspect-square bg-gray-200 rounded-md overflow-hidden';
+                gridItem.className = 'aspect-square bg-gray-200 rounded-md overflow-hidden relative cursor-pointer';
                 gridItem.dataset.postId = postId;
                 
+                // Add click handler to view post details
+                gridItem.addEventListener('click', () => {
+                    window.location.hash = `post/${postId}`;
+                });
+                
                 let thumbnail;
+                let overlayIcon = '';
                 
                 if (postData.type === 'image' && postData.imageUrls && postData.imageUrls.length > 0) {
                     thumbnail = postData.imageUrls[0];
+                    
+                    if (postData.imageUrls.length > 1) {
+                        overlayIcon = '<div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-md p-1"><i class="fas fa-clone"></i></div>';
+                    }
                 } else if (postData.type === 'video' && postData.thumbnailUrl) {
                     thumbnail = postData.thumbnailUrl;
+                    overlayIcon = '<div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-md p-1"><i class="fas fa-play"></i></div>';
                 } else {
                     // Text post or missing thumbnail
                     gridItem.innerHTML = `
@@ -1707,12 +2302,17 @@
                     return gridItem;
                 }
                 
-                const img = document.createElement('img');
-                img.src = thumbnail;
-                img.className = 'w-full h-full object-cover';
-                img.alt = postData.title || 'Post thumbnail';
-                
-                gridItem.appendChild(img);
+                gridItem.innerHTML = `
+                    <img src="${thumbnail}" alt="${postData.title || 'Post thumbnail'}" class="w-full h-full object-cover">
+                    ${overlayIcon}
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                        <p class="text-white text-xs font-medium truncate">${postData.title || ''}</p>
+                        <div class="flex text-white text-xs mt-1">
+                            <span class="mr-2"><i class="far fa-heart mr-1"></i>${postData.likes || 0}</span>
+                            <span><i class="far fa-comment mr-1"></i>${postData.comments || 0}</span>
+                        </div>
+                    </div>
+                `;
                 
                 return gridItem;
             }
@@ -1746,14 +2346,16 @@
                 const postHeader = `
                     <div class="p-4">
                         <div class="flex items-center mb-4">
-                            <img src="https://via.placeholder.com/40" alt="User profile" class="user-avatar mr-3 post-user-avatar">
+                            <img src="${postData.userImage || 'https://via.placeholder.com/40'}" alt="User profile" class="user-avatar mr-3 post-user-avatar">
                             <div>
-                                <h3 class="font-semibold post-user-name">User</h3>
+                                <h3 class="font-semibold post-user-name">${postData.userName || 'User'}</h3>
                                 <p class="text-gray-500 text-sm">${formatDate(postData.createdAt)}</p>
                             </div>
-                            <button class="ml-auto text-gray-500 hover:text-gray-700 post-menu-btn">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
+                            ${currentUser && currentUser.uid === postData.userId ? `
+                                <button class="ml-auto text-gray-500 hover:text-gray-700 post-menu-btn" data-post-id="${postId}">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            ` : ''}
                         </div>
                 `;
                 
@@ -1766,15 +2368,21 @@
                             <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
                             <p>${postData.content || ''}</p>
                             ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                `<div class="flex flex-wrap mt-2">
+                                    ${postData.tags.map(tag => `
+                                        <span class="mr-2 mb-1 text-indigo-600 text-sm">#${tag}</span>
+                                    `).join('')}
+                                </div>` : 
                                 ''}
                         </div>
                     `;
                 } else if (postData.type === 'image') {
                     const imagesHtml = postData.imageUrls && postData.imageUrls.length > 0 ? 
-                        `<div class="${postData.imageUrls.length > 1 ? 'grid grid-cols-2 gap-2' : ''} mb-4">
+                        `<div class="${postData.imageUrls.length > 1 ? 'grid grid-cols-1 md:grid-cols-2 gap-2' : ''} mb-4">
                             ${postData.imageUrls.map(url => `
-                                <img src="${url}" alt="Post image" class="rounded-lg w-full ${postData.imageUrls.length === 1 ? 'post-image' : 'aspect-square object-cover'}">
+                                <div class="rounded-lg overflow-hidden">
+                                    <img src="${url}" alt="Post image" class="rounded-lg w-full ${postData.imageUrls.length === 1 ? 'post-image' : 'object-cover'}">
+                                </div>
                             `).join('')}
                         </div>` : '';
                     
@@ -1784,7 +2392,11 @@
                             ${imagesHtml}
                             <p>${postData.caption || ''}</p>
                             ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                `<div class="flex flex-wrap mt-2">
+                                    ${postData.tags.map(tag => `
+                                        <span class="mr-2 mb-1 text-indigo-600 text-sm">#${tag}</span>
+                                    `).join('')}
+                                </div>` : 
                                 ''}
                         </div>
                     `;
@@ -1792,15 +2404,19 @@
                     postContent = `
                         <div class="post-content mb-4">
                             <h3 class="text-xl font-semibold mb-2">${postData.title || ''}</h3>
-                            <p class="mb-4">${postData.description || ''}</p>
-                            <div class="relative rounded-lg overflow-hidden">
-                                <video controls playsinline webkit-playsinline class="w-full post-video">
+                            <div class="relative rounded-lg overflow-hidden mb-4">
+                                <video controls playsinline webkit-playsinline poster="${postData.thumbnailUrl || ''}" class="w-full post-video">
                                     <source src="${postData.videoUrl}" type="video/mp4">
                                     Your browser does not support the video tag.
                                 </video>
                             </div>
+                            <p>${postData.description || ''}</p>
                             ${postData.tags && postData.tags.length > 0 ? 
-                                `<p class="mt-2 text-indigo-600 font-medium">${postData.tags.map(tag => `#${tag}`).join(' ')}</p>` : 
+                                `<div class="flex flex-wrap mt-2">
+                                    ${postData.tags.map(tag => `
+                                        <span class="mr-2 mb-1 text-indigo-600 text-sm">#${tag}</span>
+                                    `).join('')}
+                                </div>` : 
                                 ''}
                         </div>
                     `;
@@ -1855,125 +2471,159 @@
                 const shareBtn = postCard.querySelector('.share-btn');
                 const commentSection = postCard.querySelector('.comments-section');
                 const commentInput = postCard.querySelector('.comment-input');
+                const postMenuBtn = postCard.querySelector('.post-menu-btn');
+                
+                // Post menu (for post owner)
+                if (postMenuBtn) {
+                    postMenuBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        
+                        // Check if menu already exists
+                        const existingMenu = document.querySelector('.post-menu');
+                        if (existingMenu) {
+                            existingMenu.remove();
+                        }
+                        
+                        const menu = document.createElement('div');
+                        menu.className = 'post-menu absolute right-0 bg-white rounded-md shadow-lg z-10';
+                        menu.style.top = (e.target.offsetTop + 30) + 'px';
+                        menu.style.right = '20px';
+                        
+                        menu.innerHTML = `
+                            <div class="py-1">
+                                <button class="edit-post-btn block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-post-id="${postId}">
+                                    <i class="fas fa-edit mr-2"></i>Edit
+                                </button>
+                                <button class="delete-post-btn block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" data-post-id="${postId}">
+                                    <i class="fas fa-trash mr-2"></i>Delete
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Add to DOM
+                        postCard.querySelector('.p-4').appendChild(menu);
+                        
+                        // Add click handlers
+                        menu.querySelector('.edit-post-btn').addEventListener('click', function() {
+                            // Implement edit post functionality
+                            showToast('Edit functionality coming soon', 'info');
+                            menu.remove();
+                        });
+                        
+                        menu.querySelector('.delete-post-btn').addEventListener('click', function() {
+                            if (confirm('Are you sure you want to delete this post?')) {
+                                deletePost(postId, postData.type);
+                            }
+                            menu.remove();
+                        });
+                        
+                        // Close menu when clicking elsewhere
+                        document.addEventListener('click', function closeMenu(e) {
+                            if (!menu.contains(e.target) && e.target !== postMenuBtn) {
+                                menu.remove();
+                                document.removeEventListener('click', closeMenu);
+                            }
+                        });
+                    });
+                }
                 
                 // Like button functionality
-                likeBtn.addEventListener('click', function() {
-                    if (!currentUser) {
-                        showAuthModal();
-                        return;
-                    }
-                    
-                    const icon = this.querySelector('i');
-                    const likeCountElem = this.querySelector('.like-count');
-                    const isLiked = icon.classList.contains('fas');
-                    
-                    // Reference to the likes collection
-                    const likeRef = db.collection('posts').doc(postId)
-                        .collection('likes').doc(currentUser.uid);
-                    
-                    // Reference to the post document
-                    const postRef = db.collection('posts').doc(postId);
-                    
-                    if (isLiked) {
-                        // Unlike
-                        icon.classList.remove('fas', 'text-red-500');
-                        icon.classList.add('far');
+                if (likeBtn) {
+                    likeBtn.addEventListener('click', function() {
+                        if (!currentUser) {
+                            showAuthModal();
+                            return;
+                        }
                         
-                        let likeCount = parseInt(likeCountElem.textContent);
-                        likeCount = Math.max(0, likeCount - 1);
-                        likeCountElem.textContent = likeCount;
+                        const icon = this.querySelector('i');
+                        const likeCountElem = this.querySelector('.like-count');
+                        const isLiked = icon.classList.contains('fas');
                         
-                        // Update in Firestore
-                        db.runTransaction(transaction => {
-                            return transaction.get(postRef).then(postDoc => {
-                                // Remove the like document
-                                transaction.delete(likeRef);
-                                
-                                // Update post likes count
-                                const newLikes = Math.max(0, (postDoc.data().likes || 0) - 1);
-                                transaction.update(postRef, { likes: newLikes });
-                            });
-                        });
-                    } else {
-                        // Like
-                        icon.classList.remove('far');
-                        icon.classList.add('fas', 'text-red-500');
+                        // Reference to the likes collection
+                        const likeRef = db.collection('posts').doc(postId)
+                            .collection('likes').doc(currentUser.uid);
                         
-                        let likeCount = parseInt(likeCountElem.textContent);
-                        likeCount++;
-                        likeCountElem.textContent = likeCount;
+                        // Reference to the post document
+                        const postRef = db.collection('posts').doc(postId);
                         
-                        // Update in Firestore
-                        db.runTransaction(transaction => {
-                            return transaction.get(postRef).then(postDoc => {
-                                // Add the like document
-                                transaction.set(likeRef, { 
-                                    userId: currentUser.uid,
-                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        if (isLiked) {
+                            // Unlike
+                            icon.classList.remove('fas', 'text-red-500');
+                            icon.classList.add('far');
+                            
+                            let likeCount = parseInt(likeCountElem.textContent);
+                            likeCount = Math.max(0, likeCount - 1);
+                            likeCountElem.textContent = likeCount;
+                            
+                            // Update in Firestore
+                            db.runTransaction(transaction => {
+                                return transaction.get(postRef).then(postDoc => {
+                                    if (!postDoc.exists) {
+                                        throw "Post does not exist!";
+                                    }
+                                    
+                                    // Remove the like document
+                                    transaction.delete(likeRef);
+                                    
+                                    // Update post likes count
+                                    const newLikes = Math.max(0, (postDoc.data().likes || 0) - 1);
+                                    transaction.update(postRef, { likes: newLikes });
                                 });
+                            }).catch(error => {
+                                console.error("Error removing like: ", error);
                                 
-                                // Update post likes count
-                                const newLikes = (postDoc.data().likes || 0) + 1;
-                                transaction.update(postRef, { likes: newLikes });
+                                // Revert UI if transaction fails
+                                icon.classList.remove('far');
+                                icon.classList.add('fas', 'text-red-500');
+                                likeCountElem.textContent = parseInt(likeCountElem.textContent) + 1;
                             });
-                        });
-                    }
-                });
-                
-                // Comment button functionality
-                if (commentBtn && commentSection) {
-                    commentBtn.addEventListener('click', function() {
-                        commentSection.classList.toggle('hidden');
-                        if (!commentSection.classList.contains('hidden')) {
-                            loadComments(postId);
+                        } else {
+                            // Like
+                            icon.classList.remove('far');
+                            icon.classList.add('fas', 'text-red-500');
+                            
+                            let likeCount = parseInt(likeCountElem.textContent);
+                            likeCount++;
+                            likeCountElem.textContent = likeCount;
+                            
+                            // Update in Firestore
+                            db.runTransaction(transaction => {
+                                return transaction.get(postRef).then(postDoc => {
+                                    if (!postDoc.exists) {
+                                        throw "Post does not exist!";
+                                    }
+                                    
+                                    // Add the like document
+                                    transaction.set(likeRef, { 
+                                        userId: currentUser.uid,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                    
+                                    // Update post likes count
+                                    const newLikes = (postDoc.data().likes || 0) + 1;
+                                    transaction.update(post
+                                    transaction.update(postRef, { likes: newLikes });
+                                });
+                            }).catch(error => {
+                                console.error("Error adding like: ", error);
+                                
+                                // Revert UI if transaction fails
+                                icon.classList.remove('fas', 'text-red-500');
+                                icon.classList.add('far');
+                                likeCountElem.textContent = parseInt(likeCountElem.textContent) - 1;
+                            });
                         }
                     });
                 }
                 
-                // Comment input functionality
-                if (commentInput) {
-                    commentInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            if (!currentUser) {
-                                showAuthModal();
-                                return;
-                            }
-                            
-                            const commentText = this.value.trim();
-                            if (!commentText) return;
-                            
-                            // Add comment to Firestore
-                            const commentData = {
-                                userId: currentUser.uid,
-                                text: commentText,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            };
-                            
-                            const commentRef = db.collection('posts').doc(postId).collection('comments');
-                            const postRef = db.collection('posts').doc(postId);
-                            
-                            // Update in a transaction
-                            db.runTransaction(transaction => {
-                                return transaction.get(postRef).then(postDoc => {
-                                    // Add comment
-                                    const newCommentRef = commentRef.doc();
-                                    transaction.set(newCommentRef, commentData);
-                                    
-                                    // Update post comments count
-                                    const newComments = (postDoc.data().comments || 0) + 1;
-                                    transaction.update(postRef, { comments: newComments });
-                                    
-                                    // Clear input
-                                    this.value = '';
-                                    
-                                    // Update UI
-                                    const commentCountElem = postCard.querySelector('.comment-count');
-                                    commentCountElem.textContent = newComments;
-                                    
-                                    // Reload comments
-                                    loadComments(postId);
-                                });
-                            });
+                // Comment button functionality
+                if (commentBtn) {
+                    commentBtn.addEventListener('click', function() {
+                        commentSection.classList.toggle('hidden');
+                        
+                        // Load comments if not already loaded
+                        if (!commentSection.classList.contains('hidden')) {
+                            loadComments(postId);
                         }
                     });
                 }
@@ -1981,15 +2631,35 @@
                 // Share button functionality
                 if (shareBtn) {
                     shareBtn.addEventListener('click', function() {
-                        // Create a temporary input element
-                        const input = document.createElement('input');
-                        input.value = window.location.href.split('#')[0] + `#post/${postId}`;
-                        document.body.appendChild(input);
-                        input.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(input);
-                        
-                        showSuccessMessage('Link copied to clipboard!');
+                        if (navigator.share) {
+                            navigator.share({
+                                title: postData.title || 'Check out this post',
+                                text: postData.content || postData.caption || postData.description || '',
+                                url: window.location.origin + '/#post/' + postId
+                            }).catch(err => {
+                                console.error('Error sharing:', err);
+                                showToast('Could not share post', 'error');
+                            });
+                        } else {
+                            // Fallback for browsers that don't support Web Share API
+                            const shareUrl = window.location.origin + '/#post/' + postId;
+                            navigator.clipboard.writeText(shareUrl).then(() => {
+                                showToast('Link copied to clipboard', 'success');
+                            }).catch(err => {
+                                console.error('Could not copy text: ', err);
+                                showToast('Could not copy link', 'error');
+                            });
+                        }
+                    });
+                }
+                
+                // Comment input functionality
+                if (commentInput) {
+                    commentInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter' && this.value.trim()) {
+                            addComment(postId, this.value.trim());
+                            this.value = '';
+                        }
                     });
                 }
                 
@@ -1999,215 +2669,393 @@
             // Load comments for a post
             function loadComments(postId) {
                 const commentsContainer = document.querySelector(`.comments-container[data-post-id="${postId}"]`);
-                if (!commentsContainer) return;
                 
-                commentsContainer.innerHTML = `
-                    <div class="text-center py-3">
-                        <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-600"></div>
-                        <p class="mt-1 text-xs text-gray-500">Loading comments...</p>
-                    </div>
-                `;
+                if (!commentsContainer) return;
                 
                 db.collection('posts').doc(postId)
                     .collection('comments')
                     .orderBy('createdAt', 'desc')
-                    .limit(5)
+                    .limit(10)
                     .get()
                     .then(querySnapshot => {
+                        commentsContainer.innerHTML = '';
+                        
                         if (querySnapshot.empty) {
-                            commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-gray-500">No comments yet.</p>';
+                            commentsContainer.innerHTML = '<p class="text-center py-3 text-gray-500 text-sm">No comments yet</p>';
                             return;
                         }
                         
-                        commentsContainer.innerHTML = '';
-                        
                         querySnapshot.forEach(doc => {
                             const commentData = doc.data();
-                            const commentElement = document.createElement('div');
-                            commentElement.className = 'comment mt-3';
-                            commentElement.dataset.commentId = doc.id;
-                            
-                            commentElement.innerHTML = `
-                                <div class="flex">
-                                    <img src="https://via.placeholder.com/40" alt="User" class="w-8 h-8 rounded-full mr-3 comment-user-avatar">
-                                    <div>
-                                        <div class="bg-gray-100 rounded-lg p-3">
-                                            <h5 class="font-medium text-sm comment-user-name">User</h5>
-                                            <p class="text-sm">${commentData.text}</p>
-                                        </div>
-                                        <div class="flex items-center mt-1 text-xs text-gray-500">
-                                            <span>${formatDate(commentData.createdAt)}</span>
-                                            <button class="ml-3 hover:text-indigo-600">Reply</button>
-                                            <button class="ml-3 hover:text-indigo-600">Like</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
+                            const commentElement = createCommentElement(commentData);
                             commentsContainer.appendChild(commentElement);
-                            
-                            // Get user information for comment
-                            getUserInfo(commentData.userId).then(userInfo => {
-                                const userNameElem = commentElement.querySelector('.comment-user-name');
-                                const userAvatarElem = commentElement.querySelector('.comment-user-avatar');
-                                
-                                if (userNameElem) userNameElem.textContent = userInfo.name || 'Anonymous';
-                                if (userAvatarElem) userAvatarElem.src = userInfo.profileImage || 'https://via.placeholder.com/40';
-                            });
                         });
                     })
                     .catch(error => {
                         console.error("Error loading comments: ", error);
-                        commentsContainer.innerHTML = '<p class="text-center py-3 text-sm text-red-500">Error loading comments.</p>';
+                        commentsContainer.innerHTML = '<p class="text-center py-3 text-red-500 text-sm">Error loading comments</p>';
                     });
             }
             
-            // Get user information from Firestore
+            // Create comment element
+            function createCommentElement(commentData) {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment';
+                
+                commentElement.innerHTML = `
+                    <div class="flex">
+                        <img src="${commentData.userImage || 'https://via.placeholder.com/40'}" alt="User profile" class="w-8 h-8 rounded-full mr-3">
+                        <div>
+                            <div class="bg-gray-100 rounded-lg p-3">
+                                <h4 class="font-medium text-sm">${commentData.userName || 'User'}</h4>
+                                <p class="text-gray-700 text-sm">${commentData.text}</p>
+                            </div>
+                            <p class="text-gray-500 text-xs mt-1">${formatDate(commentData.createdAt)}</p>
+                        </div>
+                    </div>
+                `;
+                
+                return commentElement;
+            }
+            
+            // Add a comment to a post
+            function addComment(postId, commentText) {
+                if (!currentUser) return;
+                
+                showLoading('Posting comment...');
+                
+                // Get user info first
+                getUserInfo(currentUser.uid).then(userInfo => {
+                    // Add comment to Firestore
+                    return db.collection('posts').doc(postId)
+                        .collection('comments').add({
+                            userId: currentUser.uid,
+                            userName: userInfo.name || 'User',
+                            userImage: userInfo.profileImage || 'https://via.placeholder.com/40',
+                            text: commentText,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                })
+                .then(() => {
+                    // Update comment count on the post
+                    return db.collection('posts').doc(postId).update({
+                        comments: firebase.firestore.FieldValue.increment(1)
+                    });
+                })
+                .then(() => {
+                    hideLoading();
+                    showToast('Comment posted', 'success');
+                    loadComments(postId); // Refresh comments
+                    
+                    // Update comment count in UI
+                    const commentCountElem = document.querySelector(`.post-card[data-post-id="${postId}"] .comment-count`);
+                    if (commentCountElem) {
+                        const currentCount = parseInt(commentCountElem.textContent);
+                        commentCountElem.textContent = currentCount + 1;
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showToast('Error posting comment: ' + error.message, 'error');
+                });
+            }
+            
+            // Delete a post
+            function deletePost(postId, postType) {
+                showLoading('Deleting post...');
+                
+                // First delete the post document
+                db.collection('posts').doc(postId).delete()
+                    .then(() => {
+                        // If it's an image post, delete the images from storage
+                        if (postType === 'image') {
+                            // You would need to store the storage references when uploading
+                            // For now, we'll just delete the post document
+                            hideLoading();
+                            showToast('Post deleted', 'success');
+                            loadPosts(true); // Refresh posts
+                            loadUserPosts(currentUser.uid); // Refresh profile posts
+                        } else if (postType === 'video') {
+                            // Similarly for videos, delete from storage
+                            hideLoading();
+                            showToast('Post deleted', 'success');
+                            loadPosts(true); // Refresh posts
+                            loadUserPosts(currentUser.uid); // Refresh profile posts
+                        } else {
+                            // Text post - no storage to clean up
+                            hideLoading();
+                            showToast('Post deleted', 'success');
+                            loadPosts(true); // Refresh posts
+                            loadUserPosts(currentUser.uid); // Refresh profile posts
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showToast('Error deleting post: ' + error.message, 'error');
+                    });
+            }
+            
+            // Settings functionality
+            settingsSaveBtn.addEventListener('click', function() {
+                if (!currentUser) return;
+                
+                const name = document.getElementById('fullname').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const bio = document.getElementById('bio').value.trim();
+                
+                const settings = {
+                    allowComments: document.getElementById('allow-comments').checked,
+                    tagNotifications: document.getElementById('tag-notifications').checked,
+                    downloadPermission: document.getElementById('download-permission').checked,
+                    emailNotifications: document.getElementById('email-notifications').checked,
+                    pushNotifications: document.getElementById('push-notifications').checked,
+                    marketingEmails: document.getElementById('marketing-emails').checked,
+                    profileVisibility: document.getElementById('profile-visibility').value
+                };
+                
+                showLoading('Saving settings...');
+                
+                // Update user profile in Firestore
+                db.collection('users').doc(currentUser.uid).update({
+                    name: name,
+                    username: username,
+                    phone: phone,
+                    bio: bio,
+                    settings: settings,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                    // Update display name in Auth
+                    return currentUser.updateProfile({
+                        displayName: name
+                    });
+                })
+                .then(() => {
+                    hideLoading();
+                    showToast('Settings saved successfully', 'success');
+                    
+                    // Update UI
+                    document.getElementById('profile-user-name').textContent = name;
+                    document.getElementById('profile-user-bio').textContent = bio || 'No bio yet';
+                    document.getElementById('user-about').textContent = bio || 'No information provided.';
+                })
+                .catch(error => {
+                    hideLoading();
+                    showToast('Error saving settings: ' + error.message, 'error');
+                });
+            });
+            
+            settingsCancelBtn.addEventListener('click', function() {
+                // Reload settings from Firestore
+                if (currentUser) {
+                    getUserProfile(currentUser.uid);
+                }
+            });
+            
+            // Reset password
+            resetPasswordBtn.addEventListener('click', function() {
+                if (!currentUser) {
+                    showAuthModal();
+                    return;
+                }
+                
+                showLoading('Sending password reset email...');
+                
+                auth.sendPasswordResetEmail(currentUser.email)
+                    .then(() => {
+                        hideLoading();
+                        showToast('Password reset email sent. Check your inbox.', 'success');
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showToast('Error sending reset email: ' + error.message, 'error');
+                    });
+            });
+            
+            // Delete account
+            deleteAccountBtn.addEventListener('click', function() {
+                deleteAccountModal.classList.remove('hidden');
+            });
+            
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteAccountModal.classList.add('hidden');
+                document.getElementById('delete-password').value = '';
+            });
+            
+            confirmDeleteBtn.addEventListener('click', function() {
+                const password = document.getElementById('delete-password').value;
+                
+                if (!password) {
+                    showToast('Please enter your password', 'error');
+                    return;
+                }
+                
+                showLoading('Deleting account...');
+                
+                // Reauthenticate user
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    currentUser.email, 
+                    password
+                );
+                
+                currentUser.reauthenticateWithCredential(credential)
+                    .then(() => {
+                        // Delete user from Auth
+                        return currentUser.delete();
+                    })
+                    .then(() => {
+                        // Delete user data from Firestore
+                        return db.collection('users').doc(currentUser.uid).delete();
+                    })
+                    .then(() => {
+                        hideLoading();
+                        deleteAccountModal.classList.add('hidden');
+                        document.getElementById('delete-password').value = '';
+                        showToast('Account deleted successfully', 'success');
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        showToast('Error deleting account: ' + error.message, 'error');
+                    });
+            });
+            
+            // Helper functions
             function getUserInfo(userId) {
                 return db.collection('users').doc(userId).get()
                     .then(doc => {
                         if (doc.exists) {
                             return doc.data();
                         } else {
-                            return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
+                            return {
+                                name: 'User',
+                                profileImage: 'https://via.placeholder.com/40'
+                            };
                         }
                     })
                     .catch(error => {
                         console.error("Error getting user info: ", error);
-                        return { name: 'Unknown User', profileImage: 'https://via.placeholder.com/40' };
+                        return {
+                            name: 'User',
+                            profileImage: 'https://via.placeholder.com/40'
+                        };
                     });
             }
             
-            // Save profile settings
-            const settingsSaveBtn = document.getElementById('settings-save');
-            if (settingsSaveBtn) {
-                settingsSaveBtn.addEventListener('click', function() {
-                    if (!currentUser) return;
-                    
-                    const fullname = document.getElementById('fullname').value;
-                    const username = document.getElementById('username').value;
-                    const phone = document.getElementById('phone').value;
-                    const bio = document.getElementById('bio').value;
-                    const profileVisibility = document.getElementById('profile-visibility').value;
-                    const allowComments = document.getElementById('allow-comments').checked;
-                    const tagNotifications = document.getElementById('tag-notifications').checked;
-                    const downloadPermission = document.getElementById('download-permission').checked;
-                    const emailNotifications = document.getElementById('email-notifications').checked;
-                    const pushNotifications = document.getElementById('push-notifications').checked;
-                    const marketingEmails = document.getElementById('marketing-emails').checked;
-                    
-                    // Update user profile in Firestore
-                    db.collection('users').doc(currentUser.uid).update({
-                        name: fullname,
-                        username: username,
-                        phone: phone,
-                        bio: bio,
-                        profileVisibility: profileVisibility,
-                        settings: {
-                            allowComments: allowComments,
-                            tagNotifications: tagNotifications,
-                            downloadPermission: downloadPermission,
-                            emailNotifications: emailNotifications,
-                            pushNotifications: pushNotifications,
-                            marketingEmails: marketingEmails
-                        },
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    })
-                    .then(() => {
-                        showSuccessMessage('Profile settings updated successfully!');
-                        getUserProfile(currentUser.uid);
-                    })
-                    .catch(error => {
-                        showErrorMessage('Error updating profile: ' + error.message);
-                    });
-                });
-            }
-            
-            // Theme toggle
-            const themeToggle = document.getElementById('themeToggle');
-            let darkMode = localStorage.getItem('darkMode') === 'true';
-            
-            // Initialize theme
-            if (darkMode) {
-                document.body.classList.add('dark-theme');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-            
-            themeToggle.addEventListener('click', function() {
-                darkMode = !darkMode;
-                localStorage.setItem('darkMode', darkMode);
-                
-                if (darkMode) {
-                    document.body.classList.add('dark-theme');
-                    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                }
-            });
-            
-            // Helper functions
             function formatDate(timestamp) {
-                if (!timestamp) return 'Just now';
+                if (!timestamp) return '';
                 
-                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const date = timestamp.toDate();
                 const now = new Date();
-                const diff = (now - date) / 1000; // seconds
+                const diffInSeconds = Math.floor((now - date) / 1000);
                 
-                if (diff < 60) return 'Just now';
-                if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-                if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-                if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-                
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return date.toLocaleDateString(undefined, options);
+                if (diffInSeconds < 60) {
+                    return 'Just now';
+                } else if (diffInSeconds < 3600) {
+                    const minutes = Math.floor(diffInSeconds / 60);
+                    return `${minutes} min ago`;
+                } else if (diffInSeconds < 86400) {
+                    const hours = Math.floor(diffInSeconds / 3600);
+                    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                } else if (diffInSeconds < 604800) {
+                    const days = Math.floor(diffInSeconds / 86400);
+                    return `${days} day${days > 1 ? 's' : ''} ago`;
+                } else {
+                    return date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                }
             }
             
-            function showSuccessMessage(message) {
-                const notification = document.createElement('div');
-                notification.className = 'fixed right-4 bottom-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                notification.textContent = message;
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
                 
-                document.body.appendChild(notification);
-                
+                // Remove toast after animation
                 setTimeout(() => {
-                    notification.remove();
+                    toast.remove();
                 }, 3000);
             }
             
-            function showErrorMessage(message) {
-                const notification = document.createElement('div');
-                notification.className = 'fixed right-4 bottom-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                notification.textContent = message;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-            
-            function showLoading(message = 'Loading...') {
-                const loadingOverlay = document.createElement('div');
-                loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                loadingOverlay.id = 'loading-overlay';
-                
-                loadingOverlay.innerHTML = `
-                    <div class="bg-white p-4 rounded-lg shadow-lg text-center">
-                        <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600 mb-2"></div>
-                        <p>${message}</p>
-                    </div>
-                `;
-                
-                document.body.appendChild(loadingOverlay);
+            function showLoading(message) {
+                // You can implement a loading spinner here
+                console.log('Loading:', message);
             }
             
             function hideLoading() {
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) {
-                    loadingOverlay.remove();
-                }
+                // Hide loading spinner
+                console.log('Loading complete');
             }
+            
+            // Dark mode toggle
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = themeToggle.querySelector('i');
+            
+            // Check for saved theme preference or use system preference
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                document.body.classList.add('dark-theme');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            }
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        document.body.classList.add('dark-theme');
+                        themeIcon.classList.remove('fa-moon');
+                        themeIcon.classList.add('fa-sun');
+                    } else {
+                        document.body.classList.remove('dark-theme');
+                        themeIcon.classList.remove('fa-sun');
+                        themeIcon.classList.add('fa-moon');
+                    }
+                }
+            });
+            
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                
+                if (document.body.classList.contains('dark-theme')) {
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                } else {
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                }
+            });
+            
+            // Initialize the app
+            window.addEventListener('load', function() {
+                // Check authentication state
+                auth.onAuthStateChanged(function(user) {
+                    if (user) {
+                        // User is signed in
+                        currentUser = user;
+                        
+                        // Load user profile
+                        getUserProfile(user.uid);
+                        
+                        // Load user posts
+                        loadUserPosts(user.uid);
+                    } else {
+                        // User is signed out
+                        currentUser = null;
+                    }
+                    
+                    // Load posts
+                    loadPosts(true);
+                });
+            });
         });
     </script>
 </body>
