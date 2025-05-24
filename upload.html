@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ဗီဒီယို တင်သွင်းရန်</title>
+    <title>စာ၊ ပုံ၊ ဗီဒီယို တင်သွင်းရန်</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Padauk', sans-serif;
@@ -19,7 +20,7 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        .video-preview {
+        .video-preview, .image-preview-container {
             background-color: #f0f0f0;
             border-radius: 8px;
             height: 300px;
@@ -115,6 +116,54 @@
         .thumbnail-preview.selected {
             border: 2px solid #4C51BF;
         }
+        .tab-active {
+            background-color: #4C51BF;
+            color: white;
+            font-weight: bold;
+        }
+        .tab-inactive {
+            background-color: #E2E8F0;
+            color: #4A5568;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #editor {
+            height: 300px;
+            background-color: #fff;
+        }
+        .image-preview {
+            width: 150px;
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 5px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .image-preview .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .images-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -133,115 +182,239 @@
             animation: pulse 2s infinite;
             color: #5a67d8;
         }
+        /* For PDF optimization */
+        @media print {
+            body {
+                width: 100%;
+                height: auto;
+                overflow: visible;
+            }
+        }
     </style>
 </head>
 <body class="py-8 px-4">
     <div class="upload-container p-6 md:p-8">
-        <h1 class="text-3xl font-bold text-center mb-8">ဗီဒီယို တင်သွင်းရန်</h1>
+        <h1 class="text-3xl font-bold text-center mb-6">စာ၊ ပုံ၊ ဗီဒီယို တင်သွင်းရန်</h1>
         
-        <!-- Video Upload Section -->
-        <div class="mb-8">
-            <div class="video-preview mb-4" id="videoPreviewContainer">
-                <div class="text-center" id="uploadPrompt">
-                    <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
-                    <p class="text-gray-600">ဗီဒီယိုဖိုင် ရွေးချယ်ရန်</p>
-                </div>
-                <video id="videoPreview" class="hidden" controls playsinline webkit-playsinline></video>
-            </div>
-            
-            <div class="flex flex-wrap items-center gap-4 mt-4">
-                <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
-                    <i class="fas fa-file-video mr-2"></i> ဗီဒီယိုဖိုင် ရွေးရန်
-                    <input type="file" id="videoUpload" accept="video/*" />
-                </button>
-                
-                <div class="flex-1 min-w-[200px]">
-                    <div class="text-sm text-gray-600 mb-1">ဖိုင်အမည်: <span id="fileName">ဗီဒီယိုဖိုင် မရွေးရသေးပါ</span></div>
-                    <div class="text-sm text-gray-600 mb-1">ဖိုင်အရွယ်အစား: <span id="fileSize">0 MB</span></div>
-                    <div class="text-sm text-gray-600">ကြာချိန်: <span id="fileDuration">00:00</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Video Information -->
-        <div class="mb-8">
-            <div class="mb-4">
-                <label for="videoTitle" class="block text-gray-700 font-medium mb-2">ဗီဒီယို ခေါင်းစဉ်</label>
-                <input type="text" id="videoTitle" placeholder="ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-            </div>
-            
-            <div class="mb-4">
-                <label for="videoDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
-                <textarea id="videoDescription" rows="4" placeholder="ဗီဒီယိုအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
-            </div>
-        </div>
-        
-        <!-- Thumbnail Selection -->
-        <div class="mb-8">
-            <label class="block text-gray-700 font-medium mb-3">ဗီဒီယို အနှစ်ချုပ်ပုံ</label>
-            
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3" id="thumbnailContainer">
-                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                </div>
-                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                </div>
-                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                </div>
-                <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
-                    <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
-                </div>
-            </div>
-            
-            <button id="customThumbnailBtn" class="text-blue-600 hover:text-blue-800 flex items-center text-sm">
-                <i class="fas fa-plus-circle mr-1"></i> ပုံတစ်ခု တင်သွင်းရန်
-                <input type="file" id="customThumbnail" accept="image/*" class="hidden" />
+        <!-- Tab Navigation -->
+        <div class="flex mb-6 border-b border-gray-200">
+            <button id="textTabBtn" class="tab-btn tab-active flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
+                <i class="fas fa-font mr-2"></i> စာသားရေးရန်
+            </button>
+            <button id="imageTabBtn" class="tab-btn tab-inactive flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
+                <i class="fas fa-image mr-2"></i> ပုံများတင်ရန်
+            </button>
+            <button id="videoTabBtn" class="tab-btn tab-inactive flex-1 py-3 px-4 rounded-t-lg flex items-center justify-center">
+                <i class="fas fa-video mr-2"></i> ဗီဒီယိုတင်ရန်
             </button>
         </div>
         
-        <!-- Advanced Options -->
-        <div class="mb-8">
-            <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
+        <!-- Text Content Tab -->
+        <div id="textContent" class="tab-content active">
+            <div class="mb-4">
+                <label for="postTitle" class="block text-gray-700 font-medium mb-2">ခေါင်းစဉ်</label>
+                <input type="text" id="postTitle" placeholder="ခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
             
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disableComments">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ</label>
+                <div id="editor"></div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
                 
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disableSharing">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disableDownload">
-                        <span class="toggle-slider"></span>
-                    </label>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="textDisableComments">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="textDisableSharing">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
+            
+            <button id="textUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
+                <i class="fas fa-paper-plane mr-2"></i> စာသား တင်သွင်းရန်
+            </button>
         </div>
         
-        <!-- Upload Button & Progress -->
-        <div id="uploadSection">
-            <button id="uploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
+        <!-- Image Upload Tab -->
+        <div id="imageContent" class="tab-content">
+            <!-- Image Upload Section -->
+            <div class="mb-6">
+                <div class="image-preview-container mb-4 flex flex-col items-center justify-center" id="imageUploadContainer">
+                    <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
+                    <p class="text-gray-600 mb-4">ပုံများ ရွေးချယ်ရန်</p>
+                    <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
+                        <i class="fas fa-images mr-2"></i> ပုံဖိုင်များ ရွေးရန်
+                        <input type="file" id="imageUpload" accept="image/*" multiple />
+                    </button>
+                </div>
+                
+                <div class="images-wrapper" id="imagesPreviewContainer">
+                    <!-- Image previews will be added here dynamically -->
+                </div>
+            </div>
+            
+            <!-- Image Information -->
+            <div class="mb-4">
+                <label for="imageTitle" class="block text-gray-700 font-medium mb-2">ပုံခေါင်းစဉ်</label>
+                <input type="text" id="imageTitle" placeholder="ပုံခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div class="mb-6">
+                <label for="imageDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
+                <textarea id="imageDescription" rows="4" placeholder="ပုံအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="imageDisableComments">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="imageDisableSharing">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="imageDisableDownload">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="imageUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
+                <i class="fas fa-upload mr-2"></i> ပုံများ တင်သွင်းရန်
+            </button>
+        </div>
+        
+        <!-- Video Upload Tab -->
+        <div id="videoContent" class="tab-content">
+            <!-- Video Upload Section -->
+            <div class="mb-8">
+                <div class="video-preview mb-4" id="videoPreviewContainer">
+                    <div class="text-center" id="uploadPrompt">
+                        <i class="fas fa-cloud-upload-alt upload-icon text-5xl mb-4"></i>
+                        <p class="text-gray-600">ဗီဒီယိုဖိုင် ရွေးချယ်ရန်</p>
+                    </div>
+                    <video id="videoPreview" class="hidden" controls playsinline webkit-playsinline></video>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-4 mt-4">
+                    <button class="file-upload-btn bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg flex items-center">
+                        <i class="fas fa-file-video mr-2"></i> ဗီဒီယိုဖိုင် ရွေးရန်
+                        <input type="file" id="videoUpload" accept="video/*" />
+                    </button>
+                    
+                    <div class="flex-1 min-w-[200px]">
+                        <div class="text-sm text-gray-600 mb-1">ဖိုင်အမည်: <span id="fileName">ဗီဒီယိုဖိုင် မရွေးရသေးပါ</span></div>
+                        <div class="text-sm text-gray-600 mb-1">ဖိုင်အရွယ်အစား: <span id="fileSize">0 MB</span></div>
+                        <div class="text-sm text-gray-600">ကြာချိန်: <span id="fileDuration">00:00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Information -->
+            <div class="mb-8">
+                <div class="mb-4">
+                    <label for="videoTitle" class="block text-gray-700 font-medium mb-2">ဗီဒီယို ခေါင်းစဉ်</label>
+                    <input type="text" id="videoTitle" placeholder="ဗီဒီယိုခေါင်းစဉ် ရိုက်ထည့်ပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="videoDescription" class="block text-gray-700 font-medium mb-2">အကြောင်းအရာ ဖော်ပြချက်</label>
+                    <textarea id="videoDescription" rows="4" placeholder="ဗီဒီယိုအကြောင်း ဖော်ပြချက် ရေးသားပါ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+            </div>
+            
+            <!-- Thumbnail Selection -->
+            <div class="mb-8">
+                <label class="block text-gray-700 font-medium mb-3">ဗီဒီယို အနှစ်ချုပ်ပုံ</label>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3" id="thumbnailContainer">
+                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                    </div>
+                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                    </div>
+                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                    </div>
+                    <div class="bg-gray-200 rounded-md h-16 flex items-center justify-center">
+                        <span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>
+                    </div>
+                </div>
+                
+                <button id="customThumbnailBtn" class="text-blue-600 hover:text-blue-800 flex items-center text-sm">
+                    <i class="fas fa-plus-circle mr-1"></i> ပုံတစ်ခု တင်သွင်းရန်
+                    <input type="file" id="customThumbnail" accept="image/*" class="hidden" />
+                </button>
+            </div>
+            
+            <!-- Advanced Options -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold mb-4">အဆင့်မြင့် ရွေးချယ်မှုများ</h3>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မှတ်ချက်ရေးခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="videoDisableComments">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">မျှဝေခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="videoDisableSharing">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-700">ဒေါင်းလုပ်ဆွဲခြင်း ပိတ်ထားရန်</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="videoDisableDownload">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="videoUploadBtn" class="btn-primary text-white py-3 px-6 rounded-lg w-full flex items-center justify-center font-bold">
                 <i class="fas fa-upload mr-2"></i> ဗီဒီယို တင်သွင်းရန်
             </button>
         </div>
         
         <!-- Progress Section (Initially Hidden) -->
         <div id="progressSection" class="mt-6 hidden">
-            <p class="text-center text-gray-700 mb-2">တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...</p>
+            <p class="text-center text-gray-700 mb-2" id="progressMessage">တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...</p>
             <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
             </div>
@@ -252,20 +425,303 @@
         </div>
     </div>
 
+    <!-- Add Quill.js for text editor -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
     <script>
+        // Firebase configuration - Replace with your own Firebase project config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Firebase services
+        const storage = firebase.storage();
+        const firestore = firebase.firestore();
+        const auth = firebase.auth();
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Quill editor
+            const quill = new Quill('#editor', {
+                theme: 'snow',
+                placeholder: 'အကြောင်းအရာဖော်ပြချက် ရေးသားပါ...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+            
+            // Tab switching functionality
+            const tabs = {
+                text: {
+                    btn: document.getElementById('textTabBtn'),
+                    content: document.getElementById('textContent')
+                },
+                image: {
+                    btn: document.getElementById('imageTabBtn'),
+                    content: document.getElementById('imageContent')
+                },
+                video: {
+                    btn: document.getElementById('videoTabBtn'),
+                    content: document.getElementById('videoContent')
+                }
+            };
+            
+            // Add click event to all tabs
+            for (const type in tabs) {
+                tabs[type].btn.addEventListener('click', function() {
+                    // Hide all tab contents
+                    for (const t in tabs) {
+                        tabs[t].content.classList.remove('active');
+                        tabs[t].btn.classList.remove('tab-active');
+                        tabs[t].btn.classList.add('tab-inactive');
+                    }
+                    
+                    // Show current tab content
+                    tabs[type].content.classList.add('active');
+                    tabs[type].btn.classList.remove('tab-inactive');
+                    tabs[type].btn.classList.add('tab-active');
+                });
+            }
+            
+            // --- TEXT POST FUNCTIONALITY ---
+            const textUploadBtn = document.getElementById('textUploadBtn');
+            
+            textUploadBtn.addEventListener('click', function() {
+                const title = document.getElementById('postTitle').value;
+                const content = quill.root.innerHTML;
+                
+                // Form validation
+                if (!title) {
+                    alert('ကျေးဇူးပြု၍ ခေါင်းစဉ် ရိုက်ထည့်ပါ။');
+                    return;
+                }
+                
+                if (quill.getText().trim().length === 0) {
+                    alert('ကျေးဇူးပြု၍ အကြောင်းအရာ ရေးသားပါ။');
+                    return;
+                }
+                
+                // Show progress UI
+                showProgressUI('စာသား');
+                
+                // Create text post data
+                const textData = {
+                    type: 'text',
+                    title: title,
+                    content: content,
+                    plainText: quill.getText(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    settings: {
+                        disableComments: document.getElementById('textDisableComments').checked,
+                        disableSharing: document.getElementById('textDisableSharing').checked,
+                    }
+                };
+                
+                // Simulate saving to Firestore
+                simulateProgress(function() {
+                    // Add to Firestore collection
+                    firestore.collection('posts').add(textData)
+                    .then(() => {
+                        alert('စာသား အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
+                        hideProgressUI();
+                        resetTextForm();
+                    })
+                    .catch(error => {
+                        alert('ဝမ်းနည်းပါသည်။ သိမ်းဆည်းမှု မအောင်မြင်ပါ။ ' + error.message);
+                        hideProgressUI();
+                    });
+                });
+            });
+            
+            function resetTextForm() {
+                document.getElementById('postTitle').value = '';
+                quill.setContents([]);
+                document.getElementById('textDisableComments').checked = false;
+                document.getElementById('textDisableSharing').checked = false;
+            }
+            
+            // --- IMAGE UPLOAD FUNCTIONALITY ---
+            const imageUpload = document.getElementById('imageUpload');
+            const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+            const imageUploadBtn = document.getElementById('imageUploadBtn');
+            
+            let selectedImages = [];
+            
+            imageUpload.addEventListener('change', function(e) {
+                const files = e.target.files;
+                
+                if (files.length > 0) {
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const imageURL = URL.createObjectURL(file);
+                        
+                        selectedImages.push({
+                            file: file,
+                            url: imageURL
+                        });
+                        
+                        // Create image preview
+                        createImagePreview(imageURL, selectedImages.length - 1);
+                    }
+                }
+            });
+            
+            function createImagePreview(imageURL, index) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.style.backgroundImage = `url('${imageURL}')`;
+                previewDiv.dataset.index = index;
+                
+                const removeBtn = document.createElement('div');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.addEventListener('click', function() {
+                    // Remove image from array
+                    selectedImages.splice(index, 1);
+                    // Re-render all previews
+                    refreshImagePreviews();
+                });
+                
+                previewDiv.appendChild(removeBtn);
+                imagesPreviewContainer.appendChild(previewDiv);
+            }
+            
+            function refreshImagePreviews() {
+                imagesPreviewContainer.innerHTML = '';
+                selectedImages.forEach((image, index) => {
+                    createImagePreview(image.url, index);
+                });
+            }
+            
+            imageUploadBtn.addEventListener('click', function() {
+                const title = document.getElementById('imageTitle').value;
+                const description = document.getElementById('imageDescription').value;
+                
+                // Form validation
+                if (!title) {
+                    alert('ကျေးဇူးပြု၍ ခေါင်းစဉ် ရိုက်ထည့်ပါ။');
+                    return;
+                }
+                
+                if (selectedImages.length === 0) {
+                    alert('ကျေးဇူးပြု၍ အနည်းဆုံး ပုံတစ်ပုံ ရွေးချယ်ပါ။');
+                    return;
+                }
+                
+                // Show progress UI
+                showProgressUI('ပုံများ');
+                
+                // Prepare image metadata
+                const imagePostData = {
+                    type: 'image',
+                    title: title,
+                    description: description,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    imageCount: selectedImages.length,
+                    imageUrls: [],
+                    settings: {
+                        disableComments: document.getElementById('imageDisableComments').checked,
+                        disableSharing: document.getElementById('imageDisableSharing').checked,
+                        disableDownload: document.getElementById('imageDisableDownload').checked
+                    }
+                };
+                
+                // Upload images one by one
+                uploadImagesSequentially(selectedImages, 0, imagePostData);
+            });
+            
+            function uploadImagesSequentially(images, index, postData) {
+                // If all images are uploaded
+                if (index >= images.length) {
+                    // Save post data to Firestore
+                    firestore.collection('posts').add(postData)
+                    .then(() => {
+                        alert('ပုံများ အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
+                        hideProgressUI();
+                        resetImageForm();
+                    })
+                    .catch(error => {
+                        alert('ဝမ်းနည်းပါသည်။ သိမ်းဆည်းမှု မအောင်မြင်ပါ။ ' + error.message);
+                        hideProgressUI();
+                    });
+                    return;
+                }
+                
+                // Update progress
+                const progressPercent = Math.round(((index) / images.length) * 100);
+                updateProgress(progressPercent, `ပုံ ${index+1}/${images.length} တင်နေသည်`);
+                
+                // Upload current image
+                const file = images[index].file;
+                const timestamp = Date.now();
+                const fileName = `images/${timestamp}_${file.name}`;
+                const imageRef = storage.ref(fileName);
+                
+                const uploadTask = imageRef.put(file);
+                
+                uploadTask.on('state_changed', 
+                    // Progress
+                    (snapshot) => {
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        updateProgress(progress, `ပုံ ${index+1}/${images.length} တင်နေသည် (${progress}%)`);
+                    },
+                    // Error
+                    (error) => {
+                        alert('ပုံတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
+                        hideProgressUI();
+                    },
+                    // Complete
+                    () => {
+                        // Get download URL
+                        imageRef.getDownloadURL().then((downloadURL) => {
+                            // Add URL to post data
+                            postData.imageUrls.push(downloadURL);
+                            
+                            // Upload next image
+                            uploadImagesSequentially(images, index + 1, postData);
+                        });
+                    }
+                );
+            }
+            
+            function resetImageForm() {
+                document.getElementById('imageTitle').value = '';
+                document.getElementById('imageDescription').value = '';
+                document.getElementById('imageDisableComments').checked = false;
+                document.getElementById('imageDisableSharing').checked = false;
+                document.getElementById('imageDisableDownload').checked = false;
+                selectedImages = [];
+                imagesPreviewContainer.innerHTML = '';
+            }
+            
+            // --- VIDEO UPLOAD FUNCTIONALITY ---
             const videoUpload = document.getElementById('videoUpload');
             const videoPreview = document.getElementById('videoPreview');
             const uploadPrompt = document.getElementById('uploadPrompt');
             const fileName = document.getElementById('fileName');
             const fileSize = document.getElementById('fileSize');
             const fileDuration = document.getElementById('fileDuration');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const progressSection = document.getElementById('progressSection');
-            const uploadSection = document.getElementById('uploadSection');
-            const progressBar = document.getElementById('progressBar');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressTask = document.getElementById('progressTask');
+            const videoUploadBtn = document.getElementById('videoUploadBtn');
             const thumbnailContainer = document.getElementById('thumbnailContainer');
             const customThumbnailBtn = document.getElementById('customThumbnailBtn');
             const customThumbnail = document.getElementById('customThumbnail');
@@ -336,6 +792,11 @@
                         if (i === 4) {
                             video.removeEventListener('seeked', handler);
                         }
+                        
+                        // Select first thumbnail by default
+                        if (i === 1) {
+                            thumbnailDiv.classList.add('border-2', 'border-blue-500');
+                        }
                     }, { once: i === 4 });
                 }
             }
@@ -355,6 +816,7 @@
                         thumbnailDiv.style.backgroundImage = `url(${event.target.result})`;
                         thumbnailDiv.style.backgroundSize = 'cover';
                         thumbnailDiv.style.backgroundPosition = 'center';
+                        thumbnailDiv.dataset.custom = 'true';
                         
                         thumbnailDiv.addEventListener('click', function() {
                             // Remove selected class from all thumbnails
@@ -378,8 +840,8 @@
                 }
             });
             
-            // Handle upload button click
-            uploadBtn.addEventListener('click', function() {
+            // Handle video upload button click
+            videoUploadBtn.addEventListener('click', function() {
                 const videoFile = videoUpload.files[0];
                 const videoTitleValue = document.getElementById('videoTitle').value;
                 
@@ -394,41 +856,220 @@
                     return;
                 }
                 
-                // Show progress UI
-                uploadSection.classList.add('hidden');
-                progressSection.classList.remove('hidden');
+                // Get selected thumbnail
+                const selectedThumbnail = document.querySelector('.thumbnail-preview.border-2.border-blue-500');
+                if (!selectedThumbnail) {
+                    alert('ကျေးဇူးပြု၍ ဗီဒီယို အနှစ်ချုပ်ပုံ ရွေးချယ်ပါ။');
+                    return;
+                }
                 
-                // Simulate upload process
-                let progress = 0;
-                const uploadInterval = setInterval(() => {
-                    progress += 1;
-                    progressBar.style.width = progress + '%';
-                    progressPercent.textContent = progress + '% တင်သွင်းပြီးပါပြီ';
-                    
-                    if (progress < 33) {
-                        progressTask.textContent = 'လုပ်ငန်း 1/3: ဖိုင်တင်နေသည်';
-                    } else if (progress < 66) {
-                        progressTask.textContent = 'လုပ်ငန်း 2/3: ပုံစံပြောင်းနေသည်';
-                    } else {
-                        progressTask.textContent = 'လုပ်ငန်း 3/3: စာရင်းသွင်းနေသည်';
+                // Show progress UI
+                showProgressUI('ဗီဒီယို');
+                
+                // Extract thumbnail data
+                let thumbnailDataUrl = null;
+                const backgroundImage = selectedThumbnail.style.backgroundImage;
+                if (backgroundImage) {
+                    thumbnailDataUrl = backgroundImage.slice(backgroundImage.indexOf('(')+1, backgroundImage.lastIndexOf(')'));
+                    thumbnailDataUrl = thumbnailDataUrl.replace(/"/g, '');
+                }
+                
+                // Generate unique file names
+                const timestamp = Date.now();
+                const videoFileName = `videos/${timestamp}_${videoFile.name}`;
+                const thumbnailFileName = `thumbnails/${timestamp}_thumbnail.jpg`;
+                
+                // Create video metadata
+                const videoData = {
+                    type: 'video',
+                    title: document.getElementById('videoTitle').value,
+                    description: document.getElementById('videoDescription').value,
+                    fileName: videoFile.name,
+                    fileSize: videoFile.size,
+                    duration: videoPreview.duration,
+                    thumbnailUrl: '',
+                    videoUrl: '',
+                    uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    settings: {
+                        disableComments: document.getElementById('videoDisableComments').checked,
+                        disableSharing: document.getElementById('videoDisableSharing').checked,
+                        disableDownload: document.getElementById('videoDisableDownload').checked
                     }
+                };
+                
+                // Upload thumbnail first
+                updateProgress(0, 'လုပ်ငန်း 1/3: ပုံတင်နေသည်');
+                
+                // Convert data URL to blob
+                fetch(thumbnailDataUrl)
+                .then(res => res.blob())
+                .then(thumbnailBlob => {
+                    const thumbnailRef = storage.ref(thumbnailFileName);
+                    const thumbnailTask = thumbnailRef.put(thumbnailBlob);
+                    
+                    thumbnailTask.on('state_changed', 
+                        // Progress
+                        (snapshot) => {
+                            const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                            updateProgress(progress / 3, 'လုပ်ငန်း 1/3: ပုံတင်နေသည်');
+                        },
+                        // Error
+                        (error) => {
+                            alert('ပုံတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
+                            hideProgressUI();
+                        },
+                        // Complete
+                        () => {
+                            // Get thumbnail URL and start video upload
+                            thumbnailRef.getDownloadURL().then((thumbnailUrl) => {
+                                videoData.thumbnailUrl = thumbnailUrl;
+                                
+                                // Upload video file
+                                updateProgress(33, 'လုပ်ငန်း 2/3: ဗီဒီယိုတင်နေသည်');
+                                
+                                const videoRef = storage.ref(videoFileName);
+                                const videoTask = videoRef.put(videoFile);
+                                
+                                videoTask.on('state_changed', 
+                                    // Progress
+                                    (snapshot) => {
+                                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                                        updateProgress(33 + (progress / 3), 'လုပ်ငန်း 2/3: ဗီဒီယိုတင်နေသည်');
+                                    },
+                                    // Error
+                                    (error) => {
+                                        alert('ဗီဒီယိုတင်နေစဉ် အမှားဖြစ်ပွားသည်: ' + error.message);
+                                        hideProgressUI();
+                                    },
+                                    // Complete
+                                    () => {
+                                        // Get video URL and save metadata
+                                        videoRef.getDownloadURL().then((videoUrl) => {
+                                            videoData.videoUrl = videoUrl;
+                                            
+                                            // Save metadata to Firestore
+                                            updateProgress(66, 'လုပ်ငန်း 3/3: စာရင်းသွင်းနေသည်');
+                                            
+                                            firestore.collection('posts').add(videoData)
+                                            .then(() => {
+                                                updateProgress(100, 'ပြီးပါပြီ');
+                                                setTimeout(() => {
+                                                    alert('ဗီဒီယို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
+                                                    hideProgressUI();
+                                                    resetVideoForm();
+                                                }, 500);
+                                            })
+                                            .catch(error => {
+                                                alert('စာရင်းသွင်းရာတွင် အမှားဖြစ်ပွားသည်: ' + error.message);
+                                                hideProgressUI();
+                                            });
+                                        });
+                                    }
+                                );
+                            });
+                        }
+                    );
+                })
+                .catch(error => {
+                    alert('ပုံကို ပြင်ဆင်ရာတွင် အမှားဖြစ်ပွားသည်: ' + error.message);
+                    hideProgressUI();
+                });
+            });
+            
+            function resetVideoForm() {
+                document.getElementById('videoTitle').value = '';
+                document.getElementById('videoDescription').value = '';
+                document.getElementById('videoDisableComments').checked = false;
+                document.getElementById('videoDisableSharing').checked = false;
+                document.getElementById('videoDisableDownload').checked = false;
+                
+                videoPreview.classList.add('hidden');
+                uploadPrompt.classList.remove('hidden');
+                videoPreview.src = '';
+                fileName.textContent = 'ဗီဒီယိုဖိုင် မရွေးရသေးပါ';
+                fileSize.textContent = '0 MB';
+                fileDuration.textContent = '00:00';
+                
+                // Reset thumbnails
+                thumbnailContainer.innerHTML = '';
+                for (let i = 1; i <= 4; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'bg-gray-200 rounded-md h-16 flex items-center justify-center';
+                    placeholder.innerHTML = '<span class="text-gray-500 text-xs text-center">ဗီဒီယိုဖိုင် ရွေးချယ်ပြီးမှ<br>ပုံပေါ်လာမည်</span>';
+                    thumbnailContainer.appendChild(placeholder);
+                }
+            }
+            
+            // --- COMMON FUNCTIONS ---
+            // Progress UI handling
+            const progressSection = document.getElementById('progressSection');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressTask = document.getElementById('progressTask');
+            const progressMessage = document.getElementById('progressMessage');
+            
+            function showProgressUI(contentType) {
+                // Hide all tab contents
+                for (const type in tabs) {
+                    tabs[type].content.classList.remove('active');
+                }
+                
+                progressSection.classList.remove('hidden');
+                progressMessage.textContent = `${contentType} တင်သွင်းနေပါသည်။ ခေတ္တစောင့်ဆိုင်းပါ...`;
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0% တင်သွင်းပြီးပါပြီ';
+                progressTask.textContent = 'လုပ်ငန်း စတင်နေသည်';
+            }
+            
+            function hideProgressUI() {
+                progressSection.classList.add('hidden');
+                
+                // Show active tab content
+                for (const type in tabs) {
+                    if (tabs[type].btn.classList.contains('tab-active')) {
+                        tabs[type].content.classList.add('active');
+                        break;
+                    }
+                }
+            }
+            
+            function updateProgress(percent, taskMessage) {
+                progressBar.style.width = percent + '%';
+                progressPercent.textContent = Math.round(percent) + '% တင်သွင်းပြီးပါပြီ';
+                if (taskMessage) {
+                    progressTask.textContent = taskMessage;
+                }
+            }
+            
+            function simulateProgress(callback) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2;
+                    updateProgress(progress);
                     
                     if (progress >= 100) {
-                        clearInterval(uploadInterval);
-                        alert('ဗီဒီယို အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။');
-                        
-                        // Reset UI
-                        setTimeout(() => {
-                            progressSection.classList.add('hidden');
-                            uploadSection.classList.remove('hidden');
-                            progressBar.style.width = '0%';
-                            progressPercent.textContent = '0% တင်သွင်းပြီးပါပြီ';
-                        }, 1500);
+                        clearInterval(interval);
+                        if (callback) callback();
                     }
                 }, 50);
-            });
+            }
+            
+            // Demo user authentication (for a complete app)
+            function checkAuth() {
+                // For demo purposes, you'd typically check if user is signed in
+                // auth.onAuthStateChanged(user => {
+                //     if (user) {
+                //         // User is signed in
+                //     } else {
+                //         // Redirect to login page
+                //         window.location.href = 'login.html';
+                //     }
+                // });
+            }
+            
+            // Run authentication check
+            checkAuth();
         });
     </script>
 </body>
-    </html>
-    
+</html>
