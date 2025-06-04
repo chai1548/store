@@ -12,14 +12,15 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
-        // Firebase Configuration
+         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "demo-api-key",
-            authDomain: "thailand-lottery-demo.firebaseapp.com",
-            projectId: "thailand-lottery-demo",
-            storageBucket: "thailand-lottery-demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "demo-app-id"
+            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+            authDomain: "onlineshop-849c8.firebaseapp.com",
+            databaseURL: "https://onlineshop-849c8.firebaseio.com",
+            projectId: "onlineshop-849c8",
+            storageBucket: "onlineshop-849c8.appspot.com",
+            messagingSenderId: "883512833370",
+            appId: "1:883512833370:web:a1c8412b158f8744afef63"
         };
         
         const app = initializeApp(firebaseConfig);
