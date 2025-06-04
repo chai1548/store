@@ -1,1890 +1,1567 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Social App with Firebase</title>
-    
-    <!-- Tailwind CSS -->
+    <title>Thailand 3D Lottery - ထိုင်း 3D ထီ</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDK v9 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy, limit, where, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-        import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
-
-        // Firebase configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
-            authDomain: "onlineshop-849c8.firebaseapp.com",
-            databaseURL: "https://onlineshop-849c8.firebaseio.com",
-            projectId: "onlineshop-849c8",
-            storageBucket: "onlineshop-849c8.appspot.com",
-            messagingSenderId: "883512833370",
-            appId: "1:883512833370:web:a1c8412b158f8744afef63"
+            apiKey: "demo-api-key",
+            authDomain: "thailand-lottery-demo.firebaseapp.com",
+            projectId: "thailand-lottery-demo",
+            storageBucket: "thailand-lottery-demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "demo-app-id"
         };
-
-        // Initialize Firebase
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
-
-        // Make Firebase services available globally
-        window.firebaseAuth = auth;
-        window.firebaseDB = db;
-        window.firebaseStorage = storage;
-        window.firebaseServices = {
-            signInWithEmailAndPassword,
-            createUserWithEmailAndPassword,
-            signOut,
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup,
-            collection,
-            addDoc,
-            getDocs,
-            doc,
-            updateDoc,
-            deleteDoc,
-            onSnapshot,
-            serverTimestamp,
-            query,
-            orderBy,
-            limit,
-            where,
-            getDoc,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            uploadBytesResumable
-        };
-
-        // Initialize app when Firebase is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.initializeApp) {
-                window.initializeApp();
-            }
-        });
+        
+        window.auth = auth;
+        window.db = db;
+        window.firebaseAuth = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+        window.firestore = { doc, setDoc, getDoc, getDocs, collection, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit };
     </script>
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
+            font-family: 'Noto Sans Myanmar', sans-serif;
         }
-
-        .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 1rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .nav-link {
-            position: relative;
-            padding: 0.75rem 1.5rem;
-            margin: 0 0.25rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.3);
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .upload-zone {
-            border: 2px dashed rgba(102, 126, 234, 0.5);
-            border-radius: 1rem;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .upload-zone:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .post-image, .post-video {
-            width: 100%;
-            max-height: 400px;
-            object-fit: cover;
-            border-radius: 0.5rem;
-        }
-
-        .user-avatar {
-            width: 50px;
-            height: 50px;
+        
+        .lottery-ball {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
             border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
         }
-
+        
+        .lottery-ball:hover {
+            transform: scale(1.1);
+        }
+        
+        .lottery-ball.selected {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+        }
+        
+        .admin-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .user-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .payment-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .lottery-card {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin: 8px 0;
+        }
+        
+        .chat-user {
+            background: #3B82F6;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .chat-ai {
+            background: #F3F4F6;
+            color: #374151;
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-number {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        
         .notification {
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
+            padding: 16px 24px;
+            border-radius: 8px;
             color: white;
-            font-weight: 600;
+            font-weight: 500;
             z-index: 1000;
             transform: translateX(400px);
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
         }
-
+        
         .notification.show {
             transform: translateX(0);
         }
-
+        
         .notification.success {
-            background: linear-gradient(135deg, #4ade80, #22c55e);
+            background: #10B981;
         }
-
+        
         .notification.error {
-            background: linear-gradient(135deg, #f87171, #ef4444);
+            background: #EF4444;
         }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            transform: scale(0.8);
-            transition: all 0.3s ease;
-        }
-
-        .modal.show .modal-content {
-            transform: scale(1);
-        }
-
-        .page {
-            display: none;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(102, 126, 234, 0.2);
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .comment-input {
-            border: 1px solid #e2e8f0;
-            border-radius: 2rem;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            focus:outline-none;
-            focus:ring-2;
-            focus:ring-indigo-500;
-        }
-
-        .story-ring {
-            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
-            padding: 3px;
-            border-radius: 50%;
-        }
-
-        .story-inner {
-            background: white;
-            border-radius: 50%;
-            padding: 2px;
-        }
-
-        @media print {
-            body {
-                background: white !important;
-            }
-            
-            .app-container {
-                max-width: 100% !important;
-                padding: 0 !important;
-            }
-            
-            .hide-in-print {
-                display: none !important;
-            }
-            
-            .card {
-                break-inside: avoid;
-                page-break-inside: avoid;
-                margin-bottom: 1rem;
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        /* New styles for search, comments, etc */
-        .search-box {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 2rem;
-            padding: 0.5rem 1rem;
-            color: white;
-            width: 200px;
-            transition: all 0.3s ease;
-        }
-
-        .search-box:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.3);
-            width: 250px;
-        }
-
-        .search-box::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .comment-container {
-            max-height: 300px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-        }
-
-        .comment-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .comment-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
-        }
-
-        .comment-container::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-
-        .comment-item {
-            border-bottom: 1px solid #eee;
-            padding: 0.75rem 0;
-        }
-
-        .comment-item:last-child {
-            border-bottom: none;
-        }
-
-        .story-viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .story-content {
-            max-width: 350px;
-            max-height: 600px;
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .story-nav {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            z-index: 10;
-        }
-
-        .story-progress {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .story-progress-fill {
-            height: 100%;
-            background: white;
-            width: 0%;
-            transition: width 0.1s linear;
+        
+        .notification.warning {
+            background: #F59E0B;
         }
     </style>
 </head>
-<body>
-    <!-- Auth Modal -->
-    <div id="authModal" class="modal">
-        <div class="modal-content">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to SocialApp</h2>
-                <p class="text-gray-600">Sign in to continue</p>
-            </div>
-            
-            <div id="authTabs" class="flex mb-6">
-                <button id="loginTab" class="flex-1 py-2 px-4 text-center border-b-2 border-indigo-500 text-indigo-600 font-semibold">Login</button>
-                <button id="registerTab" class="flex-1 py-2 px-4 text-center border-b-2 border-gray-200 text-gray-500">Register</button>
-            </div>
-            
-            <form id="authForm">
-                <div class="mb-4">
-                    <input type="email" id="authEmail" placeholder="Email address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-4">
-                    <input type="password" id="authPassword" placeholder="Password" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div id="registerFields" class="hidden">
-                    <div class="mb-4">
-                        <input type="text" id="authName" placeholder="Full Name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                </div>
-                <button type="submit" class="w-full btn-primary mb-4">
-                    <span id="authButtonText">Sign In</span>
-                </button>
-            </form>
-            
-            <div class="text-center">
-                <div class="mb-4 text-gray-500">or</div>
-                <button id="googleAuth" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center">
-                    <i class="fab fa-google mr-2"></i>
-                    Continue with Google
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Story Viewer -->
-    <div id="storyViewer" class="story-viewer hidden">
-        <div class="story-content">
-            <div class="story-nav">
-                <button id="closeStory" class="text-white text-xl"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="story-progress">
-                <div class="story-progress-fill"></div>
-            </div>
-            <img id="storyImage" src="" alt="Story" class="w-full h-full object-cover">
-        </div>
-    </div>
-
+<body class="bg-gray-100">
     <!-- Navigation -->
-    <nav class="glass-effect">
-        <div class="app-container">
-            <div class="flex justify-between items-center py-4">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-white mr-4">
-                        <i class="fas fa-share-alt mr-2"></i>SocialApp
-                    </h1>
-                    <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-3 py-1 rounded-full">Firebase</span>
+                    <i class="fas fa-dice text-blue-600 text-2xl mr-3"></i>
+                    <span class="text-xl font-bold text-gray-800">Thailand 3D Lottery</span>
                 </div>
-                
                 <div class="flex items-center space-x-4">
-                    <!-- Search Box -->
-                    <div class="relative hidden md:block">
-                        <input type="text" id="searchBox" placeholder="Search..." class="search-box">
-                        <i class="fas fa-search absolute right-3 top-2 text-white"></i>
+                    <button id="languageBtn" class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-language mr-1"></i>
+                        <span id="currentLang">မြန်မာ</span>
+                    </button>
+                    <div id="userInfo" class="hidden items-center space-x-2">
+                        <span id="userEmail" class="text-sm text-gray-600"></span>
+                        <button id="logoutBtn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                            <i class="fas fa-sign-out-alt mr-1"></i>
+                            ထွက်ရန်
+                        </button>
                     </div>
-                    
-                    <div id="userInfo" class="hidden flex items-center space-x-3">
-                        <img id="userAvatar" src="" alt="User" class="user-avatar">
-                        <span id="userName" class="text-white font-medium"></span>
-                        <button id="logoutBtn" class="text-white hover:text-red-300 transition-colors">
-                            <i class="fas fa-sign-out-alt"></i>
+                    <div id="authButtons" class="flex space-x-2">
+                        <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            <i class="fas fa-sign-in-alt mr-1"></i>
+                            ဝင်ရောက်ရန်
+                        </button>
+                        <button id="registerBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            <i class="fas fa-user-plus mr-1"></i>
+                            အကောင့်ဖွင့်ရန်
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            <div id="mainNav" class="hidden flex space-x-2 pb-4">
-                <a href="#" class="nav-link active" data-page="home">
-                    <i class="fas fa-home mr-2"></i>Home
-                </a>
-                <a href="#" class="nav-link" data-page="upload">
-                    <i class="fas fa-plus mr-2"></i>Create
-                </a>
-                <a href="#" class="nav-link" data-page="profile">
-                    <i class="fas fa-user mr-2"></i>Profile
-                </a>
-                <a href="#" class="nav-link" data-page="settings">
-                    <i class="fas fa-cog mr-2"></i>Settings
-                </a>
             </div>
         </div>
     </nav>
 
-    <main class="app-container py-6">
-        <!-- Home Page -->
-        <div id="home-page" class="page active">
-            <!-- Stories Section -->
-            <div class="card glass-effect mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">Stories</h3>
-                    <div class="flex space-x-4 overflow-x-auto pb-2" id="storiesContainer">
-                        <!-- Stories will be loaded here -->
-                    </div>
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Login Modal -->
+        <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">ဝင်ရောက်ရန်</h3>
+                    <button id="closeLoginModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            </div>
-
-            <!-- Posts Feed -->
-            <div id="postsContainer">
-                <!-- Posts will be loaded here -->
-            </div>
-
-            <div class="text-center mt-8">
-                <button id="loadMoreBtn" class="btn-primary">
-                    <i class="fas fa-plus mr-2"></i>Load More Posts
-                </button>
-            </div>
-        </div>
-
-        <!-- Upload Page -->
-        <div id="upload-page" class="page">
-            <div class="card">
-                <div class="p-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Post</h2>
-                    
-                    <!-- Upload Tabs -->
-                    <div class="flex border-b border-gray-200 mb-6">
-                        <button class="upload-tab active" data-type="text">
-                            <i class="fas fa-font mr-2"></i>Text Post
-                        </button>
-                        <button class="upload-tab" data-type="image">
-                            <i class="fas fa-image mr-2"></i>Image Post
-                        </button>
-                        <button class="upload-tab" data-type="video">
-                            <i class="fas fa-video mr-2"></i>Video Post
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">အီးမေးလ်</label>
+                        <input type="email" id="loginEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">စကားဝှက်</label>
+                        <input type="password" id="loginPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">
+                            ဝင်ရောက်ရန်
                         </button>
                     </div>
-
-                    <!-- Text Post Form -->
-                    <div id="textUpload" class="upload-form">
-                        <form id="textPostForm">
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Post Content</label>
-                                <textarea id="textContent" rows="4" placeholder="What's on your mind?" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
-                                <input type="text" id="textTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <button type="submit" class="btn-primary">
-                                <i class="fas fa-paper-plane mr-2"></i>Publish Post
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Image Post Form -->
-                    <div id="imageUpload" class="upload-form hidden">
-                        <form id="imagePostForm">
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Images</label>
-                                <div class="upload-zone" id="imageDropzone">
-                                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
-                                    <div class="text-center">
-                                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-4"></i>
-                                        <p class="text-lg font-medium text-gray-700 mb-2">Drag & drop images here</p>
-                                        <p class="text-sm text-gray-500">or click to select files</p>
-                                        <p class="text-xs text-gray-400 mt-2">Supports: JPG, PNG, GIF (Max 10MB each)</p>
-                                    </div>
-                                </div>
-                                <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Caption</label>
-                                <textarea id="imageCaption" rows="3" placeholder="Write a caption for your images..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
-                                <input type="text" id="imageTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="mb-4">
-                                <div class="progress-bar hidden" id="imageProgress">
-                                    <div class="progress-fill"></div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary">
-                                <i class="fas fa-images mr-2"></i>Publish Images
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Video Post Form -->
-                    <div id="videoUpload" class="upload-form hidden">
-                        <form id="videoPostForm">
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Video</label>
-                                <div class="upload-zone" id="videoDropzone">
-                                    <input type="file" id="videoInput" accept="video/*" class="hidden">
-                                    <div class="text-center">
-                                        <i class="fas fa-film text-4xl text-indigo-400 mb-4"></i>
-                                        <p class="text-lg font-medium text-gray-700 mb-2">Drag & drop video here</p>
-                                        <p class="text-sm text-gray-500">or click to select file</p>
-                                        <p class="text-xs text-gray-400 mt-2">Supports: MP4, WebM, MOV (Max 100MB)</p>
-                                    </div>
-                                </div>
-                                <div id="videoPreview" class="mt-4 hidden">
-                                    <video id="previewVideo" controls playsinline webkit-playsinline class="w-full max-h-96 rounded-lg"></video>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                <textarea id="videoDescription" rows="3" placeholder="Describe your video..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
-                                <input type="text" id="videoTags" placeholder="Enter tags separated by commas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="mb-4">
-                                <div class="progress-bar hidden" id="videoProgress">
-                                    <div class="progress-fill"></div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-primary">
-                                <i class="fas fa-video mr-2"></i>Publish Video
-                            </button>
-                        </form>
-                    </div>
+                </form>
+                <div class="mt-4 text-center">
+                    <button id="adminLoginBtn" class="text-purple-600 hover:text-purple-800 text-sm">
+                        Admin အဖြစ် ဝင်ရောက်ရန်
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Profile Page -->
-        <div id="profile-page" class="page">
-            <div class="card">
-                <div class="p-6">
-                    <div class="text-center mb-8">
-                        <div class="relative inline-block">
-                            <img id="profileAvatar" src="" alt="Profile" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg">
-                            <button id="changeAvatarBtn" class="absolute bottom-0 right-0 bg-indigo-500 text-white p-2 rounded-full hover:bg-indigo-600 transition-colors">
-                                <i class="fas fa-camera"></i>
-                            </button>
-                            <input type="file" id="avatarInput" accept="image/*" class="hidden">
-                        </div>
-                        <h2 id="profileName" class="text-2xl font-bold text-gray-800 mt-4">User Name</h2>
-                        <p id="profileEmail" class="text-gray-600">user@example.com</p>
-                        <p id="profileBio" class="text-gray-600 mt-2 max-w-md mx-auto"></p>
-                        <div class="flex justify-center mt-4 space-x-6">
-                            <div class="text-center">
-                                <div id="postCount" class="text-2xl font-bold text-gray-800">0</div>
-                                <div class="text-sm text-gray-600">Posts</div>
-                            </div>
-                            <div class="text-center">
-                                <div id="followerCount" class="text-2xl font-bold text-gray-800">0</div>
-                                <div class="text-sm text-gray-600">Followers</div>
-                            </div>
-                            <div class="text-center">
-                                <div id="followingCount" class="text-2xl font-bold text-gray-800">0</div>
-                                <div class="text-sm text-gray-600">Following</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">My Posts</h3>
-                        <div id="userPosts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- User posts will be loaded here -->
-                        </div>
-                    </div>
+        <!-- Register Modal -->
+        <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold">အကောင့်ဖွင့်ရန်</h3>
+                    <button id="closeRegisterModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
+                <form id="registerForm">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">အီးမေးလ်</label>
+                        <input type="email" id="registerEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">စကားဝှက်</label>
+                        <input type="password" id="registerPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">ဖုန်းနံပါတ်</label>
+                        <input type="tel" id="registerPhone" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">နာမည်</label>
+                        <input type="text" id="registerName" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-full">
+                            အကောင့်ဖွင့်ရန်
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <!-- Settings Page -->
-        <div id="settings-page" class="page">
-            <div class="card">
-                <div class="p-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
-                    
-                    <div class="space-y-6">
+        <!-- Admin Login Modal -->
+        <div id="adminLoginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-purple-600">Admin Login</h3>
+                    <button id="closeAdminLoginModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="adminLoginForm">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Admin Email</label>
+                        <input type="email" id="adminEmail" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" value="admin@thailottery.com">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Admin Password</label>
+                        <input type="password" id="adminPassword" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" value="Admin123!@#">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Admin Secret Key</label>
+                        <input type="password" id="adminSecret" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" placeholder="THAI_LOTTERY_ADMIN_2024">
+                    </div>
+                    <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 w-full">
+                        Admin ဝင်ရောက်ရန်
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="user-card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-users text-3xl mr-4"></i>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Account Information</h3>
-                            <form id="profileForm">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                                        <input type="text" id="settingsName" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                                        <input type="email" id="settingsEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" readonly>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                                    <textarea id="settingsBio" rows="3" placeholder="Tell us about yourself..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                                </div>
-                                <div class="mt-6">
-                                    <button type="submit" class="btn-primary">
-                                        <i class="fas fa-save mr-2"></i>Save Changes
-                                    </button>
-                                </div>
-                            </form>
+                            <p class="text-sm opacity-80">စုစုပေါင်း အသုံးပြုသူများ</p>
+                            <p id="totalUsers" class="text-2xl font-bold">0</p>
                         </div>
+                    </div>
+                </div>
+                <div class="lottery-card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-ticket-alt text-3xl mr-4"></i>
+                        <div>
+                            <p class="text-sm opacity-80">ယခုလ ထီလက်မှတ်</p>
+                            <p id="monthlyTickets" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-coins text-3xl mr-4"></i>
+                        <div>
+                            <p class="text-sm opacity-80">စုစုပေါင်း ရသုံးငွေ</p>
+                            <p id="totalRevenue" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-chart-line text-3xl mr-4"></i>
+                        <div>
+                            <p class="text-sm opacity-80">ယနေ့ လုပ်ငန်း</p>
+                            <p id="todayActivity" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        <div class="border-t border-gray-200 pt-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Privacy Settings</h3>
+            <!-- Main Content Tabs -->
+            <div class="bg-white rounded-lg shadow-lg">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8" aria-label="Tabs">
+                        <button class="tab-btn py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" data-tab="lottery">
+                            <i class="fas fa-dice mr-2"></i>
+                            ထီဝယ်ရန်
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="payment">
+                            <i class="fas fa-wallet mr-2"></i>
+                            ငွေကြေး
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="results">
+                            <i class="fas fa-trophy mr-2"></i>
+                            ရလဒ်များ
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="history">
+                            <i class="fas fa-history mr-2"></i>
+                            မှတ်တမ်း
+                        </button>
+                        <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="ai">
+                            <i class="fas fa-robot mr-2"></i>
+                            AI အကူအညီ
+                        </button>
+                        <button id="adminTab" class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-purple-500 hover:text-purple-700 hover:border-purple-300 hidden" data-tab="admin">
+                            <i class="fas fa-cog mr-2"></i>
+                            Admin Panel
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Lottery Tab -->
+                <div id="lottery" class="tab-content p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">3D နံပါတ် ရွေးချယ်ပါ</h3>
                             <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Profile Visibility</h4>
-                                        <p class="text-sm text-gray-600">Control who can see your profile</p>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ပထမဂဏန်း (0-9)</label>
+                                    <div id="firstDigit" class="flex space-x-2">
+                                        <!-- Numbers 0-9 will be generated here -->
                                     </div>
-                                    <select id="privacySetting" class="p-2 border border-gray-300 rounded-lg">
-                                        <option value="public">Public</option>
-                                        <option value="friends">Friends Only</option>
-                                        <option value="private">Private</option>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ဒုတိယဂဏန်း (0-9)</label>
+                                    <div id="secondDigit" class="flex space-x-2">
+                                        <!-- Numbers 0-9 will be generated here -->
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">တတိယဂဏန်း (0-9)</label>
+                                    <div id="thirdDigit" class="flex space-x-2">
+                                        <!-- Numbers 0-9 will be generated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ငွေပမာណ (ကျပ်)</label>
+                                <input type="number" id="betAmount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" min="100" placeholder="အနည်းဆုံး ၁၀၀ ကျပ်">
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">ရွေးချယ်ထားသော နံပါတ်</h3>
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="text-center mb-4">
+                                    <div class="text-4xl font-bold text-blue-600" id="selectedNumber">---</div>
+                                    <div class="text-sm text-gray-600 mt-2">ရွေးချယ်ထားသော 3D နံပါတ်</div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span>ငွေပမာណ:</span>
+                                        <span id="displayAmount" class="font-bold">0 ကျပ်</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>ဖြစ်နိုင်သော ဆုငွေ:</span>
+                                        <span id="potentialWin" class="font-bold text-green-600">0 ကျပ်</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>ထွက်ပွဲရက်:</span>
+                                        <span id="drawDate" class="font-bold">--/--/----</span>
+                                    </div>
+                                </div>
+                                <button id="buyTicketBtn" class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 mt-4 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                                    <i class="fas fa-shopping-cart mr-2"></i>
+                                    ထီလက်မှတ် ဝယ်ယူရန်
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Tab -->
+                <div id="payment" class="tab-content p-6 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">ငွေသွင်းရန်</h3>
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ငွေပမာណ</label>
+                                    <input type="number" id="depositAmount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" min="1000" placeholder="အနည်းဆုံး ၁၀၀၀ ကျပ်">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ငွေပေးချေမှု နည်းလမ်း</label>
+                                    <select id="paymentMethod" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                                        <option value="">ရွေးချယ်ပါ</option>
+                                        <option value="kpay">KBZ Pay</option>
+                                        <option value="wavepay">Wave Pay</option>
+                                        <option value="ayapay">AYA Pay</option>
+                                        <option value="cbpay">CB Pay</option>
+                                        <option value="bank">ဘဏ်လွှဲငွေ</option>
                                     </select>
                                 </div>
-                                
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-medium text-gray-800">Allow Comments</h4>
-                                        <p class="text-sm text-gray-600">Let others comment on your posts</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="allowComments" checked class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                    </label>
+                                <button id="depositBtn" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-plus-circle mr-2"></i>
+                                    ငွေသွင်းရန်
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">ငွေထုတ်ရန်</h3>
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ပိုက်ဆံအိတ် လက်ကျန်</label>
+                                    <div class="text-2xl font-bold text-green-600" id="walletBalance">0 ကျပ်</div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ထုတ်လိုသော ငွေပမာণ</label>
+                                    <input type="number" id="withdrawAmount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" min="1000" placeholder="အနည်းဆုံး ၁၀၀၀ ကျပ်">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ဘဏ်အကောင့် / ဖုန်းနံပါတ်</label>
+                                    <input type="text" id="withdrawAccount" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="ငွေလက်ခံရန် အကောင့်">
+                                </div>
+                                <button id="withdrawBtn" class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600">
+                                    <i class="fas fa-minus-circle mr-2"></i>
+                                    ငွေထုတ်ရန်
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-4">ငွေကြေး လုပ်ငန်းမှတ်တမ်း</h3>
+                        <div class="bg-white border rounded-lg overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">နေ့စွဲ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">အမျိုးအစား</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ငွေပမာណ</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">အခြေအနေ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionHistory" class="bg-white divide-y divide-gray-200">
+                                    <!-- Transaction history will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="results" class="tab-content p-6 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">ယခုလ ထီရလဒ်</h3>
+                            <div class="bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg p-8 text-white text-center">
+                                <div class="text-lg mb-2">လာမည့် ထွက်ပွဲ</div>
+                                <div id="nextDrawDate" class="text-2xl font-bold mb-4">၂၀၂၄ ခုနှစ်၊ ဇန်နဝါရီလ ၃၀ ရက်</div>
+                                <div class="text-sm opacity-80">ညနေ ၆:၀၀ နာရီတွင် ထွက်ပါမည်</div>
+                            </div>
+                            <div class="mt-6">
+                                <h4 class="text-lg font-bold mb-3">ယခင်လ ရလဒ်များ</h4>
+                                <div id="previousResults" class="space-y-3">
+                                    <!-- Previous results will be loaded here -->
                                 </div>
                             </div>
                         </div>
-
-                        <div class="border-t border-gray-200 pt-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Dangerous Actions</h3>
-                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <button id="deleteAccountBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium">
-                                    <i class="fas fa-trash mr-2"></i>Delete Account
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">ရလဒ် စစ်ဆေးရန်</h3>
+                            <div class="bg-gray-50 rounded-lg p-6">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ထီလက်မှတ် နံပါတ်</label>
+                                    <input type="text" id="checkTicketNumber" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="XXX နံပါတ် ထည့်ပါ">
+                                </div>
+                                <button id="checkResultBtn" class="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 mb-4">
+                                    <i class="fas fa-search mr-2"></i>
+                                    ရလဒ်စစ်ရန်
                                 </button>
-                                <p class="text-sm text-red-600 mt-2">This action cannot be undone. All your data will be permanently deleted.</p>
+                                <div id="checkResult" class="hidden">
+                                    <div class="border-t pt-4">
+                                        <div class="text-center">
+                                            <div id="resultStatus" class="text-lg font-bold mb-2"></div>
+                                            <div id="winAmount" class="text-2xl font-bold text-green-600"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h4 class="text-lg font-bold mb-3">ဆုငွေ ဇယား</h4>
+                                <div class="bg-white border rounded-lg overflow-hidden">
+                                    <table class="min-w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">အမျိုးအစား</th>
+                                                <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">ဆုငွေ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm">လက်မှတ်နံပါတ် အတိအကျ ကိုက်ညီ</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-green-600">x500</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm">နောက်ဆုံး ၂ လုံး ကိုက်ညီ</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-green-600">x50</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm">နောက်ဆုံး ၁ လုံး ကိုက်ညီ</td>
+                                                <td class="px-4 py-2 text-sm font-bold text-green-600">x5</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- History Tab -->
+                <div id="history" class="tab-content p-6 hidden">
+                    <h3 class="text-xl font-bold mb-4">ထီလက်မှတ် မှတ်တမ်း</h3>
+                    <div class="bg-white border rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">နေ့စွဲ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">နံပါတ်</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ငွေပမာณ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">အခြေအနေ</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ဆုငွေ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticketHistory" class="bg-white divide-y divide-gray-200">
+                                <!-- Ticket history will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- AI Tab -->
+                <div id="ai" class="tab-content p-6 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">AI အကူအညီ</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto mb-4" id="chatMessages">
+                                <div class="chat-bubble chat-ai">
+                                    မင်္ဂလာပါ! ကျွန်ုပ်သည် Thailand 3D Lottery AI Assistant ဖြစ်ပါသည်။ သင့်ကို ဘယ်လို ကူညီနိုင်ပါသလဲ?
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <input type="text" id="chatInput" class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="မေးခွန်းတစ်ခု မေးပါ...">
+                                <button id="sendChatBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">AI နံပါတ် ခန့်မှန်းချက်</h3>
+                            <div class="bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg p-6 text-white mb-4">
+                                <h4 class="text-lg font-bold mb-3">ယနေ့အတွက် AI ရွေးချယ်ချက်</h4>
+                                <div class="flex justify-center space-x-4 mb-4">
+                                    <div class="lottery-ball bg-white text-gray-800" id="aiNumber1">?</div>
+                                    <div class="lottery-ball bg-white text-gray-800" id="aiNumber2">?</div>
+                                    <div class="lottery-ball bg-white text-gray-800" id="aiNumber3">?</div>
+                                </div>
+                                <div class="text-center">
+                                    <button id="generateAINumbers" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-100">
+                                        <i class="fas fa-magic mr-2"></i>
+                                        AI ခန့်မှန်းချက် ရယူရန်
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="bg-white border rounded-lg p-4">
+                                    <h5 class="font-bold mb-2">
+                                        <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+                                        ဈေးကွက် ခွဲခြမ်းစိတ်ဖြာမှု
+                                    </h5>
+                                    <canvas id="analysisChart" width="400" height="200"></canvas>
+                                </div>
+                                <div class="bg-white border rounded-lg p-4">
+                                    <h5 class="font-bold mb-2">
+                                        <i class="fas fa-tips text-green-500 mr-2"></i>
+                                        AI အကြံပြုချက်များ
+                                    </h5>
+                                    <ul id="aiTips" class="text-sm text-gray-600 space-y-1">
+                                        <li>• ထီဝယ်ယူရာတွင် ပိုက်ဆံ စီမံခန့်ခွဲမှု အရေးကြီးပါသည်</li>
+                                        <li>• အတိတ် ရလဒ်များကို လေ့လာပါ</li>
+                                        <li>• စိတ်ကူး လက္ခဏာများကို မှီခိုမနေပါနှင့်</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel -->
+                <div id="admin" class="tab-content p-6 hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="admin-card rounded-lg p-6">
+                            <h4 class="text-lg font-bold mb-4">အသုံးပြုသူ စီမံခန့်ခွဲမှု</h4>
+                            <div class="space-y-3">
+                                <button class="admin-btn w-full bg-white text-purple-600 py-2 rounded hover:bg-gray-100" onclick="showUserManagement()">
+                                    <i class="fas fa-users mr-2"></i>
+                                    အသုံးပြုသူများကို ကြည့်ရန်
+                                </button>
+                                <button class="admin-btn w-full bg-white text-purple-600 py-2 rounded hover:bg-gray-100" onclick="showUserStats()">
+                                    <i class="fas fa-chart-bar mr-2"></i>
+                                    အင်ကျဉ်းဇယား
+                                </button>
+                            </div>
+                        </div>
+                        <div class="payment-card rounded-lg p-6">
+                            <h4 class="text-lg font-bold mb-4">ငွေကြေး စီမံခန့်ခွဲမှု</h4>
+                            <div class="space-y-3">
+                                <button class="admin-btn w-full bg-white text-blue-600 py-2 rounded hover:bg-gray-100" onclick="showPendingDeposits()">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    စောင့်ဆိုင်းနေသော ငွေသွင်းမှုများ
+                                </button>
+                                <button class="admin-btn w-full bg-white text-blue-600 py-2 rounded hover:bg-gray-100" onclick="showPendingWithdrawals()">
+                                    <i class="fas fa-money-bill-wave mr-2"></i>
+                                    စောင့်ဆိုင်းနေသော ငွေထုတ်မှုများ
+                                </button>
+                            </div>
+                        </div>
+                        <div class="lottery-card rounded-lg p-6">
+                            <h4 class="text-lg font-bold mb-4">ထီ စီမံခန့်ခွဲမှု</h4>
+                            <div class="space-y-3">
+                                <button class="admin-btn w-full bg-white text-green-600 py-2 rounded hover:bg-gray-100" onclick="createNewDraw()">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    ထွက်ပွဲအသစ် ဖန်တီးရန်
+                                </button>
+                                <button class="admin-btn w-full bg-white text-green-600 py-2 rounded hover:bg-gray-100" onclick="announceResults()">
+                                    <i class="fas fa-bullhorn mr-2"></i>
+                                    ရလဒ် ကြေညာရန်
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Content Area -->
+                    <div id="adminContent" class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4">Admin Dashboard</h3>
+                        <p class="text-gray-600">အပေါ်က button များမှ လုပ်ငန်းများကို ရွေးချယ်ပါ။</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </main>
 
-    <!-- Notification Container -->
-    <div id="notificationContainer"></div>
+        <!-- Welcome Section (for non-logged in users) -->
+        <div id="welcomeSection">
+            <div class="text-center py-12">
+                <i class="fas fa-dice text-6xl text-blue-600 mb-4"></i>
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Thailand 3D Lottery</h1>
+                <p class="text-xl text-gray-600 mb-8">မြန်မာနိုင်ငံမှ ထိုင်း 3D ထီ ဝယ်ယူနိုင်သော နံပါတ်တစ် Website</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <i class="fas fa-shield-alt text-3xl text-green-500 mb-3"></i>
+                        <h3 class="text-lg font-bold mb-2">လုံခြုံမှု</h3>
+                        <p class="text-gray-600">Firebase နှင့် လုံခြုံသော ငွေကြေးလုပ်ငန်း</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <i class="fas fa-mobile-alt text-3xl text-blue-500 mb-3"></i>
+                        <h3 class="text-lg font-bold mb-2">လွယ်ကူမှု</h3>
+                        <p class="text-gray-600">မိုဘိုင်းဖုန်းဖြင့် အလွယ်တကူ အသုံးပြုနိုင်</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <i class="fas fa-robot text-3xl text-purple-500 mb-3"></i>
+                        <h3 class="text-lg font-bold mb-2">AI အကူအညီ</h3>
+                        <p class="text-gray-600">AI နှင့် နံပါတ် ခန့်မှန်းချက်များ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Comment Modal -->
-    <div id="commentModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Comments</h3>
-                <button id="closeCommentModal" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="comment-container mb-4" id="commentList">
-                <!-- Comments will be loaded here -->
-            </div>
-            
-            <div class="flex items-center">
-                <input type="text" id="commentInput" placeholder="Write a comment..." class="comment-input flex-1 mr-2">
-                <button id="postCommentBtn" class="btn-primary px-4 py-2">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">ကျေးဇူးပြု၍ စောင့်ပါ...</p>
         </div>
     </div>
 
     <script>
         // Global variables
         let currentUser = null;
-        let selectedFiles = [];
-        let uploadProgress = {};
-        let currentPostId = null;
-        let stories = [];
-        let currentStoryIndex = 0;
-        let storyInterval;
+        let selectedNumbers = { first: null, second: null, third: null };
+        let currentLang = 'my';
 
         // Initialize app
-        window.initializeApp = function() {
-            setupAuthListeners();
-            setupNavigation();
-            setupUploadForms();
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            generateNumberPads();
             setupEventListeners();
-            setupCommentModal();
-            setupStoryViewer();
-            
-            // Check authentication state
-            window.firebaseServices.onAuthStateChanged(window.firebaseAuth, (user) => {
+            loadDemoData();
+        });
+
+        function initializeApp() {
+            // Auth state observer
+            window.firebaseAuth.onAuthStateChanged(window.auth, (user) => {
                 if (user) {
                     currentUser = user;
-                    showMainApp();
+                    showDashboard();
                     loadUserData();
-                    loadPosts();
-                    loadStories();
-                    
-                    // Setup search functionality
-                    setupSearch();
                 } else {
                     currentUser = null;
-                    showAuthModal();
-                }
-            });
-        };
-
-        // Authentication functions
-        function setupAuthListeners() {
-            const authModal = document.getElementById('authModal');
-            const authForm = document.getElementById('authForm');
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
-            const googleAuth = document.getElementById('googleAuth');
-            const logoutBtn = document.getElementById('logoutBtn');
-
-            // Tab switching
-            loginTab.addEventListener('click', () => switchAuthTab('login'));
-            registerTab.addEventListener('click', () => switchAuthTab('register'));
-
-            // Form submission
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('authEmail').value;
-                const password = document.getElementById('authPassword').value;
-                const name = document.getElementById('authName').value;
-                const isRegister = registerTab.classList.contains('border-indigo-500');
-
-                try {
-                    if (isRegister) {
-                        await window.firebaseServices.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-                        // Save user profile
-                        await window.firebaseServices.addDoc(window.firebaseServices.collection(window.firebaseDB, 'users'), {
-                            uid: window.firebaseAuth.currentUser.uid,
-                            name: name || 'User',
-                            email: email,
-                            bio: '',
-                            privacy: 'public',
-                            allowComments: true,
-                            createdAt: window.firebaseServices.serverTimestamp()
-                        });
-                        showNotification('Account created successfully!', 'success');
-                    } else {
-                        await window.firebaseServices.signInWithEmailAndPassword(window.firebaseAuth, email, password);
-                        showNotification('Welcome back!', 'success');
-                    }
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                }
-            });
-
-            // Google Auth
-            googleAuth.addEventListener('click', async () => {
-                try {
-                    const provider = new window.firebaseServices.GoogleAuthProvider();
-                    const result = await window.firebaseServices.signInWithPopup(window.firebaseAuth, provider);
-                    
-                    // Check if user exists in Firestore
-                    const userDoc = await window.firebaseServices.getDoc(
-                        window.firebaseServices.doc(window.firebaseDB, 'users', result.user.uid)
-                    );
-                    
-                    if (!userDoc.exists()) {
-                        // Create user profile
-                        await window.firebaseServices.setDoc(
-                            window.firebaseServices.doc(window.firebaseDB, 'users', result.user.uid),
-                            {
-                                uid: result.user.uid,
-                                name: result.user.displayName || 'User',
-                                email: result.user.email,
-                                bio: '',
-                                privacy: 'public',
-                                allowComments: true,
-                                createdAt: window.firebaseServices.serverTimestamp()
-                            }
-                        );
-                    }
-                    
-                    showNotification('Signed in with Google!', 'success');
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                }
-            });
-
-            // Logout
-            logoutBtn.addEventListener('click', async () => {
-                try {
-                    await window.firebaseServices.signOut(window.firebaseAuth);
-                    showNotification('Signed out successfully!', 'success');
-                } catch (error) {
-                    showNotification(error.message, 'error');
+                    showWelcome();
                 }
             });
         }
 
-        function switchAuthTab(tab) {
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
-            const registerFields = document.getElementById('registerFields');
-            const authButtonText = document.getElementById('authButtonText');
+        function generateNumberPads() {
+            const containers = ['firstDigit', 'secondDigit', 'thirdDigit'];
+            containers.forEach(containerId => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                for (let i = 0; i <= 9; i++) {
+                    const ball = document.createElement('div');
+                    ball.className = 'lottery-ball';
+                    ball.textContent = i;
+                    ball.onclick = () => selectNumber(containerId, i);
+                    container.appendChild(ball);
+                }
+            });
+        }
 
-            if (tab === 'login') {
-                loginTab.classList.add('border-indigo-500', 'text-indigo-600');
-                loginTab.classList.remove('border-gray-200', 'text-gray-500');
-                registerTab.classList.add('border-gray-200', 'text-gray-500');
-                registerTab.classList.remove('border-indigo-500', 'text-indigo-600');
-                registerFields.classList.add('hidden');
-                authButtonText.textContent = 'Sign In';
+        function selectNumber(position, number) {
+            // Clear previous selection
+            document.querySelectorAll(`#${position} .lottery-ball`).forEach(ball => {
+                ball.classList.remove('selected');
+            });
+            
+            // Select new number
+            event.target.classList.add('selected');
+            
+            // Update selected numbers
+            if (position === 'firstDigit') selectedNumbers.first = number;
+            if (position === 'secondDigit') selectedNumbers.second = number;
+            if (position === 'thirdDigit') selectedNumbers.third = number;
+            
+            updateSelectedDisplay();
+        }
+
+        function updateSelectedDisplay() {
+            const { first, second, third } = selectedNumbers;
+            const display = document.getElementById('selectedNumber');
+            const amountInput = document.getElementById('betAmount');
+            const amount = parseInt(amountInput.value) || 0;
+            
+            if (first !== null && second !== null && third !== null) {
+                display.textContent = `${first}${second}${third}`;
+                document.getElementById('displayAmount').textContent = `${amount.toLocaleString()} ကျပ်`;
+                document.getElementById('potentialWin').textContent = `${(amount * 500).toLocaleString()} ကျပ်`;
+                document.getElementById('buyTicketBtn').disabled = amount < 100;
             } else {
-                registerTab.classList.add('border-indigo-500', 'text-indigo-600');
-                registerTab.classList.remove('border-gray-200', 'text-gray-500');
-                loginTab.classList.add('border-gray-200', 'text-gray-500');
-                loginTab.classList.remove('border-indigo-500', 'text-indigo-600');
-                registerFields.classList.remove('hidden');
-                authButtonText.textContent = 'Sign Up';
-            }
-        }
-
-        function showAuthModal() {
-            document.getElementById('authModal').classList.add('show');
-            document.getElementById('mainNav').classList.add('hidden');
-            document.getElementById('userInfo').classList.add('hidden');
-        }
-
-        function showMainApp() {
-            document.getElementById('authModal').classList.remove('show');
-            document.getElementById('mainNav').classList.remove('hidden');
-            document.getElementById('userInfo').classList.remove('hidden');
-        }
-
-        // Navigation
-        function setupNavigation() {
-            const navLinks = document.querySelectorAll('.nav-link');
-            const pages = document.querySelectorAll('.page');
-
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetPage = link.getAttribute('data-page');
-                    
-                    // Update active nav
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-                    
-                    // Show target page
-                    pages.forEach(page => {
-                        if (page.id === `${targetPage}-page`) {
-                            page.classList.add('active');
-                        } else {
-                            page.classList.remove('active');
-                        }
-                    });
-                    
-                    // Load specific page data
-                    if (targetPage === 'profile') {
-                        loadProfileData();
-                    } else if (targetPage === 'settings') {
-                        loadSettingsData();
-                    }
-                });
-            });
-        }
-
-        // Upload forms
-        function setupUploadForms() {
-            // Tab switching
-            const uploadTabs = document.querySelectorAll('.upload-tab');
-            const uploadForms = document.querySelectorAll('.upload-form');
-
-            uploadTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const type = tab.getAttribute('data-type');
-                    
-                    uploadTabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    uploadForms.forEach(form => {
-                        if (form.id === `${type}Upload`) {
-                            form.classList.remove('hidden');
-                        } else {
-                            form.classList.add('hidden');
-                        }
-                    });
-                });
-            });
-
-            // Image upload
-            setupImageUpload();
-            
-            // Video upload
-            setupVideoUpload();
-            
-            // Form submissions
-            setupFormSubmissions();
-            
-            // Profile picture upload
-            setupProfilePictureUpload();
-        }
-
-        function setupImageUpload() {
-            const imageDropzone = document.getElementById('imageDropzone');
-            const imageInput = document.getElementById('imageInput');
-            const imagePreview = document.getElementById('imagePreview');
-
-            imageDropzone.addEventListener('click', () => imageInput.click());
-            
-            imageDropzone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                imageDropzone.classList.add('border-indigo-500');
-            });
-            
-            imageDropzone.addEventListener('dragleave', () => {
-                imageDropzone.classList.remove('border-indigo-500');
-            });
-            
-            imageDropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                imageDropzone.classList.remove('border-indigo-500');
-                handleImageFiles(e.dataTransfer.files);
-            });
-            
-            imageInput.addEventListener('change', (e) => {
-                handleImageFiles(e.target.files);
-            });
-
-            function handleImageFiles(files) {
-                selectedFiles = Array.from(files);
-                imagePreview.innerHTML = '';
-                
-                selectedFiles.forEach((file, index) => {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const preview = document.createElement('div');
-                            preview.className = 'relative';
-                            preview.innerHTML = `
-                                <img src="${e.target.result}" alt="Preview" class="w-full h-32 object-cover rounded-lg">
-                                <button type="button" onclick="removeFile(${index})" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">×</button>
-                            `;
-                            imagePreview.appendChild(preview);
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-        }
-
-        function setupVideoUpload() {
-            const videoDropzone = document.getElementById('videoDropzone');
-            const videoInput = document.getElementById('videoInput');
-            const videoPreview = document.getElementById('videoPreview');
-            const previewVideo = document.getElementById('previewVideo');
-
-            videoDropzone.addEventListener('click', () => videoInput.click());
-            
-            videoDropzone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                videoDropzone.classList.add('border-indigo-500');
-            });
-            
-            videoDropzone.addEventListener('dragleave', () => {
-                videoDropzone.classList.remove('border-indigo-500');
-            });
-            
-            videoDropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                videoDropzone.classList.remove('border-indigo-500');
-                handleVideoFile(e.dataTransfer.files[0]);
-            });
-            
-            videoInput.addEventListener('change', (e) => {
-                handleVideoFile(e.target.files[0]);
-            });
-
-            function handleVideoFile(file) {
-                if (file && file.type.startsWith('video/')) {
-                    selectedFiles = [file];
-                    const videoURL = URL.createObjectURL(file);
-                    previewVideo.src = videoURL;
-                    videoPreview.classList.remove('hidden');
-                }
-            }
-        }
-
-        function setupProfilePictureUpload() {
-            const changeAvatarBtn = document.getElementById('changeAvatarBtn');
-            const avatarInput = document.getElementById('avatarInput');
-            
-            changeAvatarBtn.addEventListener('click', () => avatarInput.click());
-            
-            avatarInput.addEventListener('change', async (e) => {
-                if (e.target.files.length > 0) {
-                    const file = e.target.files[0];
-                    if (file.type.startsWith('image/')) {
-                        try {
-                            // Upload to Firebase Storage
-                            const fileName = `avatars/${currentUser.uid}_${Date.now()}`;
-                            const storageRef = window.firebaseServices.ref(window.firebaseStorage, fileName);
-                            await window.firebaseServices.uploadBytes(storageRef, file);
-                            
-                            // Get download URL
-                            const downloadURL = await window.firebaseServices.getDownloadURL(storageRef);
-                            
-                            // Update user profile in Firestore
-                            await window.firebaseServices.updateDoc(
-                                window.firebaseServices.doc(window.firebaseDB, 'users', currentUser.uid),
-                                { photoURL: downloadURL }
-                            );
-                            
-                            // Update auth profile
-                            await updateAuthProfile({ photoURL: downloadURL });
-                            
-                            // Update UI
-                            document.getElementById('userAvatar').src = downloadURL;
-                            document.getElementById('profileAvatar').src = downloadURL;
-                            
-                            showNotification('Profile picture updated!', 'success');
-                        } catch (error) {
-                            showNotification('Failed to update profile picture', 'error');
-                            console.error(error);
-                        }
-                    }
-                }
-            });
-        }
-
-        async function updateAuthProfile(updates) {
-            try {
-                await window.firebaseServices.updateProfile(window.firebaseAuth.currentUser, updates);
-                currentUser = window.firebaseAuth.currentUser;
-                return true;
-            } catch (error) {
-                console.error('Error updating auth profile:', error);
-                return false;
-            }
-        }
-
-        function setupFormSubmissions() {
-            // Text post form
-            document.getElementById('textPostForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const content = document.getElementById('textContent').value;
-                const tags = document.getElementById('textTags').value;
-                
-                await createPost('text', {
-                    content,
-                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-                });
-            });
-
-            // Image post form
-            document.getElementById('imagePostForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (selectedFiles.length === 0) {
-                    showNotification('Please select at least one image', 'error');
-                    return;
-                }
-                
-                const caption = document.getElementById('imageCaption').value;
-                const tags = document.getElementById('imageTags').value;
-                
-                await createPost('image', {
-                    caption,
-                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                    files: selectedFiles
-                });
-            });
-
-            // Video post form
-            document.getElementById('videoPostForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (selectedFiles.length === 0) {
-                    showNotification('Please select a video file', 'error');
-                    return;
-                }
-                
-                const description = document.getElementById('videoDescription').value;
-                const tags = document.getElementById('videoTags').value;
-                
-                await createPost('video', {
-                    description,
-                    tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                    files: selectedFiles
-                });
-            });
-
-            // Profile form
-            document.getElementById('profileForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('settingsName').value;
-                const bio = document.getElementById('settingsBio').value;
-                
-                try {
-                    // Update Firestore
-                    await window.firebaseServices.updateDoc(
-                        window.firebaseServices.doc(window.firebaseDB, 'users', currentUser.uid),
-                        { name, bio }
-                    );
-                    
-                    // Update auth profile
-                    await updateAuthProfile({ displayName: name });
-                    
-                    // Update UI
-                    document.getElementById('userName').textContent = name;
-                    document.getElementById('profileName').textContent = name;
-                    document.getElementById('profileBio').textContent = bio;
-                    
-                    showNotification('Profile updated successfully!', 'success');
-                } catch (error) {
-                    showNotification('Failed to update profile', 'error');
-                    console.error(error);
-                }
-            });
-        }
-
-        // Create post function
-        async function createPost(type, data) {
-            try {
-                const postData = {
-                    type,
-                    authorId: currentUser.uid,
-                    authorName: currentUser.displayName || 'User',
-                    authorAvatar: currentUser.photoURL || '',
-                    createdAt: window.firebaseServices.serverTimestamp(),
-                    likes: 0,
-                    comments: 0,
-                    likesList: []
-                };
-
-                if (type === 'text') {
-                    postData.content = data.content;
-                    postData.tags = data.tags;
-                } else if (type === 'image') {
-                    postData.caption = data.caption;
-                    postData.tags = data.tags;
-                    postData.images = await uploadFiles(data.files, 'images');
-                } else if (type === 'video') {
-                    postData.description = data.description;
-                    postData.tags = data.tags;
-                    postData.videos = await uploadFiles(data.files, 'videos');
-                }
-
-                await window.firebaseServices.addDoc(
-                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
-                    postData
-                );
-
-                showNotification('Post created successfully!', 'success');
-                resetUploadForms();
-                loadPosts();
-
-            } catch (error) {
-                console.error('Error creating post:', error);
-                showNotification('Failed to create post', 'error');
-            }
-        }
-
-        // Upload files to Firebase Storage
-        async function uploadFiles(files, folder) {
-            const uploadPromises = files.map(async (file, index) => {
-                const fileName = `${Date.now()}_${index}_${file.name}`;
-                const storageRef = window.firebaseServices.ref(window.firebaseStorage, `${folder}/${fileName}`);
-                
-                return new Promise((resolve, reject) => {
-                    const uploadTask = window.firebaseServices.uploadBytesResumable(storageRef, file);
-                    
-                    uploadTask.on('state_changed',
-                        (snapshot) => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            updateUploadProgress(folder, progress);
-                        },
-                        (error) => reject(error),
-                        async () => {
-                            const downloadURL = await window.firebaseServices.getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(downloadURL);
-                        }
-                    );
-                });
-            });
-
-            return Promise.all(uploadPromises);
-        }
-
-        function updateUploadProgress(type, progress) {
-            const progressBar = document.getElementById(`${type === 'images' ? 'image' : 'video'}Progress`);
-            const progressFill = progressBar.querySelector('.progress-fill');
-            
-            progressBar.classList.remove('hidden');
-            progressFill.style.width = `${progress}%`;
-            
-            if (progress === 100) {
-                setTimeout(() => {
-                    progressBar.classList.add('hidden');
-                    progressFill.style.width = '0%';
-                }, 1000);
-            }
-        }
-
-        // Load posts
-        async function loadPosts() {
-            try {
-                const postsQuery = window.firebaseServices.query(
-                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
-                    window.firebaseServices.orderBy('createdAt', 'desc'),
-                    window.firebaseServices.limit(10)
-                );
-
-                window.firebaseServices.onSnapshot(postsQuery, (snapshot) => {
-                    const postsContainer = document.getElementById('postsContainer');
-                    postsContainer.innerHTML = '';
-                    
-                    snapshot.docs.forEach((doc) => {
-                        const post = doc.data();
-                        postsContainer.innerHTML += createPostHTML(post, doc.id);
-                    });
-                });
-
-            } catch (error) {
-                console.error('Error loading posts:', error);
-            }
-        }
-
-        function createPostHTML(post, postId) {
-            const timeAgo = post.createdAt ? 'Just now' : 'Loading...';
-            let mediaHTML = '';
-
-            if (post.type === 'image' && post.images) {
-                mediaHTML = post.images.map(url => 
-                    `<img src="${url}" alt="Post image" class="post-image mb-3">`
-                ).join('');
-            } else if (post.type === 'video' && post.videos) {
-                mediaHTML = post.videos.map(url => 
-                    `<video controls playsinline webkit-playsinline class="post-video mb-3">
-                        <source src="${url}" type="video/mp4">
-                    </video>`
-                ).join('');
-            }
-
-            const tagsHTML = post.tags ? post.tags.map(tag => 
-                `<span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">#${tag}</span>`
-            ).join(' ') : '';
-
-            // Check if current user has liked the post
-            const isLiked = post.likesList && post.likesList.includes(currentUser.uid);
-            
-            return `
-                <div class="card fade-in" data-post-id="${postId}">
-                    <div class="p-6">
-                        <div class="flex items-center mb-4">
-                            <img src="${post.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face'}" alt="User" class="user-avatar mr-4">
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-gray-800">${post.authorName}</h4>
-                                <p class="text-sm text-gray-500">${timeAgo}</p>
-                            </div>
-                            <button class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="mb-4">
-                            ${post.content ? `<p class="text-gray-800 mb-3">${post.content}</p>` : ''}
-                            ${post.caption ? `<p class="text-gray-800 mb-3">${post.caption}</p>` : ''}
-                            ${post.description ? `<p class="text-gray-800 mb-3">${post.description}</p>` : ''}
-                            ${mediaHTML}
-                            <div class="flex flex-wrap gap-2">
-                                ${tagsHTML}
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-between items-center py-3 border-t border-gray-100">
-                            <button class="flex items-center ${isLiked ? 'text-red-500' : 'text-gray-600'} hover:text-red-500 transition-colors" onclick="likePost('${postId}', ${isLiked})">
-                                <i class="${isLiked ? 'fas' : 'far'} fa-heart mr-2"></i>
-                                <span>${post.likes || 0} Likes</span>
-                            </button>
-                            <button class="flex items-center text-gray-600 hover:text-indigo-500 transition-colors" onclick="showComments('${postId}')">
-                                <i class="far fa-comment mr-2"></i>
-                                <span>${post.comments || 0} Comments</span>
-                            </button>
-                            <button class="flex items-center text-gray-600 hover:text-green-500 transition-colors">
-                                <i class="fas fa-share mr-2"></i>
-                                <span>Share</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Load user data
-        function loadUserData() {
-            if (currentUser) {
-                document.getElementById('userName').textContent = currentUser.displayName || 'User';
-                document.getElementById('userAvatar').src = currentUser.photoURL || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face';
-            }
-        }
-
-        // Load profile data
-        async function loadProfileData() {
-            try {
-                const userDoc = await window.firebaseServices.getDoc(
-                    window.firebaseServices.doc(window.firebaseDB, 'users', currentUser.uid)
-                );
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    document.getElementById('profileName').textContent = userData.name || 'User';
-                    document.getElementById('profileEmail').textContent = currentUser.email;
-                    document.getElementById('profileBio').textContent = userData.bio || '';
-                    document.getElementById('profileAvatar').src = currentUser.photoURL || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop&crop=face';
-                    
-                    // Load user posts
-                    loadUserPosts();
-                    
-                    // Load user stats
-                    loadUserStats();
-                }
-            } catch (error) {
-                console.error('Error loading profile data:', error);
-            }
-        }
-
-        async function loadUserPosts() {
-            try {
-                const postsQuery = window.firebaseServices.query(
-                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
-                    window.firebaseServices.where('authorId', '==', currentUser.uid),
-                    window.firebaseServices.orderBy('createdAt', 'desc')
-                );
-
-                const querySnapshot = await window.firebaseServices.getDocs(postsQuery);
-                const userPostsContainer = document.getElementById('userPosts');
-                userPostsContainer.innerHTML = '';
-                
-                querySnapshot.forEach((doc) => {
-                    const post = doc.data();
-                    userPostsContainer.innerHTML += createUserPostHTML(post, doc.id);
-                });
-            } catch (error) {
-                console.error('Error loading user posts:', error);
-            }
-        }
-
-        function createUserPostHTML(post, postId) {
-            let mediaHTML = '';
-            
-            if (post.type === 'image' && post.images) {
-                mediaHTML = `<img src="${post.images[0]}" alt="Post" class="w-full h-40 object-cover rounded-lg">`;
-            } else if (post.type === 'video' && post.videos) {
-                mediaHTML = `
-                    <div class="relative w-full h-40 rounded-lg bg-black flex items-center justify-center">
-                        <video class="w-full h-full object-cover rounded-lg">
-                            <source src="${post.videos[0]}" type="video/mp4">
-                        </video>
-                        <i class="fas fa-play absolute text-white text-2xl"></i>
-                    </div>
-                `;
-            } else if (post.type === 'text') {
-                mediaHTML = `<div class="w-full h-40 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400"><i class="fas fa-font text-4xl"></i></div>`;
+                display.textContent = '---';
+                document.getElementById('displayAmount').textContent = '0 ကျပ်';
+                document.getElementById('potentialWin').textContent = '0 ကျပ်';
+                document.getElementById('buyTicketBtn').disabled = true;
             }
             
-            return `
-                <div class="cursor-pointer" onclick="showPostDetail('${postId}')">
-                    ${mediaHTML}
-                    <p class="text-sm text-gray-600 mt-2 truncate">${post.content || post.caption || post.description || 'Post'}</p>
-                </div>
-            `;
-        }
-
-        async function loadUserStats() {
-            try {
-                // Count posts
-                const postsQuery = window.firebaseServices.query(
-                    window.firebaseServices.collection(window.firebaseDB, 'posts'),
-                    window.firebaseServices.where('authorId', '==', currentUser.uid)
-                );
-                const postsSnapshot = await window.firebaseServices.getDocs(postsQuery);
-                document.getElementById('postCount').textContent = postsSnapshot.size;
-                
-                // TODO: Implement followers and following counts
-                // For now we'll use placeholder values
-                document.getElementById('followerCount').textContent = '42';
-                document.getElementById('followingCount').textContent = '24';
-            } catch (error) {
-                console.error('Error loading user stats:', error);
-            }
-        }
-
-        async function loadSettingsData() {
-            try {
-                const userDoc = await window.firebaseServices.getDoc(
-                    window.firebaseServices.doc(window.firebaseDB, 'users', currentUser.uid)
-                );
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    document.getElementById('settingsName').value = userData.name || '';
-                    document.getElementById('settingsEmail').value = currentUser.email;
-                    document.getElementById('settingsBio').value = userData.bio || '';
-                    document.getElementById('privacySetting').value = userData.privacy || 'public';
-                    document.getElementById('allowComments').checked = userData.allowComments !== false;
-                }
-            } catch (error) {
-                console.error('Error loading settings data:', error);
-            }
-        }
-
-        // Load stories
-        async function loadStories() {
-            try {
-                // In a real app, you would fetch stories from Firestore
-                // For this example, we'll use mock data
-                stories = [
-                    {
-                        id: '1',
-                        userId: 'user1',
-                        userName: 'Sarah Wilson',
-                        userAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b1e5?w=64&h=64&fit=crop&crop=face',
-                        imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=800&fit=crop',
-                        createdAt: new Date()
-                    },
-                    {
-                        id: '2',
-                        userId: 'user2',
-                        userName: 'John Doe',
-                        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
-                        imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&h=800&fit=crop',
-                        createdAt: new Date()
-                    },
-                    {
-                        id: '3',
-                        userId: currentUser.uid,
-                        userName: currentUser.displayName || 'You',
-                        userAvatar: currentUser.photoURL || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face',
-                        imageUrl: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800&h=800&fit=crop',
-                        createdAt: new Date()
-                    }
-                ];
-                
-                renderStories();
-            } catch (error) {
-                console.error('Error loading stories:', error);
-            }
-        }
-
-        function renderStories() {
-            const storiesContainer = document.getElementById('storiesContainer');
-            storiesContainer.innerHTML = '';
-            
-            // Add "Add Story" button for current user
-            storiesContainer.innerHTML += `
-                <div class="flex-shrink-0 text-center cursor-pointer" onclick="addStory()">
-                    <div class="story-ring w-16 h-16 mx-auto mb-2">
-                        <div class="story-inner w-full h-full flex items-center justify-center">
-                            <i class="fas fa-plus text-gray-400"></i>
-                        </div>
-                    </div>
-                    <p class="text-xs text-white">Add Story</p>
-                </div>
-            `;
-            
-            // Add other stories
-            stories.forEach((story, index) => {
-                storiesContainer.innerHTML += `
-                    <div class="flex-shrink-0 text-center cursor-pointer" onclick="viewStory(${index})">
-                        <div class="story-ring w-16 h-16 mx-auto mb-2">
-                            <div class="story-inner w-full h-full">
-                                <img src="${story.userAvatar}" alt="Story" class="w-full h-full object-cover rounded-full">
-                            </div>
-                        </div>
-                        <p class="text-xs text-white">${story.userId === currentUser.uid ? 'You' : story.userName}</p>
-                    </div>
-                `;
-            });
-        }
-
-        function setupStoryViewer() {
-            const closeStoryBtn = document.getElementById('closeStory');
-            const storyViewer = document.getElementById('storyViewer');
-            
-            closeStoryBtn.addEventListener('click', () => {
-                storyViewer.classList.add('hidden');
-                clearInterval(storyInterval);
-            });
-        }
-
-        function viewStory(index) {
-            currentStoryIndex = index;
-            const story = stories[index];
-            const storyViewer = document.getElementById('storyViewer');
-            const storyImage = document.getElementById('storyImage');
-            const progressFill = document.querySelector('.story-progress-fill');
-            
-            storyImage.src = story.imageUrl;
-            storyViewer.classList.remove('hidden');
-            
-            // Reset and start progress bar
-            progressFill.style.width = '0%';
-            progressFill.style.transition = 'width 5s linear';
-            progressFill.style.width = '100%';
-            
-            // Set timeout to go to next story or close
-            clearInterval(storyInterval);
-            storyInterval = setTimeout(() => {
-                if (currentStoryIndex < stories.length - 1) {
-                    viewStory(currentStoryIndex + 1);
-                } else {
-                    storyViewer.classList.add('hidden');
-                }
-            }, 5000);
-        }
-
-        function addStory() {
-            // In a real app, this would open a file picker and upload the story
-            showNotification('Story feature coming soon!', 'success');
-        }
-
-        // Setup comment modal
-        function setupCommentModal() {
-            const commentModal = document.getElementById('commentModal');
-            const closeCommentModal = document.getElementById('closeCommentModal');
-            const postCommentBtn = document.getElementById('postCommentBtn');
-            
-            closeCommentModal.addEventListener('click', () => {
-                commentModal.classList.remove('show');
-            });
-            
-            postCommentBtn.addEventListener('click', async () => {
-                const commentInput = document.getElementById('commentInput');
-                const commentText = commentInput.value.trim();
-                
-                if (commentText && currentPostId) {
-                    try {
-                        // Add comment to Firestore
-                        await window.firebaseServices.addDoc(
-                            window.firebaseServices.collection(window.firebaseDB, 'posts', currentPostId, 'comments'),
-                            {
-                                userId: currentUser.uid,
-                                userName: currentUser.displayName || 'User',
-                                userAvatar: currentUser.photoURL || '',
-                                text: commentText,
-                                createdAt: window.firebaseServices.serverTimestamp()
-                            }
-                        );
-                        
-                        // Update comment count on post
-                        await window.firebaseServices.updateDoc(
-                            window.firebaseServices.doc(window.firebaseDB, 'posts', currentPostId),
-                            {
-                                comments: window.firebaseServices.increment(1)
-                            }
-                        );
-                        
-                        commentInput.value = '';
-                        showNotification('Comment posted!', 'success');
-                    } catch (error) {
-                        showNotification('Failed to post comment', 'error');
-                        console.error(error);
-                    }
-                }
-            });
-        }
-
-        async function showComments(postId) {
-            currentPostId = postId;
-            const commentModal = document.getElementById('commentModal');
-            const commentList = document.getElementById('commentList');
-            
-            // Load comments
-            try {
-                const commentsQuery = window.firebaseServices.query(
-                    window.firebaseServices.collection(window.firebaseDB, 'posts', postId, 'comments'),
-                    window.firebaseServices.orderBy('createdAt', 'desc')
-                );
-                
-                window.firebaseServices.onSnapshot(commentsQuery, (snapshot) => {
-                    commentList.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        commentList.innerHTML = '<p class="text-gray-500 text-center py-4">No comments yet</p>';
-                        return;
-                    }
-                    
-                    snapshot.docs.forEach(doc => {
-                        const comment = doc.data();
-                        commentList.innerHTML += createCommentHTML(comment);
-                    });
-                });
-                
-                commentModal.classList.add('show');
-            } catch (error) {
-                showNotification('Failed to load comments', 'error');
-                console.error(error);
-            }
-        }
-
-        function createCommentHTML(comment) {
-            return `
-                <div class="comment-item">
-                    <div class="flex items-start">
-                        <img src="${comment.userAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face'}" 
-                             alt="${comment.userName}" 
-                             class="user-avatar w-8 h-8 mr-3">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-sm">${comment.userName}</h4>
-                            <p class="text-gray-800 text-sm">${comment.text}</p>
-                            <p class="text-gray-500 text-xs mt-1">${comment.createdAt?.toDate ? comment.createdAt.toDate().toLocaleTimeString() : 'Just now'}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Like post function
-        async function likePost(postId, isLiked) {
-            try {
-                const postRef = window.firebaseServices.doc(window.firebaseDB, 'posts', postId);
-                
-                if (isLiked) {
-                    // Unlike the post
-                    await window.firebaseServices.updateDoc(postRef, {
-                        likes: window.firebaseServices.increment(-1),
-                        likesList: window.firebaseServices.arrayRemove(currentUser.uid)
-                    });
-                } else {
-                    // Like the post
-                    await window.firebaseServices.updateDoc(postRef, {
-                        likes: window.firebaseServices.increment(1),
-                        likesList: window.firebaseServices.arrayUnion(currentUser.uid)
-                    });
-                }
-            } catch (error) {
-                console.error('Error liking post:', error);
-            }
-        }
-
-        // Setup search functionality
-        function setupSearch() {
-            const searchBox = document.getElementById('searchBox');
-            
-            searchBox.addEventListener('keyup', async (e) => {
-                if (e.key === 'Enter') {
-                    const searchTerm = searchBox.value.trim();
-                    
-                    if (searchTerm) {
-                        try {
-                            // Search posts by tags or content
-                            const postsQuery = window.firebaseServices.query(
-                                window.firebaseServices.collection(window.firebaseDB, 'posts'),
-                                window.firebaseServices.where('tags', 'array-contains', searchTerm)
-                            );
-                            
-                            const querySnapshot = await window.firebaseServices.getDocs(postsQuery);
-                            const postsContainer = document.getElementById('postsContainer');
-                            postsContainer.innerHTML = '';
-                            
-                            if (querySnapshot.empty) {
-                                postsContainer.innerHTML = '<div class="card p-6 text-center">No posts found matching your search</div>';
-                                return;
-                            }
-                            
-                            querySnapshot.forEach((doc) => {
-                                const post = doc.data();
-                                postsContainer.innerHTML += createPostHTML(post, doc.id);
-                            });
-                            
-                            // Show home page
-                            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-                            document.getElementById('home-page').classList.add('active');
-                            
-                            // Update nav
-                            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-                            document.querySelector('.nav-link[data-page="home"]').classList.add('active');
-                            
-                        } catch (error) {
-                            console.error('Error searching:', error);
-                            showNotification('Failed to search', 'error');
-                        }
-                    }
-                }
-            });
-        }
-
-        // Utility functions
-        function resetUploadForms() {
-            document.getElementById('textPostForm').reset();
-            document.getElementById('imagePostForm').reset();
-            document.getElementById('videoPostForm').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-            document.getElementById('videoPreview').classList.add('hidden');
-            selectedFiles = [];
-        }
-
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            document.getElementById('imageInput').value = '';
-            // Refresh preview
-            const event = new Event('change');
-            document.getElementById('imageInput').dispatchEvent(event);
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            
-            document.getElementById('notificationContainer').appendChild(notification);
-            
-            setTimeout(() => notification.classList.add('show'), 100);
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
+            // Set next draw date (last day of current month)
+            const today = new Date();
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            document.getElementById('drawDate').textContent = formatDate(nextMonth);
         }
 
         function setupEventListeners() {
-            // Upload tabs
-            const uploadTabs = document.querySelectorAll('.upload-tab');
-            uploadTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    uploadTabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                });
+            // Auth buttons
+            document.getElementById('loginBtn').onclick = () => showModal('loginModal');
+            document.getElementById('registerBtn').onclick = () => showModal('registerModal');
+            document.getElementById('adminLoginBtn').onclick = () => showModal('adminLoginModal');
+            document.getElementById('logoutBtn').onclick = logout;
+
+            // Modal close buttons
+            document.getElementById('closeLoginModal').onclick = () => hideModal('loginModal');
+            document.getElementById('closeRegisterModal').onclick = () => hideModal('registerModal');
+            document.getElementById('closeAdminLoginModal').onclick = () => hideModal('adminLoginModal');
+
+            // Forms
+            document.getElementById('loginForm').onsubmit = handleLogin;
+            document.getElementById('registerForm').onsubmit = handleRegister;
+            document.getElementById('adminLoginForm').onsubmit = handleAdminLogin;
+
+            // Tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.onclick = () => switchTab(btn.dataset.tab);
             });
 
-            // Delete account button
-            document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
-                if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+            // Lottery functionality
+            document.getElementById('betAmount').oninput = updateSelectedDisplay;
+            document.getElementById('buyTicketBtn').onclick = buyTicket;
+
+            // Payment functionality
+            document.getElementById('depositBtn').onclick = handleDeposit;
+            document.getElementById('withdrawBtn').onclick = handleWithdraw;
+
+            // Results functionality
+            document.getElementById('checkResultBtn').onclick = checkTicketResult;
+
+            // AI functionality
+            document.getElementById('sendChatBtn').onclick = sendChatMessage;
+            document.getElementById('chatInput').onkeypress = (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            };
+            document.getElementById('generateAINumbers').onclick = generateAINumbers;
+
+            // Language toggle
+            document.getElementById('languageBtn').onclick = toggleLanguage;
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.getElementById(modalId).classList.remove('flex');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                showLoading(true);
+                await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
+                hideModal('loginModal');
+                showNotification('အောင်မြင်စွာ ဝင်ရောက်ပါပြီ!', 'success');
+            } catch (error) {
+                showNotification('ဝင်ရောက်ရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const phone = document.getElementById('registerPhone').value;
+            const name = document.getElementById('registerName').value;
+
+            try {
+                showLoading(true);
+                const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
+                
+                // Save user data to Firestore
+                await window.firestore.setDoc(window.firestore.doc(window.db, 'users', userCredential.user.uid), {
+                    email: email,
+                    name: name,
+                    phone: phone,
+                    role: 'user',
+                    balance: 0,
+                    createdAt: window.firestore.serverTimestamp(),
+                    isActive: true
+                });
+
+                hideModal('registerModal');
+                showNotification('အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါပြီ!', 'success');
+            } catch (error) {
+                showNotification('အကောင့်ဖွင့်ရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const secret = document.getElementById('adminSecret').value;
+
+            if (secret !== 'THAI_LOTTERY_ADMIN_2024') {
+                showNotification('Admin Secret Key မှားယွင်းပါသည်', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // For demo purposes, create admin user if doesn't exist
+                if (email === 'admin@thailottery.com') {
                     try {
-                        // In a real app, you would also delete all user data
-                        await window.firebaseServices.deleteUser(currentUser);
-                        showNotification('Account deleted successfully', 'success');
+                        await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
                     } catch (error) {
-                        showNotification('Failed to delete account', 'error');
-                        console.error(error);
+                        // Create admin user if doesn't exist
+                        const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(window.auth, email, password);
+                        await window.firestore.setDoc(window.firestore.doc(window.db, 'users', userCredential.user.uid), {
+                            email: email,
+                            name: 'Super Admin',
+                            role: 'admin',
+                            permissions: {
+                                manageUsers: true,
+                                manageLottery: true,
+                                managePayments: true,
+                                viewReports: true,
+                                manageSystem: true
+                            },
+                            createdAt: window.firestore.serverTimestamp(),
+                            isActive: true
+                        });
+                    }
+                } else {
+                    await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
+                }
+
+                hideModal('adminLoginModal');
+                showNotification('Admin အဖြစ် ဝင်ရောက်ပါပြီ!', 'success');
+            } catch (error) {
+                showNotification('Admin login မှားယွင်းပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function logout() {
+            try {
+                await window.firebaseAuth.signOut(window.auth);
+                showNotification('အောင်မြင်စွာ ထွက်ပါပြီ!', 'success');
+            } catch (error) {
+                showNotification('ထွက်ရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('welcomeSection').style.display = 'none';
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('flex');
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+
+        function showWelcome() {
+            document.getElementById('welcomeSection').style.display = 'block';
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('userInfo').classList.remove('flex');
+            document.getElementById('authButtons').style.display = 'flex';
+        }
+
+        async function loadUserData() {
+            if (!currentUser) return;
+
+            try {
+                const userDoc = await window.firestore.getDoc(window.firestore.doc(window.db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    // Show admin tab if user is admin
+                    if (userData.role === 'admin') {
+                        document.getElementById('adminTab').classList.remove('hidden');
+                    }
+                    
+                    // Update wallet balance
+                    document.getElementById('walletBalance').textContent = `${(userData.balance || 0).toLocaleString()} ကျပ်`;
+                    
+                    // Load user transactions and tickets
+                    loadTransactionHistory();
+                    loadTicketHistory();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.remove('border-transparent', 'text-gray-500');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('border-blue-500', 'text-blue-600');
+
+            // Show/hide tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tabName).classList.remove('hidden');
+        }
+
+        async function buyTicket() {
+            if (!currentUser) {
+                showNotification('ကျေးဇူးပြု၍ အရင် ဝင်ရောက်ပါ', 'warning');
+                return;
+            }
+
+            const { first, second, third } = selectedNumbers;
+            const amount = parseInt(document.getElementById('betAmount').value);
+
+            if (first === null || second === null || third === null) {
+                showNotification('ကျေးဇူးပြု၍ 3D နံပါတ် အပြည့်အစုံ ရွေးချယ်ပါ', 'warning');
+                return;
+            }
+
+            if (amount < 100) {
+                showNotification('အနည်းဆုံး ၁၀၀ ကျပ် လိုအပ်ပါသည်', 'warning');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // Check user balance
+                const userDoc = await window.firestore.getDoc(window.firestore.doc(window.db, 'users', currentUser.uid));
+                const userData = userDoc.data();
+                
+                if ((userData.balance || 0) < amount) {
+                    showNotification('ပိုက်ဆံအိတ်တွင် ငွေမလုံလောက်ပါ', 'error');
+                    return;
+                }
+
+                // Create ticket
+                const ticketNumber = `${first}${second}${third}`;
+                await window.firestore.addDoc(window.firestore.collection(window.db, 'tickets'), {
+                    userId: currentUser.uid,
+                    ticketNumber: ticketNumber,
+                    amount: amount,
+                    drawDate: getNextDrawDate(),
+                    status: 'active',
+                    createdAt: window.firestore.serverTimestamp()
+                });
+
+                // Update user balance
+                await window.firestore.updateDoc(window.firestore.doc(window.db, 'users', currentUser.uid), {
+                    balance: (userData.balance || 0) - amount
+                });
+
+                // Reset form
+                selectedNumbers = { first: null, second: null, third: null };
+                document.getElementById('betAmount').value = '';
+                document.querySelectorAll('.lottery-ball').forEach(ball => ball.classList.remove('selected'));
+                updateSelectedDisplay();
+
+                showNotification('ထီလက်မှတ် ဝယ်ယူခြင်း အောင်မြင်ပါပြီ!', 'success');
+                loadUserData();
+                loadTicketHistory();
+            } catch (error) {
+                showNotification('ထီလက်မှတ် ဝယ်ယူရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleDeposit() {
+            const amount = parseInt(document.getElementById('depositAmount').value);
+            const method = document.getElementById('paymentMethod').value;
+
+            if (!amount || amount < 1000) {
+                showNotification('အနည်းဆုံး ၁၀၀၀ ကျပ် လိုအပ်ပါသည်', 'warning');
+                return;
+            }
+
+            if (!method) {
+                showNotification('ငွေပေးချေမှု နည်းလမ်း ရွေးချယ်ပါ', 'warning');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // Create deposit request
+                await window.firestore.addDoc(window.firestore.collection(window.db, 'transactions'), {
+                    userId: currentUser.uid,
+                    type: 'deposit',
+                    amount: amount,
+                    method: method,
+                    status: 'pending',
+                    createdAt: window.firestore.serverTimestamp()
+                });
+
+                document.getElementById('depositAmount').value = '';
+                document.getElementById('paymentMethod').value = '';
+
+                showNotification('ငွေသွင်းတောင်းဆိုမှု ပေးပို့ပါပြီ! Admin မှ ခွင့်ပြုချက်ရပါမည်', 'success');
+                loadTransactionHistory();
+            } catch (error) {
+                showNotification('ငွေသွင်းရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleWithdraw() {
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            const account = document.getElementById('withdrawAccount').value;
+
+            if (!amount || amount < 1000) {
+                showNotification('အနည်းဆုံး ၁၀၀၀ ကျပ် လိုအပ်ပါသည်', 'warning');
+                return;
+            }
+
+            if (!account) {
+                showNotification('ငွေလက်ခံရန် အကောင့် ထည့်ပါ', 'warning');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // Check balance
+                const userDoc = await window.firestore.getDoc(window.firestore.doc(window.db, 'users', currentUser.uid));
+                const userData = userDoc.data();
+                
+                if ((userData.balance || 0) < amount) {
+                    showNotification('ပိုက်ဆံအိတ်တွင် ငွေမလုံလောက်ပါ', 'error');
+                    return;
+                }
+
+                // Create withdraw request
+                await window.firestore.addDoc(window.firestore.collection(window.db, 'transactions'), {
+                    userId: currentUser.uid,
+                    type: 'withdraw',
+                    amount: amount,
+                    account: account,
+                    status: 'pending',
+                    createdAt: window.firestore.serverTimestamp()
+                });
+
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('withdrawAccount').value = '';
+
+                showNotification('ငွေထုတ်တောင်းဆိုမှု ပေးပို့ပါပြီ! Admin မှ ခွင့်ပြုချက်ရပါမည်', 'success');
+                loadTransactionHistory();
+            } catch (error) {
+                showNotification('ငွေထုတ်ရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function checkTicketResult() {
+            const ticketNumber = document.getElementById('checkTicketNumber').value;
+            
+            if (!ticketNumber || ticketNumber.length !== 3) {
+                showNotification('ကျေးဇူးပြု၍ 3 လုံး နံပါတ် ထည့်ပါ', 'warning');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // Simulate result checking (in real app, this would check against actual results)
+                const randomWin = Math.random() < 0.1; // 10% chance to win
+                const resultDiv = document.getElementById('checkResult');
+                const statusDiv = document.getElementById('resultStatus');
+                const winAmountDiv = document.getElementById('winAmount');
+                
+                if (randomWin) {
+                    statusDiv.textContent = 'ဂုဏ်ယူပါသည်! သင် ပေါက်ပါပြီ!';
+                    statusDiv.className = 'text-lg font-bold mb-2 text-green-600';
+                    winAmountDiv.textContent = '50,000 ကျပ်';
+                } else {
+                    statusDiv.textContent = 'စိတ်မရှုပ်ပါနှင့်! နောက်တစ်ကြိမ် ကံစမ်းကြည့်ပါ';
+                    statusDiv.className = 'text-lg font-bold mb-2 text-red-600';
+                    winAmountDiv.textContent = '0 ကျပ်';
+                }
+                
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                showNotification('ရလဒ်စစ်ရာတွင် အမှားအယွင်း ဖြစ်ပါသည်', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            // Add user message
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble chat-user ml-auto';
+            userBubble.textContent = message;
+            messagesContainer.appendChild(userBubble);
+            
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const aiBubble = document.createElement('div');
+                aiBubble.className = 'chat-bubble chat-ai';
+                aiBubble.textContent = getAIResponse(message);
+                messagesContainer.appendChild(aiBubble);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function getAIResponse(message) {
+            const responses = [
+                'ထီဝယ်ယူရာတွင် ပိုက်ဆံ စီမံခန့်ခွဲမှု အရေးကြီးပါသည်။ အရှုံးခံနိုင်သမျှသာ ဝယ်ယူပါ။',
+                'Thailand 3D Lottery သည် လစဉ် ထွက်ပွဲရှိပြီး ဆုငွေ အများကြီး ရရှိနိုင်ပါသည်။',
+                'AI ခန့်မှန်းချက်များသည် ရာဇဝင် ဒေတာများကို အခြေခံ၍ တွက်ချက်ထားပါသည်။',
+                'ပိုမို အောင်မြင်လိုပါက နံပါတ်များ၏ ပုံစံများကို လေ့လာပါ။',
+                'ငွေကြေး လုပ်ငန်းများတွင် အခက်အခဲရှိပါက Admin နှင့် ဆက်သွယ်ပါ။'
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        function generateAINumbers() {
+            // Simulate AI number generation
+            const numbers = [];
+            for (let i = 0; i < 3; i++) {
+                numbers.push(Math.floor(Math.random() * 10));
+            }
+            
+            document.getElementById('aiNumber1').textContent = numbers[0];
+            document.getElementById('aiNumber2').textContent = numbers[1];
+            document.getElementById('aiNumber3').textContent = numbers[2];
+            
+            showNotification('AI နံပါတ်များ ထုတ်ပြီးပါပြီ!', 'success');
+        }
+
+        async function loadTransactionHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const q = window.firestore.query(
+                    window.firestore.collection(window.db, 'transactions'),
+                    window.firestore.where('userId', '==', currentUser.uid),
+                    window.firestore.orderBy('createdAt', 'desc'),
+                    window.firestore.limit(10)
+                );
+                
+                const snapshot = await window.firestore.getDocs(q);
+                const tbody = document.getElementById('transactionHistory');
+                tbody.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(new Date())}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.type === 'deposit' ? 'ငွေသွင်း' : 'ငွေထုတ်'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.amount.toLocaleString()} ကျပ်</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${data.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                  data.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                ${data.status === 'approved' ? 'ခွင့်ပြုပြီး' : 
+                                  data.status === 'pending' ? 'စောင့်ဆိုင်းနေ' : 'ငြင်းပယ်'}
+                            </span>
+                        </td>
+                    `;
+                });
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">လုပ်ငန်းမှတ်တမ်း မရှိပါ</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        async function loadTicketHistory() {
+            if (!currentUser) return;
+            
+            try {
+                const q = window.firestore.query(
+                    window.firestore.collection(window.db, 'tickets'),
+                    window.firestore.where('userId', '==', currentUser.uid),
+                    window.firestore.orderBy('createdAt', 'desc'),
+                    window.firestore.limit(10)
+                );
+                
+                const snapshot = await window.firestore.getDocs(q);
+                const tbody = document.getElementById('ticketHistory');
+                tbody.innerHTML = '';
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(new Date())}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${data.ticketNumber}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.amount.toLocaleString()} ကျပ်</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                ${data.status === 'active' ? 'စောင့်ဆိုင်းနေ' : 'ပြီးဆုံး'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+                    `;
+                });
+                
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">ထီလက်မှတ်မှတ်တမ်း မရှိပါ</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+            }
+        }
+
+        function loadDemoData() {
+            // Load demo statistics
+            document.getElementById('totalUsers').textContent = '1,234';
+            document.getElementById('monthlyTickets').textContent = '5,678';
+            document.getElementById('totalRevenue').textContent = '12,345,678 ကျပ်';
+            document.getElementById('todayActivity').textContent = '89';
+            
+            // Load previous results
+            const resultsContainer = document.getElementById('previousResults');
+            const sampleResults = [
+                { date: '2024-01-01', number: '123', prize: '1,000,000 ကျပ်' },
+                { date: '2023-12-01', number: '456', prize: '800,000 ကျပ်' },
+                { date: '2023-11-01', number: '789', prize: '1,200,000 ကျပ်' }
+            ];
+            
+            resultsContainer.innerHTML = sampleResults.map(result => `
+                <div class="bg-white border rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-lg">${result.number}</div>
+                            <div class="text-sm text-gray-600">${result.date}</div>
+                        </div>
+                        <div class="text-green-600 font-bold">${result.prize}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Initialize chart
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'ထီပေါက်မှု ခန့်မှန်းချက်',
+                        data: [12, 19, 3, 5, 2, 3],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
             });
-
-            // Add upload tab styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .upload-tab {
-                    padding: 0.75rem 1.5rem;
-                    border-bottom: 2px solid transparent;
-                    color: #6b7280;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-                .upload-tab.active {
-                    color: #4f46e5;
-                    border-bottom-color: #4f46e5;
-                    font-weight: 600;
-                }
-                .upload-tab:hover {
-                    color: #4f46e5;
-                }
-            `;
-            document.head.appendChild(style);
         }
 
-        // Make functions globally available
-        window.removeFile = removeFile;
-        window.likePost = likePost;
-        window.showComments = showComments;
-        window.viewStory = viewStory;
-        window.addStory = addStory;
+        // Admin functions
+        function showUserManagement() {
+            document.getElementById('adminContent').innerHTML = `
+                <h3 class="text-xl font-bold mb-4">အသုံးပြုသူ စီမံခန့်ခွဲမှု</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">အီးမေးလ်</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">နာမည်</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">လက်ကျန်</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">အခြေအနေ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">လုပ်ဆောင်ချက်များ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">user1@example.com</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">User One</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">50,000 ကျပ်</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button class="text-blue-600 hover:text-blue-900 mr-2">Edit</button>
+                                    <button class="text-red-600 hover:text-red-900">Block</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function showPendingDeposits() {
+            document.getElementById('adminContent').innerHTML = `
+                <h3 class="text-xl font-bold mb-4">စောင့်ဆိုင်းနေသော ငွေသွင်းမှုများ</h3>
+                <div class="space-y-4">
+                    <div class="bg-white border rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold">user1@example.com</div>
+                                <div class="text-sm text-gray-600">10,000 ကျပ် - KBZ Pay</div>
+                            </div>
+                            <div class="space-x-2">
+                                <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Approve</button>
+                                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showPendingWithdrawals() {
+            document.getElementById('adminContent').innerHTML = `
+                <h3 class="text-xl font-bold mb-4">စောင့်ဆိုင်းနေသော ငွေထုတ်မှုများ</h3>
+                <div class="space-y-4">
+                    <div class="bg-white border rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold">user2@example.com</div>
+                                <div class="text-sm text-gray-600">5,000 ကျပ် - Bank Account: 123456789</div>
+                            </div>
+                            <div class="space-x-2">
+                                <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Approve</button>
+                                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createNewDraw() {
+            document.getElementById('adminContent').innerHTML = `
+                <h3 class="text-xl font-bold mb-4">ထွက်ပွဲအသစ် ဖန်တီးရန်</h3>
+                <div class="max-w-md">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ထွက်ပွဲ ရက်စွဲ</label>
+                        <input type="date" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ထွက်ပွဲ အချိန်</label>
+                        <input type="time" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" value="18:00">
+                    </div>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        ထွက်ပွဲ ဖန်တီးရန်
+                    </button>
+                </div>
+            `;
+        }
+
+        function announceResults() {
+            document.getElementById('adminContent').innerHTML = `
+                <h3 class="text-xl font-bold mb-4">ရလဒ် ကြေညာရန်</h3>
+                <div class="max-w-md">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ထွက်ပွဲ ရက်စွဲ</label>
+                        <select class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <option>2024-01-30</option>
+                            <option>2024-02-29</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ထွက်သော နံပါတ်</label>
+                        <input type="text" maxlength="3" placeholder="123" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        ရလဒ် ကြေညာရန်
+                    </button>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function formatDate(date) {
+            return date.toLocaleDateString('my-MM', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+
+        function getNextDrawDate() {
+            const today = new Date();
+            return new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        function toggleLanguage() {
+            // Simple language toggle (for demo)
+            const currentLangElement = document.getElementById('currentLang');
+            currentLang = currentLang === 'my' ? 'en' : 'my';
+            currentLangElement.textContent = currentLang === 'my' ? 'မြန်မာ' : 'English';
+        }
     </script>
 </body>
 </html>
