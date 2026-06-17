@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NLA — Social App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ind:#6C63FF; --ind-d:#4E45D6; --ind-soft:#ECEBFF;
+    --rose:#FF4D6D; --green:#5BA82E; --green-d:#3C7A1E;
+    --bg:#F4F5FA; --surf:#FFFFFF;
+    --t1:#15151E; --t2:#5A5A68; --t3:#9A9AA6; --line:#EEEFF4;
+    --disp:'Plus Jakarta Sans',sans-serif; --body:'Inter',sans-serif;
+    --sh:0 2px 10px rgba(20,20,40,.06); --sh2:0 8px 28px rgba(20,20,40,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:var(--body);background:#DBDEE8;color:var(--t1);
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:0}
+  /* phone shell */
+  .app{position:relative;width:100%;max-width:430px;height:100vh;max-height:932px;
+    background:var(--bg);overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:var(--sh2)}
+  @media(min-width:480px){.app{border-radius:30px;height:880px}}
+  .screens{flex:1;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;transform:translateX(12px);
+    transition:opacity .22s ease,transform .22s ease,visibility .22s}
+  .screen.active{opacity:1;visibility:visible;transform:none}
+  .body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  .body::-webkit-scrollbar{display:none}
+  @media(prefers-reduced-motion:reduce){.screen{transition:none}}
+
+  /* top bar */
+  .top{height:56px;background:var(--surf);display:flex;align-items:center;gap:10px;
+    padding:0 16px;box-shadow:0 1px 0 var(--line);flex-shrink:0;z-index:5}
+  .top .ttl{font-family:var(--disp);font-weight:800;font-size:18px}
+  .brand{font-family:var(--disp);font-weight:800;font-size:22px;
+    background:linear-gradient(120deg,var(--ind),var(--rose));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .grow{flex:1}
+  .iconbtn{width:42px;height:42px;border:none;background:none;font-size:19px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;position:relative}
+  .iconbtn:active{background:var(--ind-soft)}
+  .dot{position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%;
+    background:var(--rose);border:1.5px solid #fff}
+  .back{font-size:24px;color:var(--t1);background:none;border:none;cursor:pointer;padding:4px 10px 4px 0}
+
+  /* bottom nav */
+  .nav{height:62px;background:var(--surf);display:flex;align-items:center;
+    box-shadow:0 -1px 0 var(--line);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+  .nav button{flex:1;height:100%;border:none;background:none;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-family:var(--body);font-size:10.5px;color:var(--t3);font-weight:600}
+  .nav button .i{font-size:20px;line-height:1}
+  .nav button.on{color:var(--ind)}
+  .nav .fab{flex:0 0 auto;width:54px;height:54px;margin:0 6px;border-radius:18px;
+    background:linear-gradient(135deg,var(--ind),var(--ind-d));color:#fff;font-size:26px;
+    box-shadow:0 6px 16px rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center}
+
+  /* generic */
+  .card{background:var(--surf);border-radius:18px;box-shadow:var(--sh);overflow:hidden}
+  .pad{padding:14px}
+  .avatar{border-radius:50%;background:var(--ind-soft);display:flex;align-items:center;justify-content:center}
+  .ring{padding:2px;border-radius:50%;background:linear-gradient(45deg,var(--ind),var(--rose))}
+  .ring>.avatar{border:2px solid #fff}
+  .pill{border:none;border-radius:22px;padding:8px 18px;font-family:var(--body);font-weight:700;
+    font-size:13px;cursor:pointer}
+  .pill.solid{background:var(--ind);color:#fff}.pill.soft{background:var(--ind-soft);color:var(--ind)}
+  .sect{font-family:var(--disp);font-weight:800;font-size:17px;margin:18px 16px 12px}
+  .row{display:flex;align-items:center}
+  .muted{color:var(--t3);font-size:12px}
+
+  /* FEED */
+  .stories{display:flex;gap:14px;padding:14px 16px;overflow-x:auto}
+  .stories::-webkit-scrollbar{display:none}
+  .story{flex:0 0 auto;width:64px;text-align:center;font-size:11px;color:var(--t2);cursor:pointer}
+  .story .ring,.story .new{width:64px;height:64px;margin-bottom:5px}
+  .story .new{border-radius:50%;background:var(--surf);border:1.5px dashed var(--ind);
+    display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--ind)}
+  .story .av-in{width:56px;height:56px;font-size:26px}
+  .post{margin:0 14px 16px}
+  .post .head{display:flex;align-items:center;gap:10px;padding:12px}
+  .post .head .av{width:44px;height:44px;font-size:21px}
+  .nm{font-family:var(--disp);font-weight:700;font-size:14.5px}
+  .post .media{height:250px;margin:0 12px;border-radius:14px;background:#E9EBF2;
+    display:flex;align-items:center;justify-content:center;font-size:58px;cursor:pointer}
+  .post .acts{display:flex;gap:20px;padding:13px 16px 4px;font-weight:700;color:var(--t2);font-size:13.5px}
+  .post .acts .b{cursor:pointer;display:flex;align-items:center;gap:6px}
+  .post .acts .b.liked{color:var(--rose)}
+  .post .cap{padding:2px 16px 14px;color:#333;font-size:13.5px;line-height:1.45}
+
+  /* POST DETAIL */
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 12px}
+  .grid4 .cell{height:122px;background:#E9EBF2;display:flex;align-items:center;justify-content:center;
+    font-size:40px;position:relative;cursor:pointer}
+  .grid4 .cell:nth-child(1){border-radius:14px 0 0 0}.grid4 .cell:nth-child(2){border-radius:0 14px 0 0}
+  .grid4 .cell:nth-child(3){border-radius:0 0 0 14px}.grid4 .cell:nth-child(4){border-radius:0 0 14px 0}
+  .grid4 .more{position:absolute;inset:0;background:rgba(0,0,0,.55);border-radius:inherit;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:24px}
+  .video{margin:10px 12px 0;height:200px;border-radius:14px;background:#E9EBF2;position:relative;
+    display:flex;align-items:center;justify-content:center;font-size:54px;cursor:pointer}
+  .video .play{position:absolute;width:58px;height:58px;border-radius:50%;background:rgba(0,0,0,.65);
+    border:2px solid #fff;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center}
+  .video .dur{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.8);color:#fff;
+    font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .cmt{display:flex;gap:10px;padding:12px 16px}
+  .cmt .av{width:36px;height:36px;font-size:17px;flex-shrink:0}
+  .cmt .bub{background:#F1F2F7;border-radius:4px 16px 16px 16px;padding:9px 13px;font-size:13px}
+  .cmt .bub b{font-family:var(--disp);display:block;font-size:12.5px;margin-bottom:1px}
+
+  /* SHOP */
+  .shop-bg{background:var(--bg)}
+  .greet{font-family:var(--disp);font-weight:800;font-size:23px;margin:16px 16px 2px}
+  .banner{margin:14px;height:130px;border-radius:18px;
+    background:linear-gradient(90deg,#5BA82E,#3C7A1E);display:flex;align-items:center;padding:0 14px 0 20px;color:#fff}
+  .banner h3{font-family:var(--disp);font-size:20px;font-weight:800}
+  .search{margin:0 16px;height:50px;background:var(--surf);border-radius:14px;display:flex;
+    align-items:center;gap:10px;padding:0 16px;box-shadow:var(--sh);color:var(--t3);font-size:14px}
+  .cats{display:flex;gap:10px;padding:0 16px}
+  .cat{flex:1;text-align:center}
+  .cat .ic{height:64px;background:var(--surf);border-radius:16px;display:flex;align-items:center;
+    justify-content:center;font-size:26px;box-shadow:var(--sh);cursor:pointer}
+  .cat .l{margin-top:6px;font-size:12px;font-weight:700;color:#33333D}
+  .prods{display:flex;gap:12px;padding:0 16px 4px;overflow-x:auto}.prods::-webkit-scrollbar{display:none}
+  .prod{flex:0 0 auto;width:144px;background:var(--surf);border-radius:16px;padding:10px;box-shadow:var(--sh)}
+  .prod .img{height:84px;background:#F2F4F7;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:40px}
+  .prod .pn{font-family:var(--disp);font-weight:700;font-size:13.5px;margin-top:9px}
+  .prod .add{margin-top:9px;height:34px;background:var(--green);color:#fff;border:none;border-radius:10px;
+    font-family:var(--body);font-weight:700;font-size:13px;width:100%;cursor:pointer}
+
+  /* CHATS */
+  .chatitem{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer}
+  .chatitem:active{background:#F1F2F7}
+  .chatitem .av{width:52px;height:52px;font-size:24px;position:relative}
+  .online{position:absolute;bottom:1px;right:1px;width:13px;height:13px;border-radius:50%;
+    background:#2ED47A;border:2px solid #fff}
+  .chatitem .nm{font-size:14.5px}
+  .chatitem .last{color:var(--t3);font-size:12.5px;margin-top:2px;max-width:200px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .unread{margin-left:auto;text-align:right}
+  .unread .t{font-size:11px;color:var(--t3)}
+  .unread .c{margin-top:4px;display:inline-block;min-width:20px;height:20px;border-radius:10px;
+    background:var(--ind);color:#fff;font-size:11px;font-weight:700;line-height:20px;padding:0 6px}
+
+  /* CONVERSATION */
+  .conv{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+  .conv::-webkit-scrollbar{display:none}
+  .msg{max-width:74%;padding:9px 13px;font-size:13.5px;line-height:1.4;border-radius:18px}
+  .msg.in{align-self:flex-start;background:var(--surf);border-bottom-left-radius:5px;box-shadow:var(--sh)}
+  .msg.out{align-self:flex-end;background:var(--ind);color:#fff;border-bottom-right-radius:5px}
+  .msg .tm{font-size:9.5px;opacity:.6;margin-top:3px;text-align:right}
+  .composer{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surf);box-shadow:0 -1px 0 var(--line)}
+  .composer .field{flex:1;background:#F1F2F7;border-radius:22px;border:none;padding:11px 16px;
+    font-family:var(--body);font-size:14px;outline:none}
+  .composer .send{width:44px;height:44px;border:none;border-radius:50%;background:var(--ind);color:#fff;
+    font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+
+  /* PROFILE */
+  .phead{margin:14px;padding:20px;text-align:center}
+  .phead .pav{width:96px;height:96px;font-size:44px;margin:6px auto 0}
+  .phead .pn{font-family:var(--disp);font-weight:800;font-size:21px;margin-top:12px}
+  .stats{display:flex;background:var(--ind-soft);border-radius:16px;margin-top:18px;padding:14px 0}
+  .stats .s{flex:1;text-align:center}.stats .s b{font-family:var(--disp);color:var(--ind);font-size:18px}
+  .stats .s span{display:block;color:var(--t2);font-size:11.5px}
+  .pbtns{display:flex;gap:10px;margin-top:16px}
+  .pbtns .pill{flex:1}
+  .tabs{display:flex;margin:0 16px}
+  .tabs .tab{flex:1;text-align:center;padding:10px;font-weight:700;font-size:13px;color:var(--t3);
+    border-bottom:2px solid transparent;cursor:pointer}
+  .tabs .tab.on{color:var(--ind);border-bottom-color:var(--ind)}
+  .pgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:8px 16px 16px}
+  .pgrid .g{height:108px;background:#E9EBF2;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:32px}
+
+  /* ADMIN */
+  .ahead{background:linear-gradient(135deg,var(--ind),var(--ind-d));color:#fff;padding:18px 16px 22px;display:flex;align-items:center;gap:12px}
+  .ahead h2{font-family:var(--disp);font-size:20px;font-weight:800}
+  .ahead p{color:#DCD9FF;font-size:12.5px;margin-top:2px}
+  .scards{display:flex;gap:10px;padding:14px}
+  .sc{flex:1;text-align:center;padding:14px}
+  .sc .e{font-size:22px}.sc b{font-family:var(--disp);display:block;font-size:18px;margin-top:6px}
+  .sc span{color:var(--t3);font-size:11.5px}
+  .menu .mi{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer}
+  .menu .mi:active{background:#F1F2F7}
+  .menu .mi .mc{width:42px;height:42px;border-radius:21px;background:var(--ind-soft);
+    display:flex;align-items:center;justify-content:center;font-size:18px}
+  .menu .mi .ml{flex:1;font-family:var(--disp);font-weight:700;font-size:14.5px}
+  .menu .mi .mr{color:#C2C2CE;font-size:22px}
+  .menu .div{height:1px;background:var(--line);margin:0 14px}
+
+  /* NOTIFICATIONS */
+  .noti{display:flex;gap:12px;padding:13px 16px}
+  .noti .av{width:44px;height:44px;font-size:20px;flex-shrink:0}
+  .noti .txt{font-size:13.5px;line-height:1.4}
+  .noti .txt b{font-family:var(--disp)}
+  .noti .tm{color:var(--t3);font-size:11.5px;margin-top:3px}
+
+  .menu-sheet{margin:0 0 8px}
+  .gh{padding:14px 16px;text-align:center;color:var(--t3);font-size:11px}
+
+  /* LOGIN OVERLAY */
+  .auth-ov{position:absolute;inset:0;z-index:50;background:var(--bg);
+    display:flex;flex-direction:column;justify-content:center;padding:32px 28px;overflow-y:auto}
+  .auth-ov.hide{display:none}
+  .auth-logo{font-family:var(--disp);font-weight:800;font-size:40px;text-align:center;
+    background:linear-gradient(120deg,var(--ind),var(--rose));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .auth-sub{text-align:center;color:var(--t2);font-size:14px;margin-top:4px;margin-bottom:28px}
+  .auth-field{width:100%;height:52px;background:var(--surf);border:1.5px solid var(--line);border-radius:14px;
+    padding:0 16px;font-family:var(--body);font-size:15px;margin-bottom:12px;outline:none}
+  .auth-field:focus{border-color:var(--ind)}
+  .auth-btn{width:100%;height:52px;background:var(--ind);color:#fff;border:none;border-radius:14px;
+    font-family:var(--disp);font-weight:700;font-size:16px;cursor:pointer;margin-top:6px}
+  .auth-btn:active{background:var(--ind-d)}
+  .auth-toggle{text-align:center;margin-top:18px;color:var(--t2);font-size:13.5px}
+  .auth-toggle b{color:var(--ind);cursor:pointer}
+  .auth-err{color:var(--rose);font-size:12.5px;text-align:center;min-height:18px;margin-top:8px}
+  .admin-only{display:none}
+  body.is-admin .admin-only{display:flex}
+
+  /* SEARCH */
+  .searchbar{flex:1;height:42px;background:#F1F2F7;border-radius:14px;border:none;
+    padding:0 14px;font-family:var(--body);font-size:14px;outline:none}
+  .chips{display:flex;gap:8px;padding:12px 16px;overflow-x:auto}.chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;padding:8px 16px;border-radius:20px;background:var(--surf);box-shadow:var(--sh);
+    font-size:12.5px;font-weight:600;color:var(--t2);cursor:pointer}
+  .chip.on{background:var(--ind);color:#fff}
+  .xgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:4px 16px}
+  .xgrid .x{height:118px;background:#E9EBF2;border-radius:6px;display:flex;align-items:center;
+    justify-content:center;font-size:34px;cursor:pointer}
+  .xgrid .x.tall{grid-row:span 2;height:240px}
+  .people{padding:6px 0}
+  .person{display:flex;align-items:center;gap:12px;padding:10px 16px}
+  .person .nm{font-size:14px}
+
+  /* REELS */
+  #reels{background:#000}
+  .reel{position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;
+    background:linear-gradient(180deg,#1a1d29,#000);color:#fff;scroll-snap-align:start;flex:0 0 100%}
+  .reel .center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;opacity:.5}
+  .reel .rail{position:absolute;right:12px;bottom:90px;display:flex;flex-direction:column;gap:20px;align-items:center}
+  .reel .rail .r{text-align:center;font-size:24px;cursor:pointer}
+  .reel .rail .r span{display:block;font-size:11px;font-weight:600;margin-top:2px}
+  .reel .meta{padding:16px;position:relative;z-index:2}
+  .reel .meta .u{display:flex;align-items:center;gap:8px;font-weight:700}
+  .reel .meta .cap{font-size:13px;margin-top:8px;opacity:.92;max-width:78%}
+  .reels-scroll{flex:1;overflow-y:auto;scroll-snap-type:y mandatory}.reels-scroll::-webkit-scrollbar{display:none}
+  .reels-top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;
+    padding:14px 16px;color:#fff;font-family:var(--disp);font-weight:800;font-size:18px}
+
+  /* CALL SCREENS */
+  .call{background:linear-gradient(160deg,#3a2d6b,#1a1730);color:#fff;align-items:center}
+  .call .body{display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:60px 24px 44px;text-align:center}
+  .call .cav{width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;font-size:64px;border:3px solid rgba(255,255,255,.3)}
+  .call .cn{font-family:var(--disp);font-weight:800;font-size:26px;margin-top:22px}
+  .call .cs{color:#C9C3F0;font-size:14px;margin-top:6px}
+  .call .ctrls{display:flex;gap:18px;align-items:center}
+  .call .cbtn{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.16);border:none;
+    color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .call .cbtn.end{background:#FF3B5C;width:70px;height:70px}
+  .call .cbtn.accept{background:#2ED47A;width:70px;height:70px}
+  .vcall{background:#10131c}
+  .vcall .selfcam{position:absolute;top:80px;right:16px;width:96px;height:140px;border-radius:14px;
+    background:#22273A;display:flex;align-items:center;justify-content:center;font-size:40px;border:1.5px solid rgba(255,255,255,.2)}
+  .vcall .remote{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;
+    background:radial-gradient(circle at 50% 35%,#2a2f45,#10131c)}
+
+  /* STORY VIEWER */
+  #story{background:#000}
+  .story-v{position:relative;height:100%;background:linear-gradient(160deg,#5b3fb0,#1a1730);color:#fff;
+    display:flex;flex-direction:column}
+  .story-bars{display:flex;gap:4px;padding:12px 12px 0}
+  .story-bars .sb{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden}
+  .story-bars .sb.done{background:#fff}
+  .story-bars .sb.cur i{display:block;height:100%;width:55%;background:#fff}
+  .story-head{display:flex;align-items:center;gap:10px;padding:14px 14px 0}
+  .story-head .nm{font-weight:700}
+  .story-stage{flex:1;display:flex;align-items:center;justify-content:center;font-size:120px}
+  .story-reply{display:flex;align-items:center;gap:10px;padding:14px}
+  .story-reply .field{flex:1;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+    border-radius:22px;padding:11px 16px;color:#fff;font-size:14px;outline:none}
+  .story-reply .field::placeholder{color:rgba(255,255,255,.7)}
+
+  /* CREATE POST */
+  .cp-area{margin:14px;min-height:130px;border:none;outline:none;resize:none;width:calc(100% - 28px);
+    font-family:var(--body);font-size:16px;background:transparent;color:var(--t1)}
+  .cp-tools{display:flex;gap:10px;padding:0 14px;flex-wrap:wrap}
+  .cp-tool{flex:1;min-width:90px;background:var(--surf);border-radius:14px;box-shadow:var(--sh);
+    padding:14px;text-align:center;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer}
+  .cp-tool .e{font-size:24px;display:block;margin-bottom:4px}
+
+  /* SETTINGS */
+  .set-grp{margin:14px;border-radius:18px;overflow:hidden;box-shadow:var(--sh);background:var(--surf)}
+  .set-row{display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer}
+  .set-row:active{background:#F1F2F7}
+  .set-row .e{width:34px;text-align:center;font-size:18px}
+  .set-row .l{flex:1;font-size:14.5px}
+  .set-row .r{color:#C2C2CE;font-size:20px}
+  .set-div{height:1px;background:var(--line);margin:0 15px}
+  .set-cap{margin:18px 18px 8px;font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= LOGIN / SIGNUP ================= -->
+  <div class="auth-ov" id="authOverlay">
+    <div class="auth-logo">NLA</div>
+    <div class="auth-sub" id="authSub">Welcome back 👋</div>
+    <input class="auth-field" id="authName" placeholder="Full name" style="display:none">
+    <input class="auth-field" id="authEmail" type="email" placeholder="Email" autocomplete="email">
+    <input class="auth-field" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-btn" id="authBtn" onclick="doAuth()">Log in</button>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-toggle" id="authToggle">New here? <b onclick="toggleAuth()">Create account</b></div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ================= FEED ================= -->
+    <section class="screen active" id="feed">
+      <div class="top">
+        <span class="brand">NLA</span><span class="grow"></span>
+        <button class="iconbtn" onclick="go('search')">🔍</button>
+        <button class="iconbtn" onclick="go('notifs')">🔔<span class="dot"></span></button>
+        <button class="iconbtn" onclick="go('chats')">✉️</button>
+      </div>
+      <div class="body">
+        <div class="stories">
+          <div class="story"><div class="new">＋</div>Your story</div>
+          <div class="story" onclick="go('story')"><div class="ring"><div class="avatar av-in">🧑</div></div>alex</div>
+          <div class="story" onclick="go('story')"><div class="ring"><div class="avatar av-in">👩</div></div>sara</div>
+          <div class="story" onclick="go('story')"><div class="ring"><div class="avatar av-in">🧔</div></div>mike</div>
+          <div class="story" onclick="go('story')"><div class="ring"><div class="avatar av-in">👧</div></div>lia</div>
+        </div>
+
+        <div class="card post">
+          <div class="head">
+            <div class="ring"><div class="avatar av">🧑</div></div>
+            <div><div class="nm">Alex Morgan</div><div class="muted">35 min ago · 🌐</div></div>
+            <span class="grow"></span><button class="iconbtn" style="font-size:20px">⋯</button>
+          </div>
+          <div class="cap" style="padding:0 16px 10px"><b>Alex Morgan</b> Weekend trip dump 🏕️🌄</div>
+          <div class="grid4" onclick="go('post')">
+            <div class="cell">🏞️</div><div class="cell">🌄</div><div class="cell">🏕️</div>
+            <div class="cell">🌲<div class="more">+5</div></div>
+          </div>
+          <div class="acts">
+            <span class="b" onclick="like(this,512)">🤍 <span>512</span></span>
+            <span class="b" onclick="go('post')">💬 <span>48</span></span>
+            <span class="b grow">↗ Share</span><span class="b">🔖</span>
+          </div>
+        </div>
+
+        <div class="card post">
+          <div class="head">
+            <div class="ring"><div class="avatar av">👩</div></div>
+            <div><div class="nm">Sara Williams</div><div class="muted">2 hours ago · 🌐</div></div>
+            <span class="grow"></span><button class="iconbtn" style="font-size:20px">⋯</button>
+          </div>
+          <div class="media" onclick="go('post')">🏞️</div>
+          <div class="acts">
+            <span class="b" onclick="like(this,248)">🤍 <span>248</span></span>
+            <span class="b" onclick="go('post')">💬 <span>36</span></span>
+            <span class="b grow">↗ Share</span><span class="b">🔖</span>
+          </div>
+          <div class="cap"><b>Sara Williams</b> Sunset hike with the team today 🌄 Best views all year!</div>
+        </div>
+
+        <div class="card post">
+          <div class="head">
+            <div class="ring"><div class="avatar av">🧔</div></div>
+            <div><div class="nm">Mike Chen</div><div class="muted">5 hours ago · 🌐</div></div>
+            <span class="grow"></span><button class="iconbtn" style="font-size:20px">⋯</button>
+          </div>
+          <div class="media" onclick="go('post')">🎬</div>
+          <div class="acts">
+            <span class="b" onclick="like(this,1204)">🤍 <span>1,204</span></span>
+            <span class="b" onclick="go('post')">💬 <span>86</span></span>
+            <span class="b grow">↗ Share</span><span class="b">🔖</span>
+          </div>
+          <div class="cap"><b>Mike Chen</b> New drone footage from the coast 🌊 turn the sound on!</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= POST DETAIL ================= -->
+    <section class="screen" id="post">
+      <div class="top"><button class="back" onclick="go('feed')">‹</button><span class="ttl">Post</span><span class="grow"></span><button class="iconbtn" style="font-size:20px">⋯</button></div>
+      <div class="body">
+        <div class="card post" style="margin-top:14px">
+          <div class="head">
+            <div class="ring"><div class="avatar av">🧑</div></div>
+            <div><div class="nm">Alex Morgan</div><div class="muted">35 min ago · 🌐</div></div>
+            <span class="grow"></span><button class="pill soft">Follow</button>
+          </div>
+          <div class="cap" style="padding-top:0">A few shots from this weekend's trip 🏕️🌄 swipe through!</div>
+          <div class="grid4">
+            <div class="cell">🏞️</div><div class="cell">🌄</div><div class="cell">🏕️</div>
+            <div class="cell">🌲<div class="more">+5</div></div>
+          </div>
+          <div class="video"><span>🎬</span><div class="play">▶</div><div class="dur">0:45</div></div>
+          <div class="row" style="padding:12px 16px 0"><span class="muted">❤️ 1,204 likes</span><span class="grow"></span><span class="muted">86 comments</span></div>
+          <div style="height:1px;background:var(--line);margin:10px 16px 0"></div>
+          <div class="acts" style="padding-top:8px">
+            <span class="b grow" style="justify-content:center" onclick="like(this,1204)">🤍 Like</span>
+            <span class="b grow" style="justify-content:center">💬 Comment</span>
+            <span class="b grow" style="justify-content:center">↗ Share</span>
+          </div>
+        </div>
+        <div class="cmt"><div class="ring"><div class="avatar av">👩</div></div><div class="bub"><b>Sara Williams</b>These views are unreal! 😍</div></div>
+        <div class="cmt"><div class="ring"><div class="avatar av">🧔</div></div><div class="bub"><b>Mike Chen</b>Where is this? Need to go 🔥</div></div>
+        <div style="height:14px"></div>
+      </div>
+      <div class="composer">
+        <div class="ring"><div class="avatar" style="width:36px;height:36px;font-size:17px">🙂</div></div>
+        <input class="field" placeholder="Add a comment…">
+        <button class="send">➤</button>
+      </div>
+    </section>
+
+    <!-- ================= SHOP ================= -->
+    <section class="screen shop-bg" id="shop">
+      <div class="body">
+        <div class="row" style="padding-right:12px">
+          <div><div class="greet">Hi, Sarah 👋</div><div class="muted" style="margin:0 16px">What would you like to buy today?</div></div>
+          <span class="grow"></span>
+          <button class="iconbtn" style="font-size:22px;margin-top:8px">🛒<span class="c" id="cartBadge" style="position:absolute;top:4px;right:4px;min-width:18px;height:18px;border-radius:9px;background:var(--green);color:#fff;font-size:10px;font-weight:700;line-height:18px">0</span></button>
+        </div>
+        <div class="search" style="margin-top:14px">🔍 Search for products <span class="grow"></span>🎤</div>
+        <div class="banner"><div style="flex:1.4"><h3>Fresh &amp; Healthy</h3><div style="font-size:12.5px;color:#EAF6E0;margin-top:3px">Get 20% Off on all vegetables</div><button class="pill" style="background:#fff;color:var(--green-d);margin-top:10px">Shop Now ›</button></div><div style="flex:1;text-align:center;font-size:34px">🥦🍅🫑</div></div>
+        <div class="sect">Categories</div>
+        <div class="cats">
+          <div class="cat"><div class="ic">🍎</div><div class="l">Fruits</div></div>
+          <div class="cat"><div class="ic">🥕</div><div class="l">Vegetables</div></div>
+          <div class="cat"><div class="ic">🥛</div><div class="l">Dairy</div></div>
+          <div class="cat"><div class="ic">🍿</div><div class="l">Snacks</div></div>
+        </div>
+        <div class="row" style="margin:18px 16px 12px"><span class="sect" style="margin:0">Popular Products</span><span class="grow"></span><span style="color:var(--green);font-weight:700;font-size:13px">See All ›</span></div>
+        <div class="prods">
+          <div class="prod"><div class="img">🍌</div><div class="pn">Fresh Bananas</div><div class="muted">$1.20 / kg</div><button class="add" onclick="addCart()">+ Add</button></div>
+          <div class="prod"><div class="img">🥦</div><div class="pn">Organic Broccoli</div><div class="muted">$2.50 / each</div><button class="add" onclick="addCart()">+ Add</button></div>
+          <div class="prod"><div class="img">🥚</div><div class="pn">Farm Eggs</div><div class="muted">$3.00 / doz</div><button class="add" onclick="addCart()">+ Add</button></div>
+          <div class="prod"><div class="img">🥛</div><div class="pn">Almond Milk</div><div class="muted">$2.80</div><button class="add" onclick="addCart()">+ Add</button></div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+    </section>
+
+    <!-- ================= CHATS LIST ================= -->
+    <section class="screen" id="chats">
+      <div class="top"><button class="back" onclick="go('feed')">‹</button><span class="ttl">Messages</span><span class="grow"></span><button class="iconbtn" title="Demo incoming call" onclick="go('incomingcall')">📞</button><button class="iconbtn">✏️</button></div>
+      <div class="body">
+        <div class="search" style="margin:14px 16px">🔍 Search messages</div>
+        <div class="chatitem" onclick="go('conv')"><div class="av ring"><div class="avatar" style="width:48px;height:48px;font-size:23px">👩</div><span class="online"></span></div><div><div class="nm">Sara Williams</div><div class="last">Sounds great! See you at 6 😊</div></div><div class="unread"><div class="t">2m</div><span class="c">3</span></div></div>
+        <div class="chatitem" onclick="go('conv')"><div class="av ring"><div class="avatar" style="width:48px;height:48px;font-size:23px">🧔</div><span class="online"></span></div><div><div class="nm">Mike Chen</div><div class="last">Sent the drone footage 🎬</div></div><div class="unread"><div class="t">18m</div></div></div>
+        <div class="chatitem" onclick="go('conv')"><div class="av"><div class="avatar" style="width:52px;height:52px;font-size:24px">👧</div></div><div><div class="nm">Lia Park</div><div class="last">Thank you so much! 🙏</div></div><div class="unread"><div class="t">1h</div></div></div>
+        <div class="chatitem" onclick="go('conv')"><div class="av"><div class="avatar" style="width:52px;height:52px;font-size:24px">🧑</div></div><div><div class="nm">Alex Morgan</div><div class="last">You: let's catch up tomorrow</div></div><div class="unread"><div class="t">3h</div></div></div>
+        <div class="chatitem" onclick="go('conv')"><div class="av"><div class="avatar" style="width:52px;height:52px;font-size:24px">👨‍💼</div></div><div><div class="nm">David Kim</div><div class="last">Invoice attached 📄</div></div><div class="unread"><div class="t">1d</div></div></div>
+      </div>
+    </section>
+
+    <!-- ================= CONVERSATION ================= -->
+    <section class="screen" id="conv">
+      <div class="top">
+        <button class="back" onclick="go('chats')">‹</button>
+        <div class="av ring" style="position:relative"><div class="avatar" style="width:38px;height:38px;font-size:18px">👩</div><span class="online" style="width:11px;height:11px"></span></div>
+        <div style="margin-left:4px"><div class="nm">Sara Williams</div><div class="muted" style="color:#2ED47A;font-size:11px">online</div></div>
+        <span class="grow"></span>
+        <button class="iconbtn" onclick="go('voicecall')">📞</button><button class="iconbtn" onclick="go('videocall')">📹</button>
+      </div>
+      <div class="conv" id="convBody">
+        <div class="msg in">Hey! Are we still on for the hike this weekend? 🏔️<div class="tm">5:42 PM</div></div>
+        <div class="msg out">Absolutely! Saturday morning works 👍<div class="tm">5:43 PM</div></div>
+        <div class="msg in">Perfect. I'll bring the camera 📷<div class="tm">5:44 PM</div></div>
+        <div class="msg out">Sounds great! See you at 6 😊<div class="tm">5:45 PM</div></div>
+      </div>
+      <div class="composer">
+        <button class="iconbtn">😊</button>
+        <input class="field" id="msgField" placeholder="Type a message" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="send" onclick="sendMsg()">➤</button>
+      </div>
+    </section>
+
+    <!-- ================= PROFILE ================= -->
+    <section class="screen" id="profile">
+      <div class="body">
+        <div class="card phead">
+          <div class="row"><button class="back" style="font-size:22px" onclick="go('feed')">‹</button><span class="grow"></span><button class="iconbtn admin-only" title="Admin" onclick="go('admin')">🛡️</button><button class="iconbtn" title="Settings" onclick="go('settings')">⚙️</button><button class="iconbtn" title="Log out" onclick="logout()">⏻</button></div>
+          <div class="ring" style="width:100px;height:100px;margin:6px auto 0"><div class="avatar pav">🧑‍🦱</div></div>
+          <div class="pn">Jackson Logan</div>
+          <div class="muted">@jackson · Photographer</div>
+          <div style="color:var(--t2);font-size:13px;margin-top:10px">Capturing moments, one frame at a time 📷✨</div>
+          <div class="stats"><div class="s"><b>248</b><span>Posts</span></div><div class="s"><b>12.4K</b><span>Followers</span></div><div class="s"><b>312</b><span>Following</span></div></div>
+          <div class="pbtns"><button class="pill solid">Edit Profile</button><button class="pill soft" style="background:#F0F1F6;color:#4A4A5A">Share</button></div>
+        </div>
+        <div class="tabs"><div class="tab on">▦ Posts</div><div class="tab">🏷️ Tagged</div></div>
+        <div class="pgrid">
+          <div class="g">🏞️</div><div class="g">🌅</div><div class="g">🏔️</div>
+          <div class="g">🌊</div><div class="g">🌲</div><div class="g">🦋</div>
+          <div class="g">🌸</div><div class="g">🏜️</div><div class="g">🌌</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ADMIN ================= -->
+    <section class="screen" id="admin">
+      <div class="ahead"><button class="back" style="color:#fff" onclick="go('profile')">‹</button><div class="grow"><h2>Admin Panel</h2><p>Manage your community</p></div><div class="avatar" style="width:40px;height:40px;background:#fff;font-size:18px">🛡️</div></div>
+      <div class="body">
+        <div class="scards">
+          <div class="card sc"><div class="e">👥</div><b>8.2K</b><span>Users</span></div>
+          <div class="card sc"><div class="e">📝</div><b>1.5K</b><span>Posts</span></div>
+          <div class="card sc"><div class="e">🚩</div><b style="color:var(--rose)">14</b><span>Reports</span></div>
+        </div>
+        <div class="sect">Management</div>
+        <div class="card menu" style="margin:0 14px">
+          <div class="mi" onclick="loadAdminUsers()"><div class="mc">👥</div><div class="ml">Manage Users</div><div class="mr">›</div></div><div class="div"></div>
+          <div class="mi"><div class="mc">📝</div><div class="ml">Manage Posts</div><div class="mr">›</div></div><div class="div"></div>
+          <div class="mi" onclick="sendBroadcast()"><div class="mc">🔔</div><div class="ml">Send Notification</div><div class="mr">›</div></div><div class="div"></div>
+          <div class="mi"><div class="mc">🚩</div><div class="ml">Reports &amp; Moderation</div><div class="mr">›</div></div><div class="div"></div>
+          <div class="mi" onclick="logout()"><div class="mc">⏻</div><div class="ml">Log out</div><div class="mr">›</div></div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+    </section>
+
+    <!-- ================= NOTIFICATIONS ================= -->
+    <section class="screen" id="notifs">
+      <div class="top"><button class="back" onclick="go('feed')">‹</button><span class="ttl">Notifications</span></div>
+      <div class="body">
+        <div class="sect" style="margin-top:14px">New</div>
+        <div class="noti"><div class="ring"><div class="avatar av">👩</div></div><div><div class="txt"><b>Sara Williams</b> liked your photo ❤️</div><div class="tm">2 minutes ago</div></div></div>
+        <div class="noti"><div class="ring"><div class="avatar av">🧔</div></div><div><div class="txt"><b>Mike Chen</b> started following you</div><div class="tm">20 minutes ago</div></div><span class="grow"></span><button class="pill soft" style="align-self:center">Follow</button></div>
+        <div class="sect">Earlier</div>
+        <div class="noti"><div class="ring"><div class="avatar av">👧</div></div><div><div class="txt"><b>Lia Park</b> commented: "Amazing shot! 🔥"</div><div class="tm">3 hours ago</div></div></div>
+        <div class="noti"><div class="ring"><div class="avatar av">🧑</div></div><div><div class="txt"><b>Alex Morgan</b> mentioned you in a post</div><div class="tm">Yesterday</div></div></div>
+        <div class="noti"><div class="avatar av" style="background:var(--ind-soft)">🎉</div><div><div class="txt">Your post reached <b>1,000 likes</b>!</div><div class="tm">2 days ago</div></div></div>
+      </div>
+    </section>
+
+    <!-- ================= SEARCH ================= -->
+    <section class="screen" id="search">
+      <div class="top">
+        <button class="back" onclick="go('feed')">‹</button>
+        <input class="searchbar" id="searchField" placeholder="Search people, posts, tags…" oninput="filterSearch(this.value)">
+      </div>
+      <div class="body">
+        <div class="chips" id="searchChips">
+          <div class="chip on" onclick="pickChip(this)">Trending</div>
+          <div class="chip" onclick="pickChip(this)">People</div>
+          <div class="chip" onclick="pickChip(this)">Photos</div>
+          <div class="chip" onclick="pickChip(this)">Videos</div>
+          <div class="chip" onclick="pickChip(this)">Tags</div>
+        </div>
+
+        <div class="xgrid" id="exploreGrid">
+          <div class="x tall" onclick="go('post')">🏞️</div>
+          <div class="x" onclick="go('post')">🌅</div>
+          <div class="x" onclick="go('post')">🍜</div>
+          <div class="x" onclick="go('post')">🎬</div>
+          <div class="x" onclick="go('post')">🏔️</div>
+          <div class="x tall" onclick="go('post')">🌊</div>
+          <div class="x" onclick="go('post')">🐶</div>
+          <div class="x" onclick="go('post')">🌸</div>
+          <div class="x" onclick="go('post')">☕</div>
+          <div class="x" onclick="go('post')">🚗</div>
+          <div class="x" onclick="go('post')">🏙️</div>
+        </div>
+
+        <div class="sect">People to follow</div>
+        <div class="people" id="peopleList">
+          <div class="person"><div class="ring"><div class="avatar av">🧑</div></div><div><div class="nm">Alex Morgan</div><div class="muted">Photographer · 12.4K followers</div></div><span class="grow"></span><button class="pill soft">Follow</button></div>
+          <div class="person"><div class="ring"><div class="avatar av">👩</div></div><div><div class="nm">Sara Williams</div><div class="muted">Traveler · 8.1K followers</div></div><span class="grow"></span><button class="pill soft">Follow</button></div>
+          <div class="person"><div class="ring"><div class="avatar av">🧔</div></div><div><div class="nm">Mike Chen</div><div class="muted">Filmmaker · 22K followers</div></div><span class="grow"></span><button class="pill soft">Follow</button></div>
+          <div class="person"><div class="ring"><div class="avatar av">👧</div></div><div><div class="nm">Lia Park</div><div class="muted">Designer · 5.6K followers</div></div><span class="grow"></span><button class="pill soft">Follow</button></div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+    </section>
+
+    <!-- ================= REELS / SHORTS ================= -->
+    <section class="screen" id="reels">
+      <div class="reels-top">Reels</div>
+      <div class="reels-scroll">
+        <div class="reel">
+          <div class="center">🎬</div>
+          <div class="rail">
+            <div class="r" onclick="like(this,3200)">🤍<span>3.2K</span></div>
+            <div class="r">💬<span>214</span></div>
+            <div class="r">↗<span>Share</span></div>
+            <div class="r">🔖<span>Save</span></div>
+            <div class="r">🎵</div>
+          </div>
+          <div class="meta"><div class="u"><div class="ring"><div class="avatar" style="width:34px;height:34px;font-size:16px">🧔</div></div> mike_films <button class="pill" style="background:rgba(255,255,255,.2);color:#fff;padding:5px 14px">Follow</button></div><div class="cap">Coastal drone run 🌊 sound on 🔊 #reels #drone</div></div>
+        </div>
+        <div class="reel">
+          <div class="center">🏄</div>
+          <div class="rail">
+            <div class="r" onclick="like(this,8100)">🤍<span>8.1K</span></div>
+            <div class="r">💬<span>530</span></div>
+            <div class="r">↗<span>Share</span></div>
+            <div class="r">🔖<span>Save</span></div>
+            <div class="r">🎵</div>
+          </div>
+          <div class="meta"><div class="u"><div class="ring"><div class="avatar" style="width:34px;height:34px;font-size:16px">👧</div></div> lia.surf</div><div class="cap">Morning waves 🏄‍♀️ best feeling ever #surf #ocean</div></div>
+        </div>
+        <div class="reel">
+          <div class="center">🍜</div>
+          <div class="rail">
+            <div class="r" onclick="like(this,1500)">🤍<span>1.5K</span></div>
+            <div class="r">💬<span>97</span></div>
+            <div class="r">↗<span>Share</span></div>
+            <div class="r">🔖<span>Save</span></div>
+            <div class="r">🎵</div>
+          </div>
+          <div class="meta"><div class="u"><div class="ring"><div class="avatar" style="width:34px;height:34px;font-size:16px">👩</div></div> sara.eats</div><div class="cap">60-second ramen 🍜 recipe in comments 👇 #food</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= INCOMING CALL ================= -->
+    <section class="screen call" id="incomingcall">
+      <div class="body">
+        <div>
+          <div class="cs" style="margin-bottom:8px">Incoming voice call…</div>
+          <div class="cav" style="margin:0 auto">👩</div>
+          <div class="cn">Sara Williams</div>
+          <div class="cs">NLA Audio</div>
+        </div>
+        <div class="ctrls">
+          <button class="cbtn end" onclick="go('chats')">📵</button>
+          <button class="cbtn accept" onclick="go('voicecall')">📞</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VOICE CALL ================= -->
+    <section class="screen call" id="voicecall">
+      <div class="body">
+        <div>
+          <div class="cav" style="margin:0 auto">👩</div>
+          <div class="cn">Sara Williams</div>
+          <div class="cs" id="voiceTimer">00:04</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;align-items:center">
+          <div class="ctrls">
+            <button class="cbtn">🔇</button>
+            <button class="cbtn">🔊</button>
+            <button class="cbtn" onclick="go('videocall')">📹</button>
+          </div>
+          <button class="cbtn end" onclick="go('conv')">📵</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIDEO CALL ================= -->
+    <section class="screen call vcall" id="videocall">
+      <div class="remote">👩</div>
+      <div class="selfcam">🙂</div>
+      <div class="reels-top" style="justify-content:center;font-size:15px;font-weight:600">Sara Williams · 00:12</div>
+      <div class="body" style="justify-content:flex-end;background:transparent">
+        <div class="ctrls">
+          <button class="cbtn">🔇</button>
+          <button class="cbtn">🔄</button>
+          <button class="cbtn">📷</button>
+          <button class="cbtn end" onclick="go('conv')">📵</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= STORY VIEWER ================= -->
+    <section class="screen" id="story">
+      <div class="story-v">
+        <div class="story-bars"><div class="sb done"></div><div class="sb cur"><i></i></div><div class="sb"></div></div>
+        <div class="story-head"><div class="ring"><div class="avatar" style="width:36px;height:36px;font-size:17px">👩</div></div><div><div class="nm">sara</div><div style="font-size:11px;opacity:.8">2h ago</div></div><span class="grow"></span><button class="iconbtn" style="color:#fff" onclick="go('feed')">✕</button></div>
+        <div class="story-stage">🌄</div>
+        <div class="story-reply"><input class="field" placeholder="Reply to sara…"><button class="iconbtn" style="color:#fff">➤</button><button class="iconbtn" style="color:#fff">🤍</button></div>
+      </div>
+    </section>
+
+    <!-- ================= CREATE POST ================= -->
+    <section class="screen" id="createpost">
+      <div class="top"><button class="back" onclick="go('feed')">✕</button><span class="ttl">New post</span><span class="grow"></span><button class="pill solid" onclick="go('feed')">Post</button></div>
+      <div class="body">
+        <div class="row" style="padding:14px 14px 0;gap:10px"><div class="ring"><div class="avatar av">🙂</div></div><div class="nm">You</div></div>
+        <textarea class="cp-area" placeholder="What's on your mind?"></textarea>
+        <div class="cp-tools">
+          <div class="cp-tool"><span class="e">🖼️</span>Photo</div>
+          <div class="cp-tool"><span class="e">🎬</span>Video</div>
+          <div class="cp-tool"><span class="e">📍</span>Location</div>
+          <div class="cp-tool"><span class="e">😊</span>Feeling</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SETTINGS ================= -->
+    <section class="screen" id="settings">
+      <div class="top"><button class="back" onclick="go('profile')">‹</button><span class="ttl">Settings</span></div>
+      <div class="body">
+        <div class="set-cap">Account</div>
+        <div class="set-grp">
+          <div class="set-row"><span class="e">👤</span><span class="l">Edit profile</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row"><span class="e">🔒</span><span class="l">Privacy</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row"><span class="e">🔔</span><span class="l">Notifications</span><span class="r">›</span></div>
+        </div>
+        <div class="set-cap">Preferences</div>
+        <div class="set-grp">
+          <div class="set-row"><span class="e">🌙</span><span class="l">Dark mode</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row"><span class="e">🌐</span><span class="l">Language</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row"><span class="e">📦</span><span class="l">Cargo tracking</span><span class="r">›</span></div>
+        </div>
+        <div class="set-cap">Support</div>
+        <div class="set-grp">
+          <div class="set-row"><span class="e">❓</span><span class="l">Help center</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row"><span class="e">ℹ️</span><span class="l">About NLA</span><span class="r">›</span></div><div class="set-div"></div>
+          <div class="set-row" onclick="logout()"><span class="e">⏻</span><span class="l" style="color:var(--rose)">Log out</span><span class="r">›</span></div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= BOTTOM NAV ================= -->
+  <div class="nav">
+    <button class="on" data-tab="feed" onclick="go('feed')"><span class="i">🏠</span>Home</button>
+    <button data-tab="shop" onclick="go('shop')"><span class="i">🛍️</span>Shop</button>
+    <button class="fab" onclick="go('createpost')">＋</button>
+    <button data-tab="reels" onclick="go('reels')"><span class="i">🎬</span>Reels</button>
+    <button data-tab="profile" onclick="go('profile')"><span class="i">👤</span>Profile</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+  // ===== Firebase config =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyB49vRPX8YaWuTP5GS3lsBDqdAaz_hJYAw",
+    authDomain: "onlineshop-849c8.firebaseapp.com",
+    databaseURL: "https://onlineshop-849c8.firebaseio.com",
+    projectId: "onlineshop-849c8",
+    storageBucket: "onlineshop-849c8.appspot.com",
+    messagingSenderId: "883512833370",
+    appId: "1:883512833370:web:a1c8412b158f8744afef63"
+  };
+  let auth=null, db=null, fbReady=false;
+  try { firebase.initializeApp(firebaseConfig); auth=firebase.auth(); db=firebase.database(); fbReady=true; }
+  catch(e){ console.warn('Firebase init failed — running in demo mode:', e); }
+</script>
+<script>
+  const tabFor = {feed:'feed', shop:'shop', chats:'chats', conv:'chats', profile:'profile', admin:'profile', post:'feed', notifs:'feed', search:'feed', reels:'reels', createpost:'feed', settings:'profile', voicecall:'chats', videocall:'chats', incomingcall:'chats', story:'feed'};
+  const fullscreen = new Set(['voicecall','videocall','incomingcall','story','createpost']);
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
+    const tab = tabFor[id] || id;
+    document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+    document.querySelector('.nav').style.display = fullscreen.has(id) ? 'none' : 'flex';
+    const body = document.querySelector('#'+id+' .body'); if(body) body.scrollTop = 0;
+  }
+  function like(el, base){
+    const span = el.querySelector('span');
+    const liked = el.classList.toggle('liked');
+    el.firstChild.textContent = liked ? '❤️ ' : '🤍 ';
+    if(span) span.textContent = (liked ? base+1 : base).toLocaleString();
+  }
+  let cart = 0;
+  function addCart(){ cart++; document.getElementById('cartBadge').textContent = cart; }
+
+  function pickChip(el){
+    el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+    el.classList.add('on');
+  }
+  function filterSearch(q){
+    q = (q||'').trim().toLowerCase();
+    document.querySelectorAll('#peopleList .person').forEach(p=>{
+      const nm = p.querySelector('.nm').textContent.toLowerCase();
+      p.style.display = (!q || nm.includes(q)) ? 'flex' : 'none';
+    });
+    document.getElementById('exploreGrid').style.display = q ? 'none' : 'grid';
+  }
+  function sendMsg(){
+    const f = document.getElementById('msgField'); const txt = f.value.trim(); if(!txt) return;
+    const body = document.getElementById('convBody');
+    const t = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    const div = document.createElement('div'); div.className='msg out';
+    div.innerHTML = txt.replace(/</g,'&lt;') + '<div class="tm">'+t+'</div>';
+    body.appendChild(div); f.value=''; body.scrollTop = body.scrollHeight;
+    // persist to Realtime Database if a thread + user are available
+    if(fbReady && auth && auth.currentUser && currentThread){
+      db.ref('chats/'+currentThread+'/messages').push({
+        uid: auth.currentUser.uid, text: txt, time: firebase.database.ServerValue.TIMESTAMP
+      }).catch(e=>console.warn('send failed', e));
+    }
+  }
+
+  /* ===================== FIREBASE AUTH ===================== */
+  let signupMode = false;
+  let currentThread = null;
+
+  function toggleAuth(){
+    signupMode = !signupMode;
+    document.getElementById('authName').style.display = signupMode ? 'block' : 'none';
+    document.getElementById('authSub').textContent = signupMode ? 'Create your account ✨' : 'Welcome back 👋';
+    document.getElementById('authBtn').textContent = signupMode ? 'Sign up' : 'Log in';
+    document.getElementById('authToggle').innerHTML = signupMode
+      ? 'Already have an account? <b onclick="toggleAuth()">Log in</b>'
+      : 'New here? <b onclick="toggleAuth()">Create account</b>';
+    document.getElementById('authErr').textContent = '';
+  }
+
+  function doAuth(){
+    const err = document.getElementById('authErr'); err.textContent='';
+    const email = document.getElementById('authEmail').value.trim();
+    const pass  = document.getElementById('authPass').value;
+    const name  = document.getElementById('authName').value.trim();
+    if(!email || !pass){ err.textContent='Enter your email and password.'; return; }
+    if(!fbReady){ err.textContent='Firebase not reachable — check your network.'; return; }
+    document.getElementById('authBtn').textContent = '…';
+    if(signupMode){
+      auth.createUserWithEmailAndPassword(email, pass)
+        .then(cred=>{
+          return db.ref('users/'+cred.user.uid).set({
+            name: name || email.split('@')[0], username: email.split('@')[0],
+            email: email, photo: '🙂', bio: '', createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        })
+        .catch(e=>{ err.textContent = friendlyAuthError(e); document.getElementById('authBtn').textContent='Sign up'; });
+    } else {
+      auth.signInWithEmailAndPassword(email, pass)
+        .catch(e=>{ err.textContent = friendlyAuthError(e); document.getElementById('authBtn').textContent='Log in'; });
+    }
+  }
+
+  function friendlyAuthError(e){
+    const c = (e && e.code) || '';
+    if(c.includes('wrong-password')||c.includes('invalid-credential')) return 'Incorrect email or password.';
+    if(c.includes('user-not-found')) return 'No account with that email.';
+    if(c.includes('email-already-in-use')) return 'That email is already registered.';
+    if(c.includes('weak-password')) return 'Password should be at least 6 characters.';
+    if(c.includes('invalid-email')) return 'That email address looks invalid.';
+    return (e && e.message) || 'Something went wrong. Try again.';
+  }
+
+  function logout(){ if(fbReady && auth) auth.signOut(); }
+
+  // React to login state
+  if(fbReady){
+    auth.onAuthStateChanged(function(user){
+      const ov = document.getElementById('authOverlay');
+      if(user){
+        ov.classList.add('hide');
+        checkAdmin(user.uid);
+        loadProfile(user.uid);
+        loadPosts();
+        loadProducts();
+        loadChats(user.uid);
+      } else {
+        ov.classList.remove('hide');
+        document.body.classList.remove('is-admin');
+        go('feed');
+        document.getElementById('authBtn').textContent = signupMode ? 'Sign up' : 'Log in';
+      }
+    });
+  } else {
+    // no firebase reachable -> stay in demo mode, hide login
+    document.getElementById('authOverlay').classList.add('hide');
+  }
+
+  /* ===================== ADMIN ===================== */
+  function checkAdmin(uid){
+    db.ref('admins/'+uid).once('value').then(s=>{
+      document.body.classList.toggle('is-admin', s.val()===true);
+    }).catch(()=>{});
+  }
+
+  // Admin: load real users into "Manage Users" (wire a button to call this)
+  function loadAdminUsers(){
+    db.ref('users').once('value').then(s=>{
+      const users=[]; s.forEach(c=>{ const v=c.val()||{}; users.push((v.name||'User')); });
+      alert('Registered users ('+users.length+'):\n'+users.slice(0,30).join('\n'));
+    }).catch(e=>alert('Could not load users: '+e.message));
+  }
+
+  // Admin: broadcast a notification to all users
+  function sendBroadcast(){
+    if(!document.body.classList.contains('is-admin')) return;
+    const text = prompt('Notification message to broadcast:');
+    if(!text) return;
+    db.ref('broadcast').push({ text: text, time: firebase.database.ServerValue.TIMESTAMP })
+      .then(()=>alert('Notification sent ✅'))
+      .catch(e=>alert('Failed: '+e.message));
+  }
+
+  /* ===================== DATA LOADERS (with demo fallback) ===================== */
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+  function loadProfile(uid){
+    db.ref('users/'+uid).once('value').then(s=>{
+      const v=s.val(); if(!v) return;
+      const nm=document.querySelector('#profile .pn'); if(nm&&v.name) nm.textContent=v.name;
+      const un=document.querySelector('#profile .phead .muted'); if(un) un.textContent='@'+(v.username||'user')+(v.role?(' · '+v.role):'');
+      if(v.bio){ const b=document.querySelector('#profile .phead > div:nth-of-type(1)'); }
+    }).catch(()=>{});
+  }
+
+  function loadPosts(){
+    db.ref('posts').limitToLast(20).once('value').then(s=>{
+      if(!s.exists()) return; // keep demo posts
+      const items=[]; s.forEach(c=>items.unshift({id:c.key, ...(c.val()||{})}));
+      const feed=document.querySelector('#feed .body');
+      // remove demo post cards, keep stories
+      feed.querySelectorAll('.post').forEach(p=>p.remove());
+      items.forEach(p=>{
+        const isVid = p.type==='video';
+        const el=document.createElement('div'); el.className='card post';
+        el.innerHTML =
+          '<div class="head"><div class="ring"><div class="avatar av">'+esc(p.avatar||'🙂')+'</div></div>'+
+          '<div><div class="nm">'+esc(p.name||'User')+'</div><div class="muted">'+esc(p.time||'just now')+' · 🌐</div></div>'+
+          '<span class="grow"></span><button class="iconbtn" style="font-size:20px">⋯</button></div>'+
+          '<div class="media" onclick="go(\'post\')">'+esc(p.media|| (isVid?'🎬':'🖼️'))+'</div>'+
+          '<div class="acts"><span class="b" onclick="like(this,'+(p.likes||0)+')">🤍 <span>'+(p.likes||0)+'</span></span>'+
+          '<span class="b" onclick="go(\'post\')">💬 <span>'+(p.comments||0)+'</span></span>'+
+          '<span class="b grow">↗ Share</span><span class="b">🔖</span></div>'+
+          '<div class="cap"><b>'+esc(p.name||'User')+'</b> '+esc(p.text||'')+'</div>';
+        feed.appendChild(el);
+      });
+    }).catch(e=>console.warn('posts', e));
+  }
+
+  function loadProducts(){
+    db.ref('products').limitToFirst(10).once('value').then(s=>{
+      if(!s.exists()) return; // keep demo products
+      const row=document.querySelector('#shop .prods'); if(!row) return;
+      row.innerHTML='';
+      s.forEach(c=>{ const p=c.val()||{};
+        const el=document.createElement('div'); el.className='prod';
+        el.innerHTML='<div class="img">'+esc(p.emoji||'🛒')+'</div><div class="pn">'+esc(p.name||'Item')+'</div>'+
+          '<div class="muted">'+esc(p.price||'')+'</div><button class="add" onclick="addCart()">+ Add</button>';
+        row.appendChild(el);
+      });
+    }).catch(e=>console.warn('products', e));
+  }
+
+  function loadChats(uid){
+    db.ref('userChats/'+uid).once('value').then(s=>{
+      if(!s.exists()) return; // keep demo chats
+      const body=document.querySelector('#chats .body');
+      body.querySelectorAll('.chatitem').forEach(c=>c.remove());
+      s.forEach(c=>{ const v=c.val()||{}; const tid=c.key;
+        const el=document.createElement('div'); el.className='chatitem';
+        el.onclick=()=>openConv(tid, v.name);
+        el.innerHTML='<div class="av"><div class="avatar" style="width:52px;height:52px;font-size:24px">'+esc(v.photo||'🙂')+'</div>'+
+          (v.online?'<span class="online"></span>':'')+'</div>'+
+          '<div><div class="nm">'+esc(v.name||'Chat')+'</div><div class="last">'+esc(v.last||'')+'</div></div>'+
+          '<div class="unread"><div class="t">'+esc(v.time||'')+'</div>'+(v.unread?'<span class="c">'+v.unread+'</span>':'')+'</div>';
+        body.appendChild(el);
+      });
+    }).catch(e=>console.warn('chats', e));
+  }
+
+  function openConv(threadId, name){
+    currentThread = threadId;
+    if(name){ const t=document.querySelector('#conv .nm'); if(t) t.textContent=name; }
+    const body=document.getElementById('convBody'); body.innerHTML='';
+    db.ref('chats/'+threadId+'/messages').limitToLast(50).once('value').then(s=>{
+      s.forEach(c=>{ const m=c.val()||{};
+        const mine = auth.currentUser && m.uid===auth.currentUser.uid;
+        const div=document.createElement('div'); div.className='msg '+(mine?'out':'in');
+        const tm = m.time? new Date(m.time).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) : '';
+        div.innerHTML=esc(m.text)+'<div class="tm">'+tm+'</div>';
+        body.appendChild(div);
+      });
+      body.scrollTop=body.scrollHeight;
+    }).catch(e=>console.warn('conv', e));
+    go('conv');
+  }
+</script>
+</body>
+</html>
